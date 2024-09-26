@@ -35,6 +35,21 @@ To ensure we build grounded Chain of Thought sets, the academic papers used are 
 13. econ.TH - Theoretical Economics
 14. econ.EM - Econometrics
 15. eess.SP - Signal Processing
+16. math.LO -- Logic
+17. physics.ed-ph -- Physics Education
+18. q-bio.QM -- Quantitative Methods
+19. astro-ph.EP -- Earth and Planetary Astrophysics
+20. cond-mat.stat-mech -- Statistical Mechanics
+21. q-fin.PM -- Portfolio Management
+22. stat.ME -- Methodology
+23. math.HO -- History and Overview
+24. physics.soc-ph -- Physics and Society
+25. q-bio.PE -- Populations and Evolution
+26. econ.GN -- General Economics
+27. physics.hist-ph -- History and Philosophy of Physics
+28. math.OC -- Optimization and Control
+29. q-fin.RM -- Risk Management
+30. stat.AP -- Applications
 
 ### Commands used to extract papers
 
@@ -54,4 +69,25 @@ To ensure we build grounded Chain of Thought sets, the academic papers used are 
 ./pull-arxiv-papers.py --debug --date-filter-begin 1970-01-01 --date-filter-end 2020-01-01 --output papers/econ.TH.txt --category econ.TH
 ./pull-arxiv-papers.py --debug --date-filter-begin 1970-01-01 --date-filter-end 2020-01-01 --output papers/econ.EM.txt --category econ.EM
 ./pull-arxiv-papers.py --debug --date-filter-begin 1970-01-01 --date-filter-end 2020-01-01 --output papers/eess.SP.txt --category eess.SP
+./pull-arxiv-papers.py --debug --date-filter-begin 1970-01-01 --date-filter-end 2020-01-01 --output papers/math.LO.txt --category math.LO
+./pull-arxiv-papers.py --debug --date-filter-begin 1970-01-01 --date-filter-end 2020-01-01 --output papers/physics.ed-ph.txt --category physics.ed-ph
+./pull-arxiv-papers.py --debug --date-filter-begin 1970-01-01 --date-filter-end 2020-01-01 --output papers/q-bio.QM.txt --category q-bio.QM
+./pull-arxiv-papers.py --debug --date-filter-begin 1970-01-01 --date-filter-end 2020-01-01 --output papers/astro-ph.EP.txt --category astro-ph.EP
+./pull-arxiv-papers.py --debug --date-filter-begin 1970-01-01 --date-filter-end 2020-01-01 --output papers/cond-mat.stat-mech.txt --category cond-mat.stat-mech
+./pull-arxiv-papers.py --debug --date-filter-begin 1970-01-01 --date-filter-end 2020-01-01 --output papers/q-fin.PM.txt --category q-fin.PM
+./pull-arxiv-papers.py --debug --date-filter-begin 1970-01-01 --date-filter-end 2020-01-01 --output papers/stat.ME.txt --category stat.ME
+./pull-arxiv-papers.py --debug --date-filter-begin 1970-01-01 --date-filter-end 2020-01-01 --output papers/math.HO.txt --category math.HO
+./pull-arxiv-papers.py --debug --date-filter-begin 1970-01-01 --date-filter-end 2020-01-01 --output papers/physics.soc-ph.txt --category physics.soc-ph
+./pull-arxiv-papers.py --debug --date-filter-begin 1970-01-01 --date-filter-end 2020-01-01 --output papers/q-bio.PE.txt --category q-bio.PE
+./pull-arxiv-papers.py --debug --date-filter-begin 1970-01-01 --date-filter-end 2020-01-01 --output papers/econ.GN.txt --category econ.GN
+./pull-arxiv-papers.py --debug --date-filter-begin 1970-01-01 --date-filter-end 2020-01-01 --output papers/physics.hist-ph.txt --category physics.hist-ph
+./pull-arxiv-papers.py --debug --date-filter-begin 1970-01-01 --date-filter-end 2020-01-01 --output papers/math.OC.txt --category math.OC
+./pull-arxiv-papers.py --debug --date-filter-begin 1970-01-01 --date-filter-end 2020-01-01 --output papers/q-fin.RM.txt --category q-fin.RM
+./pull-arxiv-papers.py --debug --date-filter-begin 1970-01-01 --date-filter-end 2020-01-01 --output papers/stat.AP.txt --category stat.AP
+```
+
+Count of unique papers across categories:
+
+```sh
+cat papers/* | awk 'match($0, /([0-9]+\.[0-9]+)v[0-9]+/, a) { print a[1] }' | sort -un | wc -l
 ```
