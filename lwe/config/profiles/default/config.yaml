@@ -1,0 +1,24 @@
+model:
+  default_preset: claude-sonnet
+chat:
+  log:
+    enabled: true
+    # Provide as CLI arg, /dev/null is used here to prevent.
+    # the file from being written if it's turned on in a
+    # default Config().
+    filepath: /dev/null
+debug:
+  log:
+    enabled: true
+plugins:
+  enabled:
+    - gist
+    - shell
+    - provider_chat_anthropic
+    - provider_chat_fireworks
+    - provider_chat_google_genai
+    # - provider_chat_groq
+    # - provider_openrouter
+  gist:
+    include_raw_link: true
+    exclude_system_messages: true

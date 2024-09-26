@@ -1,0 +1,34 @@
+---
+- name: "Download PDF {{ current_url }} to {{ tmp_pdf_path }}"
+  ansible.builtin.get_url:
+    url: "{{ current_url }}"
+    dest: "{{ tmp_pdf_path }}"
+    mode: '0644'
+    force: yes
+
+- name: "Extract text from PDF: {{ current_url }}"
+  text_extractor:
+    path: "{{ tmp_pdf_path }}"
+  register: extracted_text
+
+- name: "Run LWE Template: {{ template }} with preset: {{ extraction_preset }}"
+  lwe_llm:
+    preset: "{{ extraction_preset }}"
+    template: "{{ template }}"
+    template_vars:
+      content: "{{ extracted_text.content }}"
+  register: lwe_results
+
+- name: "Run processing script: {{ processing_script }}"
+  ansible.builtin.command:
+    cmd: >-
+      {{ processing_script }}
+      {{ training_file | quote }}
+      {{ inference_results_directory | quote }}
+      {{ current_url | quote }}
+      {{ lwe_results.response | quote }}
+  register: script_output
+
+- name: Output script execution results
+  ansible.builtin.debug:
+    msg: "{{ script_output.stdout }}"

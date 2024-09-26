@@ -1,0 +1,52 @@
+---
+- name: Main Playbook for extracting CoT from a list of papers
+  hosts: localhost
+  vars:
+    url_list: ""
+    training_file: "{{ lookup('env', 'PWD') }}/results/raspberry-training_data.jsonl"
+    inference_results_directory: "{{ lookup('env', 'PWD') }}/results/raspberry-inference-results"
+    template: "raspberry-extract-cot.md"
+    processing_script: "{{ lookup('env', 'PWD') }}/scripts/raspberry-extract-cot.py"
+    # Use system independent temp dir
+    tmp_pdf_path: "/tmp/raspberry-tmp-pdf.pdf"
+    extraction_preset: "claude-sonnet"
+  tasks:
+
+    - name: Check required variables
+      assert:
+        that:
+          - url_list | length > 0
+        fail_msg: 'You must define url_list.'
+
+    - name: "Ensure inference results directory exists: {{ inference_results_directory }}"
+      ansible.builtin.file:
+        path: "{{ inference_results_directory }}"
+        state: directory
+        mode: '0755'
+
+    - name: "Download URL list file: {{ url_list }}"
+      ansible.builtin.get_url:
+        url: "{{ url_list }}"
+        dest: "/tmp/url_list.txt"
+        mode: '0644'
+
+    - name: "Read URL list file: {{ url_list }}"
+      ansible.builtin.slurp:
+        src: "/tmp/url_list.txt"
+      register: url_list_content
+
+    - name: "Convert URL list content to string: {{ url_list }}"
+      ansible.builtin.set_fact:
+        url_list_string: "{{ url_list_content['content'] | b64decode }}"
+
+    - name: Create list of URLs
+      ansible.builtin.set_fact:
+        urls: "{{ url_list_string | trim | split('\n') }}"
+
+    - name: Process each URL
+      ansible.builtin.include_tasks: raspberry-paper-to-cot-extraction-extract.yaml
+      loop: "{{ urls }}"
+      loop_control:
+        loop_var: url
+      vars:
+        current_url: "{{ url }}"
