@@ -20,7 +20,7 @@ To ensure we build grounded Chain of Thought sets, the academic papers used are 
 
 ### arxiv.org categories
 
-1. cs.AI (Artificial Intelligence)
+1. cs.AI - Artificial Intelligence
 2. cs.LG - Machine Learning
 3. cs.CL - Computation and Language
 4. cs.CV - Computer Vision and Pattern Recognition
