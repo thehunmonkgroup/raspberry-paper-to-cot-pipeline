@@ -1,0 +1,7 @@
+metadata:
+  name: llama-3.2-90b
+  provider: chat_fireworks
+model_customizations:
+  model_name: accounts/fireworks/models/llama-v3p2-90b-vision-instruct
+  n: 1
+  temperature: 0.0
