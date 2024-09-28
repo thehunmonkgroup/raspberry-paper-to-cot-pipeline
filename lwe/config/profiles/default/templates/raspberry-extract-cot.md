@@ -1,184 +1,120 @@
 ## TASK
 
-## Your task is to examine the provided research paper, and extract three pieces of related data:
+Your task is to examine the provided research paper, and extract three pieces of related data:
 
-1. A question that is explored
+1. A question that is explored in the paper
 2. A chain of reasoning that bridges the question and the final answer
-3. The final answer
+3. The final answer provided in the paper
 
-When choosing the question/chain/answer set, focus on a set that where the chain of reasoning best adheres to the `CHAIN OF REASONING CRITERIA` listed below:
+To produce the chain of reasoning in step 2, assume the role of a researcher and develop a first-person narrative of your cognitive exploration. Emulate how you, as an AI, would think through the question. Include your moments of uncertainty, realization, and course correction in this process. Express your thoughts, considerations, and evolving understanding as you work towards the answer. The final chain of reasoning should be a refined version of this exploration, presenting a clear and logical progression that aligns with the paper's factual content.
+
+It is imperative that your final chain of reasoning includes ONLY facts and information that are explicitly stated or directly implied in the research paper. Do not introduce any external information or speculation not supported by the paper's content. Your role is to organize and present the paper's own reasoning in a narrative form, not to invent or introduce new ideas.
+
+The paper *may* include more than one possible question/chain/answer set, therefore, when choosing the question/chain/answer set, focus on a set where the chain of reasoning best adheres to the `CHAIN OF REASONING CRITERIA` listed below.
 
 ## CHAIN OF REASONING CRITERIA
 
-1. Logical coherence:
-- Does the chain of thought follow a logical progression?
-- Are there clear connections between ideas?
-- Is there consistency throughout the thought process?
+When selecting the most appropriate question/chain/answer set from the academic paper, use the following criteria to evaluate the chain of reasoning. These criteria will help you identify the set that best demonstrates strong academic argumentation and clear thinking.
 
-2. Evidence-based reasoning:
-- Are claims supported by credible evidence or examples?
-- Does the thinker consider multiple sources of information?
-- Is there a balance between personal experience and external data?
+As you assess multiple potential sets, pay particular attention to the first seven criteria, which are crucial for identifying high-quality chains of reasoning. Use these criteria to compare different sets and select the one that best exemplifies these qualities.
 
-3. Flexibility and adaptability:
-- Can the thinker adjust their views when presented with new information?
-- Are alternative perspectives considered?
-- Is there room for nuance and complexity?
+### Top Priority Criteria
 
-4. Goal-orientation:
-- Does the thought process lead towards a clear objective or solution?
-- Is there a balance between exploring ideas and reaching conclusions?
+1. Logical coherence: Does the argument follow a clear, logical progression without contradictions or unjustified leaps?
+2. Evidence-based reasoning: Are claims supported by solid evidence, whether empirical data, theoretical foundations, or well-established prior research?
+3. Critical thinking: Does the reasoning question assumptions, consider alternative explanations, and address potential weaknesses?
+4. Clarity and precision: Are ideas expressed clearly and unambiguously, using precise language and well-defined terms?
+5. Consideration of context: Is there an understanding of how the research fits into the broader academic landscape and how different contexts might affect conclusions?
+6. Intellectual humility: Does the reasoning acknowledge limitations, areas of uncertainty, and potential for future research?
+7. Integration of multiple perspectives: Does the argument synthesize diverse viewpoints and approaches to create a more comprehensive understanding?
 
-5. Emotional regulation:
-- Are emotions acknowledged without overwhelming the logical process?
-- Is there a healthy balance between emotional and rational thinking?
+### Additional criteria, grouped by category
 
-6. Self-awareness:
-- Does the thinker demonstrate awareness of their own biases and limitations?
-- Is there evidence of metacognition (thinking about one's own thinking)?
+####  Analytical Depth
 
-7. Clarity and precision:
-- Are ideas expressed clearly and unambiguously?
-- Is specialized vocabulary used appropriately and explained when necessary?
+1. Depth vs. breadth: Is there an appropriate balance between exploring topics in depth and covering a range of relevant ideas?
+2. Systemic thinking: Is there consideration of how different elements interact within a larger system?
+3. Abstraction and concretization: Can the reasoning move fluidly between abstract concepts and concrete examples?
 
-8. Depth vs. breadth:
-- Is there an appropriate balance between exploring topics in depth and covering a range of relevant ideas?
+#### Ethical and Practical Considerations
 
-9. Practical applicability:
-- Can the thoughts be translated into actionable steps or real-world applications?
-- Is there consideration of potential consequences or implications?
+1. Ethical considerations: Does the thought process consider moral and ethical implications?
+2. Practical applicability: Can the ideas be translated into actionable steps or real-world applications?
+3. Future-oriented thinking: Is there consideration of long-term consequences and future scenarios?
 
-10. Ethical considerations:
-- Does the thought process consider moral and ethical implications?
-- Is there respect for diverse perspectives and values?
+#### Cognitive Approach
 
-11. Critical thinking:
-- Is there evidence of questioning assumptions and challenging conventional wisdom?
-- Are potential weaknesses in arguments identified and addressed?
+1. Flexibility and adaptability: Can the reasoning adjust when presented with new information?
+2. Creativity and innovation: Are novel ideas or approaches generated within the constraints of academic rigor?
+3. Handling of uncertainty and ambiguity: How effectively does the reasoning deal with uncertain or ambiguous situations?
 
-12. Structure and organization:
-- Is there a clear structure to the thought process (e.g., problem definition, analysis, solution generation)?
-- Are ideas categorized or grouped in meaningful ways?
+#### Communication and Structure
 
-13. Use of analogies and metaphors:
-- Are complex ideas illustrated through appropriate analogies or metaphors?
-- Do these comparisons enhance understanding without oversimplifying?
+1. Structure and organization: Is there a clear structure to the thought process (e.g., problem definition, analysis, solution generation)?
+2. Use of analogies and metaphors: Are complex ideas illustrated through appropriate analogies or metaphors that enhance understanding?
+3. Quantitative reasoning: Where appropriate, are quantitative measures or data used effectively to support arguments?
 
-14. Consideration of context:
-- Does the thinker consider the broader context and relevant external factors?
-- Is there awareness of how different contexts might affect the validity of conclusions?
+#### Interdisciplinary and Cultural Awareness
 
-15. Intellectual humility:
-- Is there acknowledgment of uncertainty or areas where knowledge is limited?
-- Is the thinker open to learning and changing their mind?
+1. Interdisciplinary integration: Does the reasoning draw connections between different fields or domains of knowledge?
+2. Cultural sensitivity: Is there awareness of how cultural differences might influence the research or its interpretation?
 
-16. Integration of multiple perspectives:
-- Does the thought process incorporate diverse viewpoints?
-- Is there an attempt to synthesize different ideas into a coherent whole?
+*NOTE: The importance of each criterion may vary depending on the nature and content of the specific academic paper being analyzed. Use your judgment to determine which criteria are most relevant for each particular case.*
 
-17. Future-oriented thinking:
-- Is there consideration of long-term consequences and future scenarios?
-- Does the thinker anticipate potential challenges or developments?
+## OUTPUT FORMAT
 
-18. Creativity and innovation:
-- Are novel ideas or approaches generated?
-- Is there a balance between creative thinking and practical constraints?
+The output format will be XML, based on the provided XML template.
 
-19. Quantitative reasoning:
-- Where appropriate, are quantitative measures or data used to support arguments?
-- Is there proper understanding and application of statistical concepts?
+### Instructions for using the template
 
-20. Communication effectiveness:
-- Can the chain of thought be effectively communicated to others?
-- Is there consideration of the audience's background and level of understanding?
+1. Replace the content within curly brackets {} with your analysis or response.
+2. For the <analysis> section, provide a brief overview of the selected question/chain/answer set and why it was chosen based on the Chain of Reasoning Criteria.
+3. In the <criteria_evaluation> section, assess how well the chosen chain of reasoning meets each of the top priority criteria.
+4. In the <question>, <chain_of_reasoning>, and <answer> sections, provide the extracted information as per the TASK instructions.
 
-Certainly, let's explore some additional perspectives and criteria for evaluating chains of thought:
+XML Template:
 
-21. Temporal consistency:
-- Does the thought process maintain consistency over time?
-- Are past, present, and future considerations integrated coherently?
+```xml
+<results>
+  <analysis>
+  {Provide a brief overview of the selected question/chain/answer set and explain why it was chosen based on the Chain of Reasoning Criteria}
+  </analysis>
+  <criteria_evaluation>
+    <logical_coherence>
+    {Evaluate how well the chain of reasoning demonstrates logical coherence}
+    </logical_coherence>
+    <evidence_based_reasoning>
+    {Assess the strength of evidence-based reasoning in the chain}
+    </evidence_based_reasoning>
+    <critical_thinking>
+    {Evaluate the level of critical thinking demonstrated in the chain}
+    </critical_thinking>
+    <clarity_and_precision>
+    {Assess the clarity and precision of expression in the chain}
+    </clarity_and_precision>
+    <context_consideration>
+    {Evaluate how well the chain considers the broader academic context}
+    </context_consideration>
+    <intellectual_humility>
+    {Assess the degree of intellectual humility demonstrated in the chain}
+    </intellectual_humility>
+    <multiple_perspectives>
+    {Evaluate how well the chain integrates multiple perspectives}
+    </multiple_perspectives>
+  </criteria_evaluation>
+  <question>
+  {State the extracted question from the paper}
+  </question>
+  <chain_of_reasoning>
+  {Present the chain of reasoning in a first-person narrative format, as described in the TASK section. Include moments of uncertainty, realization, and course correction, ensuring all information is derived from the paper.}
+  </chain_of_reasoning>
+  <answer>
+  {State the final answer provided in the paper}
+  </answer>
+</results>
+```
 
-22. Scalability of ideas:
-- Can the thinking be applied to both small-scale and large-scale scenarios?
-- Is there consideration of how ideas might scale up or down?
-
-23. Interdisciplinary integration:
-- Does the thinker draw connections between different fields or domains of knowledge?
-- Is there evidence of synthesizing insights from diverse disciplines?
-
-24. Handling of paradoxes and contradictions:
-- How does the thinker approach apparent contradictions or paradoxes?
-- Is there an ability to hold and examine conflicting ideas simultaneously?
-
-25. Systemic thinking:
-- Is there consideration of how different elements interact within a larger system?
-- Does the thinker recognize feedback loops and emergent properties?
-
-26. Cognitive load management:
-- How well does the thinker handle complex information without becoming overwhelmed?
-- Is there evidence of effective strategies for managing cognitive resources?
-
-27. Epistemological awareness:
-- Does the thinker show awareness of different ways of knowing and their limitations?
-- Is there consideration of how knowledge is constructed and validated?
-
-28. Fractal thinking:
-- Are patterns recognized across different scales or levels of analysis?
-- Is there an ability to see how principles apply at micro and macro levels?
-
-29. Cultural sensitivity:
-- Does the thought process consider cultural differences and their implications?
-- Is there awareness of how cultural background might influence thinking?
-
-30. Evolutionary perspective:
-- Is there consideration of how ideas or systems have evolved over time?
-- Does the thinker apply evolutionary principles to non-biological domains?
-
-31. Information synthesis:
-- How effectively does the thinker combine information from multiple sources?
-- Is there a process for resolving conflicting information?
-
-32. Handling of uncertainty and ambiguity:
-- How comfortable is the thinker with uncertain or ambiguous situations?
-- Are probabilistic thinking and scenario planning employed effectively?
-
-33. Cognitive biases awareness:
-- Does the thinker demonstrate awareness of common cognitive biases?
-- Are there strategies in place to mitigate the effects of these biases?
-
-34. Counterfactual thinking:
-- Is there consideration of "what if" scenarios and alternative histories?
-- How well does the thinker imagine and reason about hypothetical situations?
-
-35. Abstraction and concretization:
-- Can the thinker move fluidly between abstract concepts and concrete examples?
-- Is there an appropriate balance between theoretical and practical thinking?
-
-36. Narrative coherence:
-- Does the thought process form a coherent narrative or story?
-- Is there a sense of continuity and progression in the ideas presented?
-
-37. Algorithmic thinking:
-- Can the thought process be broken down into clear, repeatable steps?
-- Is there evidence of creating mental models or heuristics for problem-solving?
-
-38. Emotional intelligence in reasoning:
-- How well does the thinker incorporate emotional intelligence into their reasoning?
-- Is there consideration of how emotions might influence decisions and perceptions?
-
-39. Intuition integration:
-- How does the thinker balance intuitive insights with analytical reasoning?
-- Is there a process for validating or questioning intuitive leaps?
-
-40. Semantic precision:
-- How precise is the use of language and terminology?
-- Is there awareness of how semantic choices can influence thinking and communication?
-
-## Output format
-
-Output the question, followed by the chain of reasoning (formatted so each step in the reasoning chain is easily discernable), and the answer.
-
-## Paper
+## PAPER
 
 This is the paper to extract the question/chain/answer from:
 
