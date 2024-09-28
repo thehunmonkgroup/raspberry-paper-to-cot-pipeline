@@ -9,8 +9,8 @@
     processing_script: "{{ lookup('env', 'PWD') }}/scripts/raspberry-extract-cot.py"
     # Use system independent temp dir
     tmp_pdf_path: "/tmp/raspberry-tmp-pdf.pdf"
-    # extraction_preset: "claude-sonnet"
-    extraction_preset: "llama-3.2-90b"
+    extraction_preset: "claude-sonnet"
+    # extraction_preset: "llama-3.2-90b"
   tasks:
 
     - name: Check required variables
