@@ -3,16 +3,39 @@
 import argparse
 import time
 import logging
+import sqlite3
 import requests
 import sys
 import signal
+from pathlib import Path
 from dateutil.parser import parse as parse_date
 import xml.etree.ElementTree as ET
 
+DEFAULT_DB_NAME = 'papers.db'
+CREATE_TABLE_QUERY = """
+CREATE TABLE IF NOT EXISTS papers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    paper_url TEXT,
+    paper_category TEXT,
+    processing_status TEXT,
+    criteria_logical_coherence INT,
+    criteria_evidence_based_reasoning INT,
+    criteria_critical_thinking INT,
+    criteria_clarity_and_precision INT,
+    criteria_context_consideration INT,
+    criteria_intellectual_humility INT,
+    criteria_multiple_perspectives INT,
+    UNIQUE(paper_url, paper_category)
+);
+"""
+MAX_EMPTY_RESULTS_ATTEMPTS = 25
+
 class ArxivPaperFetcher:
-    def __init__(self, debug_mode=False):
+    def __init__(self, database, debug_mode=False):
         self.setup_logging(debug_mode)
         self.logger = logging.getLogger(__name__)
+        self.database = database
+        self.create_database()
 
     def setup_logging(self, debug_mode):
         """
@@ -23,6 +46,30 @@ class ArxivPaperFetcher:
         """
         log_level = logging.DEBUG if debug_mode else logging.INFO
         logging.basicConfig(level=log_level, format='%(asctime)s - %(levelname)s - %(message)s')
+
+    def create_database(self) -> None:
+        """
+        Conditionally creates an SQLite database with the required table and columns.
+
+        This method connects to the SQLite database specified by self.database,
+        creates the necessary table if it doesn't exist, and handles any errors
+        that may occur during the process.
+
+        Raises:
+            sqlite3.Error: If there's an issue with the SQLite operations.
+        """
+        db_path = Path(self.database)
+        self.logger.info(f"Creating/connecting to database: {db_path}")
+        
+        try:
+            with sqlite3.connect(db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute(CREATE_TABLE_QUERY)
+                conn.commit()
+            self.logger.info(f"Database '{db_path}' is ready.")
+        except sqlite3.Error as e:
+            self.logger.error(f"An error occurred while creating database {db_path}: {e}")
+            raise
 
     def fetch_arxiv_papers(self, categories, date_filter_begin, date_filter_end, start_index):
         """
@@ -43,6 +90,7 @@ class ArxivPaperFetcher:
         params = self._construct_query_params(categories, start_index)
         results = []
         fetched = start_index
+        attempts = 0
 
         while True:
             root = self._fetch_arxiv_data(params)
@@ -51,6 +99,7 @@ class ArxivPaperFetcher:
 
             entries = root.findall('{http://www.w3.org/2005/Atom}entry')
             if entries:
+                attempts = 0
                 for entry in entries:
                     fetched += 1
                     arxiv_id = self._process_entry(entry, date_filter_begin, date_filter_end)
@@ -61,8 +110,10 @@ class ArxivPaperFetcher:
                     results.append(arxiv_id)
 
                 params['start'] += len(entries)
+            else:
+                attempts += 1
 
-            if self._should_stop_fetching(root, fetched, entries, results, date_filter_end):
+            if self._should_stop_fetching(root, fetched, entries, results, date_filter_end, attempts):
                 break
 
         self.logger.info('Total papers fetched: %d, stored: %d', fetched, len(results))
@@ -99,8 +150,10 @@ class ArxivPaperFetcher:
             return 'BREAK'
         return entry.find('{http://www.w3.org/2005/Atom}id').text.split('/')[-1]
 
-    def _should_stop_fetching(self, root, fetched, entries, results, date_filter_end):
+    def _should_stop_fetching(self, root, fetched, entries, results, date_filter_end, attempts):
         """Determine if we should stop fetching more results."""
+        if attempts >= MAX_EMPTY_RESULTS_ATTEMPTS:
+            return True
         total_results = int(root.find('{http://a9.com/-/spec/opensearch/1.1/}totalResults').text)
         if fetched >= total_results:
             return True
@@ -125,44 +178,50 @@ class ArxivPaperFetcher:
         """
         return [f'http://export.arxiv.org/pdf/{arxiv_id}.pdf' for arxiv_id in arxiv_ids]
 
-    def write_urls_to_file(self, urls, output_file):
+    def write_urls_to_database(self, urls, category):
         """
-        Write URLs to the specified output file.
+        Write URLs and category to the SQLite database.
 
         Args:
             urls (list): List of URLs to write.
-            output_file (str): Name of the output file.
+            category (str): arXiv category of the papers.
         """
         try:
-            with open(output_file, 'w') as f:
-                for url in urls:
-                    f.write(f'{url}\n')
-            self.logger.info('Successfully wrote %d URLs to %s', len(urls), output_file)
-        except IOError as e:
-            self.logger.error('Error writing to file %s: %s', output_file, str(e))
+            with sqlite3.connect(self.database) as conn:
+                cursor = conn.cursor()
+                cursor.executemany(
+                    """
+                    INSERT OR IGNORE INTO papers (paper_url, paper_category)
+                    VALUES (?, ?)
+                    """,
+                    [(url, category) for url in urls]
+                )
+                conn.commit()
+            self.logger.info('Successfully wrote %d new entries with category %s to the database', cursor.rowcount, category)
+        except sqlite3.Error as e:
+            self.logger.error('Error writing to database: %s', str(e))
             sys.exit(1)
 
-    def run(self, categories, date_filter_begin, date_filter_end, start_index, output_file):
+    def run(self, category, date_filter_begin, date_filter_end, start_index):
         """
         Run the arXiv paper search and URL generation process.
 
         Args:
-            categories (list): List of arXiv categories to search.
+            category (str): arXiv category to search.
             date_filter_begin (str): Start date for the search in YYYY-MM-DD format.
             date_filter_end (str): End date for the search in YYYY-MM-DD format.
             start_index (int): Starting index for the search.
-            output_file (str): Name of the output file.
         """
-        self.logger.debug('Starting arXiv paper search with categories=%s, date_filter_begin=%s, date_filter_end=%s, start_index=%d, output_file=%s',
-                          categories, date_filter_begin, date_filter_end, start_index, output_file)
+        self.logger.debug('Starting arXiv paper search with category=%s, date_filter_begin=%s, date_filter_end=%s, start_index=%d',
+                          category, date_filter_begin, date_filter_end, start_index)
 
-        arxiv_ids = self.fetch_arxiv_papers(categories, date_filter_begin, date_filter_end, start_index)
+        arxiv_ids = self.fetch_arxiv_papers([category], date_filter_begin, date_filter_end, start_index)
         if not arxiv_ids:
             self.logger.error('No papers found or error occurred during fetch. Exiting.')
             sys.exit(1)
 
         pdf_urls = self.generate_pdf_urls(arxiv_ids)
-        self.write_urls_to_file(pdf_urls, output_file)
+        self.write_urls_to_database(pdf_urls, category)
 
         self.logger.info('Process completed successfully.')
 
@@ -174,16 +233,16 @@ def parse_arguments():
         argparse.Namespace: Parsed command-line arguments.
     """
     parser = argparse.ArgumentParser(description='Search arXiv for recent papers and generate PDF download links.')
-    parser.add_argument('--category', type=str, required=True, action='append',
-                        help='arXiv category to search. Can be specified multiple times.')
+    parser.add_argument('--category', type=str, required=True,
+                        help='arXiv category to search.')
     parser.add_argument('--date-filter-begin', type=str, required=True,
                         help='Start date for paper filter (YYYY-MM-DD).')
     parser.add_argument('--date-filter-end', type=str, required=True,
                         help='End date for paper filter (YYYY-MM-DD).')
     parser.add_argument('--start-index', type=int, default=0,
                         help='Starting index for the search. Default: 0')
-    parser.add_argument('--output', type=str, default='papers.txt',
-                        help='Output file name for the list of paper URLs. Default: papers.txt')
+    parser.add_argument('--database', type=str, default=DEFAULT_DB_NAME,
+                        help='Name of the SQLite database file (default: %(default)s)')
     parser.add_argument('--debug', action='store_true',
                         help='Enable debug logging.')
     return parser.parse_args()
@@ -203,9 +262,9 @@ def main():
     signal.signal(signal.SIGINT, signal_handler)
 
     args = parse_arguments()
-    fetcher = ArxivPaperFetcher(debug_mode=args.debug)
+    fetcher = ArxivPaperFetcher(args.database, debug_mode=args.debug)
     try:
-        fetcher.run(args.category, args.date_filter_begin, args.date_filter_end, args.start_index, args.output)
+        fetcher.run(args.category, args.date_filter_begin, args.date_filter_end, args.start_index)
     except KeyboardInterrupt:
         print("\nInterrupt received. Exiting gracefully...")
         sys.exit(0)
