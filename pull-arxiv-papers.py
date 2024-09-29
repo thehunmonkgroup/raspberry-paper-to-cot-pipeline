@@ -8,8 +8,10 @@ import requests
 import sys
 import signal
 from pathlib import Path
+from requests.exceptions import RequestException
 from dateutil.parser import parse as parse_date
 import xml.etree.ElementTree as ET
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 DEFAULT_DB_NAME = 'papers.db'
 CREATE_TABLE_QUERY = """
@@ -60,7 +62,7 @@ class ArxivPaperFetcher:
         """
         db_path = Path(self.database)
         self.logger.info(f"Creating/connecting to database: {db_path}")
-        
+
         try:
             with sqlite3.connect(db_path) as conn:
                 cursor = conn.cursor()
@@ -130,13 +132,19 @@ class ArxivPaperFetcher:
             'sortOrder': 'ascending'
         }
 
+    @retry(
+        stop=stop_after_attempt(10),
+        wait=wait_exponential(multiplier=1, min=4, max=60),
+        retry=retry_if_exception_type(RequestException),
+        reraise=True
+    )
     def _fetch_arxiv_data(self, params):
         """Fetch data from arXiv API and return the XML root."""
         base_url = 'http://export.arxiv.org/api/query'
         response = requests.get(base_url, params=params)
         if response.status_code != 200:
             self.logger.error('Error fetching papers from arXiv: %s', response.text)
-            return None
+            raise RequestException(f"HTTP status code: {response.status_code}")
         return ET.fromstring(response.content)
 
     def _process_entry(self, entry, date_filter_begin, date_filter_end):
@@ -153,6 +161,7 @@ class ArxivPaperFetcher:
     def _should_stop_fetching(self, root, fetched, entries, results, date_filter_end, attempts):
         """Determine if we should stop fetching more results."""
         if attempts >= MAX_EMPTY_RESULTS_ATTEMPTS:
+            self.logger.warning(f'Reached maximum number of attempts ({MAX_EMPTY_RESULTS_ATTEMPTS}) without fetching any results. Stopping search.')
             return True
         total_results = int(root.find('{http://a9.com/-/spec/opensearch/1.1/}totalResults').text)
         if fetched >= total_results:
