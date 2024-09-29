@@ -51,39 +51,10 @@ To ensure we build grounded Chain of Thought sets, the academic papers used are 
 29. q-fin.RM -- Risk Management
 30. stat.AP -- Applications
 
-### Commands used to extract papers
+### Extract papers
 
 ```sh
-./pull-arxiv-papers.py --debug --date-filter-begin 1970-01-01 --date-filter-end 2020-01-01 --output papers/cs.AI.txt --category cs.AI
-./pull-arxiv-papers.py --debug --date-filter-begin 1970-01-01 --date-filter-end 2020-01-01 --output papers/cs.LG.txt --category cs.LG
-./pull-arxiv-papers.py --debug --date-filter-begin 1970-01-01 --date-filter-end 2020-01-01 --output papers/cs.CL.txt --category cs.CL
-./pull-arxiv-papers.py --debug --date-filter-begin 1970-01-01 --date-filter-end 2020-01-01 --output papers/cs.CV.txt --category cs.CV
-./pull-arxiv-papers.py --debug --date-filter-begin 1970-01-01 --date-filter-end 2020-01-01 --output papers/cs.GT.txt --category cs.GT
-./pull-arxiv-papers.py --debug --date-filter-begin 1970-01-01 --date-filter-end 2020-01-01 --output papers/cs.LO.txt --category cs.LO
-./pull-arxiv-papers.py --debug --date-filter-begin 1970-01-01 --date-filter-end 2020-01-01 --output papers/cs.DS.txt --category cs.DS
-./pull-arxiv-papers.py --debug --date-filter-begin 1970-01-01 --date-filter-end 2020-01-01 --output papers/cs.SI.txt --category cs.SI
-./pull-arxiv-papers.py --debug --date-filter-begin 1970-01-01 --date-filter-end 2020-01-01 --output papers/cs.SE.txt --category cs.SE
-./pull-arxiv-papers.py --debug --date-filter-begin 1970-01-01 --date-filter-end 2020-01-01 --output papers/cs.HC.txt --category cs.HC
-./pull-arxiv-papers.py --debug --date-filter-begin 1970-01-01 --date-filter-end 2020-01-01 --output papers/cs.RO.txt --category cs.RO
-./pull-arxiv-papers.py --debug --date-filter-begin 1970-01-01 --date-filter-end 2020-01-01 --output papers/cs.CY.txt --category cs.CY
-./pull-arxiv-papers.py --debug --date-filter-begin 1970-01-01 --date-filter-end 2020-01-01 --output papers/econ.TH.txt --category econ.TH
-./pull-arxiv-papers.py --debug --date-filter-begin 1970-01-01 --date-filter-end 2020-01-01 --output papers/econ.EM.txt --category econ.EM
-./pull-arxiv-papers.py --debug --date-filter-begin 1970-01-01 --date-filter-end 2020-01-01 --output papers/eess.SP.txt --category eess.SP
-./pull-arxiv-papers.py --debug --date-filter-begin 1970-01-01 --date-filter-end 2020-01-01 --output papers/math.LO.txt --category math.LO
-./pull-arxiv-papers.py --debug --date-filter-begin 1970-01-01 --date-filter-end 2020-01-01 --output papers/physics.ed-ph.txt --category physics.ed-ph
-./pull-arxiv-papers.py --debug --date-filter-begin 1970-01-01 --date-filter-end 2020-01-01 --output papers/q-bio.QM.txt --category q-bio.QM
-./pull-arxiv-papers.py --debug --date-filter-begin 1970-01-01 --date-filter-end 2020-01-01 --output papers/astro-ph.EP.txt --category astro-ph.EP
-./pull-arxiv-papers.py --debug --date-filter-begin 1970-01-01 --date-filter-end 2020-01-01 --output papers/cond-mat.stat-mech.txt --category cond-mat.stat-mech
-./pull-arxiv-papers.py --debug --date-filter-begin 1970-01-01 --date-filter-end 2020-01-01 --output papers/q-fin.PM.txt --category q-fin.PM
-./pull-arxiv-papers.py --debug --date-filter-begin 1970-01-01 --date-filter-end 2020-01-01 --output papers/stat.ME.txt --category stat.ME
-./pull-arxiv-papers.py --debug --date-filter-begin 1970-01-01 --date-filter-end 2020-01-01 --output papers/math.HO.txt --category math.HO
-./pull-arxiv-papers.py --debug --date-filter-begin 1970-01-01 --date-filter-end 2020-01-01 --output papers/physics.soc-ph.txt --category physics.soc-ph
-./pull-arxiv-papers.py --debug --date-filter-begin 1970-01-01 --date-filter-end 2020-01-01 --output papers/q-bio.PE.txt --category q-bio.PE
-./pull-arxiv-papers.py --debug --date-filter-begin 1970-01-01 --date-filter-end 2020-01-01 --output papers/econ.GN.txt --category econ.GN
-./pull-arxiv-papers.py --debug --date-filter-begin 1970-01-01 --date-filter-end 2020-01-01 --output papers/physics.hist-ph.txt --category physics.hist-ph
-./pull-arxiv-papers.py --debug --date-filter-begin 1970-01-01 --date-filter-end 2020-01-01 --output papers/math.OC.txt --category math.OC
-./pull-arxiv-papers.py --debug --date-filter-begin 1970-01-01 --date-filter-end 2020-01-01 --output papers/q-fin.RM.txt --category q-fin.RM
-./pull-arxiv-papers.py --debug --date-filter-begin 1970-01-01 --date-filter-end 2020-01-01 --output papers/stat.AP.txt --category stat.AP
+scripts/fetch-papers.sh
 ```
 
 Count of unique papers across categories:
