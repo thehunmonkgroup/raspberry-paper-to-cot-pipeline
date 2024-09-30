@@ -11,6 +11,7 @@ from pathlib import Path
 from requests.exceptions import RequestException
 from dateutil.parser import parse as parse_date
 import xml.etree.ElementTree as ET
+from xml.etree.ElementTree import ParseError
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 DEFAULT_DB_NAME = 'papers.db'
@@ -135,7 +136,7 @@ class ArxivPaperFetcher:
     @retry(
         stop=stop_after_attempt(10),
         wait=wait_exponential(multiplier=1, min=4, max=60),
-        retry=retry_if_exception_type(RequestException),
+        retry=(retry_if_exception_type(RequestException) | retry_if_exception_type(ParseError)),
         reraise=True
     )
     def _fetch_arxiv_data(self, params):
@@ -145,7 +146,12 @@ class ArxivPaperFetcher:
         if response.status_code != 200:
             self.logger.error('Error fetching papers from arXiv: %s', response.text)
             raise RequestException(f"HTTP status code: {response.status_code}")
-        return ET.fromstring(response.content)
+        try:
+            return ET.fromstring(response.content)
+        except ParseError as e:
+            self.logger.error(f"XML parsing error: {e}")
+            self.logger.debug(f"Response content: {response.content[:1000]}...")  # Log first 1000 characters
+            raise
 
     def _process_entry(self, entry, date_filter_begin, date_filter_end):
         """Process a single entry from the arXiv API response."""
@@ -224,15 +230,23 @@ class ArxivPaperFetcher:
         self.logger.debug('Starting arXiv paper search with category=%s, date_filter_begin=%s, date_filter_end=%s, start_index=%d',
                           category, date_filter_begin, date_filter_end, start_index)
 
-        arxiv_ids = self.fetch_arxiv_papers([category], date_filter_begin, date_filter_end, start_index)
-        if not arxiv_ids:
-            self.logger.error('No papers found or error occurred during fetch. Exiting.')
-            sys.exit(1)
+        try:
+            arxiv_ids = self.fetch_arxiv_papers([category], date_filter_begin, date_filter_end, start_index)
+            if not arxiv_ids:
+                self.logger.warning('No papers found for the given criteria.')
+                return
 
-        pdf_urls = self.generate_pdf_urls(arxiv_ids)
-        self.write_urls_to_database(pdf_urls, category)
+            pdf_urls = self.generate_pdf_urls(arxiv_ids)
+            self.write_urls_to_database(pdf_urls, category)
 
-        self.logger.info('Process completed successfully.')
+            self.logger.info('Process completed successfully.')
+        except RequestException as e:
+            self.logger.error(f"Network error occurred: {e}")
+        except ParseError as e:
+            self.logger.error(f"XML parsing error occurred: {e}")
+        except Exception as e:
+            self.logger.error(f"An unexpected error occurred: {e}")
+            self.logger.debug("", exc_info=True)  # Log full traceback at debug level
 
 def parse_arguments():
     """
@@ -277,6 +291,9 @@ def main():
     except KeyboardInterrupt:
         print("\nInterrupt received. Exiting gracefully...")
         sys.exit(0)
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        sys.exit(1)
 
 if __name__ == '__main__':
     main()
