@@ -16,7 +16,7 @@ from typing import List, Dict
 import requests
 from bs4 import BeautifulSoup
 
-from pull_arxiv_papers import ArxivPaperFetcher
+from fetch_arxiv_papers_by_category import ArxivPaperFetcher
 
 DEFAULT_BEGIN_DATE = "1970-01-01"
 DEFAULT_END_DATE = "2020-01-01"
@@ -81,7 +81,7 @@ class ArxivPaperFetcherCLI:
         parser.add_argument("--category", help="Comma-separated list of categories. Default: use default categories")
         parser.add_argument("--config", action="store_true", help="Display current configuration and exit")
         parser.add_argument("--list", action="store_true", help="Display all available categories with descriptions and exit")
-        parser.add_argument('--database', type=str, help='Name of the SQLite database file')
+        parser.add_argument('--database', type=str, help='Name of the SQLite database file. Default: base fetcher default')
         parser.add_argument("--debug", action="store_true", help="Enable debug mode")
         return parser.parse_args()
 
