@@ -23,11 +23,11 @@ To ensure we build grounded Chain of Thought sets, the academic papers used are 
 To see the list of default categories used, and the default filter dates:
 
 ```sh
-scripts/fetch-papers.sh --config
+scripts/fetch-papers.py --config
 ```
 
 ### Extract papers
 
 ```sh
-scripts/fetch-papers.sh
+scripts/fetch-papers.py
 ```
