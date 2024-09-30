@@ -77,39 +77,61 @@ XML Template:
 ```xml
 <results>
   <analysis>
-  {Provide a brief overview of the selected question/chain/answer set and explain why it was chosen based on the Chain of Reasoning Criteria}
+    <![CDATA[
+      {Provide a brief overview of the selected question/chain/answer set and explain why it was chosen based on the Chain of Reasoning Criteria}
+    ]]>
   </analysis>
   <criteria_evaluation>
     <logical_coherence>
-    {Evaluate how well the chain of reasoning demonstrates logical coherence}
+    <![CDATA[
+      {Evaluate how well the chain of reasoning demonstrates logical coherence}
+    ]]>
     </logical_coherence>
     <evidence_based_reasoning>
-    {Assess the strength of evidence-based reasoning in the chain}
+    <![CDATA[
+      {Assess the strength of evidence-based reasoning in the chain}
+    ]]>
     </evidence_based_reasoning>
     <critical_thinking>
-    {Evaluate the level of critical thinking demonstrated in the chain}
+    <![CDATA[
+      {Evaluate the level of critical thinking demonstrated in the chain}
+    ]]>
     </critical_thinking>
     <clarity_and_precision>
-    {Assess the clarity and precision of expression in the chain}
+    <![CDATA[
+      {Assess the clarity and precision of expression in the chain}
+    ]]>
     </clarity_and_precision>
     <context_consideration>
-    {Evaluate how well the chain considers the broader academic context}
+    <![CDATA[
+      {Evaluate how well the chain considers the broader academic context}
+    ]]>
     </context_consideration>
     <intellectual_humility>
-    {Assess the degree of intellectual humility demonstrated in the chain}
+    <![CDATA[
+      {Assess the degree of intellectual humility demonstrated in the chain}
+    ]]>
     </intellectual_humility>
     <multiple_perspectives>
-    {Evaluate how well the chain integrates multiple perspectives}
+    <![CDATA[
+      {Evaluate how well the chain integrates multiple perspectives}
+    ]]>
     </multiple_perspectives>
   </criteria_evaluation>
   <question>
-  {State the extracted question from the paper}
+    <![CDATA[
+      {State the extracted question from the paper}
+    ]]>
   </question>
   <chain_of_reasoning>
-  {Present the chain of reasoning in a first-person narrative format, as described in the TASK section. Include moments of uncertainty, realization, and course correction, ensuring all information is derived from the paper.}
+    <![CDATA[
+      {Present the chain of reasoning in a first-person narrative format, as described in the TASK section. Include moments of uncertainty, realization, and course correction, ensuring all information is derived from the paper.}
+    ]]>
   </chain_of_reasoning>
   <answer>
-  {State the final answer provided in the paper}
+    <![CDATA[
+      {State the final answer provided in the paper}
+    ]]>
   </answer>
 </results>
 ```

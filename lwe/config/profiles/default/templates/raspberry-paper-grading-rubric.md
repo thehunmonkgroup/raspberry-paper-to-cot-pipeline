@@ -20,76 +20,118 @@ XML Template:
 ```xml
 <results>
   <analysis>
-  {Provide a high-level analysis of the paper's suitability, considering the criteria in the rubric}
+    <![CDATA[
+      {Provide a high-level analysis of the paper's suitability, considering the criteria in the rubric}
+    ]]>
   </analysis>
 
   <clear_question>
-  {Is there a clear, well-defined central question explicitly stated in the paper?}
+    <![CDATA[
+      {Is there a clear, well-defined central question explicitly stated in the paper?}
+    ]]>
   <explanation>
-  {If Yes, briefly state the question. If No, explain why not.}
+    <![CDATA[
+      {If Yes, briefly state the question. If No, explain why not.}
+    ]]>
   </explanation>
   </clear_question>
 
   <definitive_answer>
-  {Does the paper provide a definitive answer to this central question?}
+    <![CDATA[
+      {Does the paper provide a definitive answer to this central question?}
+    ]]>
   <explanation>
-  {If Yes, briefly summarize the answer. If No, explain why not.}
+    <![CDATA[
+      {If Yes, briefly summarize the answer. If No, explain why not.}
+    ]]>
   </explanation>
   </definitive_answer>
 
   <complex_reasoning>
-  {Is the answer derived through multi-step reasoning that includes at least 3 distinct logical steps or connections?}
+    <![CDATA[
+      {Is the answer derived through multi-step reasoning that includes at least 3 distinct logical steps or connections?}
+    ]]>
   <explanation>
-  {If Yes, briefly outline the main steps. If No, explain why not.}
+    <![CDATA[
+      {If Yes, briefly outline the main steps. If No, explain why not.}
+    ]]>
   </explanation>
   </complex_reasoning>
 
   <coherent_structure>
-  {Is the reasoning leading to the answer logically coherent and well-structured?}
+    <![CDATA[
+      {Is the reasoning leading to the answer logically coherent and well-structured?}
+    ]]>
   <explanation>
-  {If Yes, briefly describe how. If No, explain why not.}
+    <![CDATA[
+      {If Yes, briefly describe how. If No, explain why not.}
+    ]]>
   </explanation>
   </coherent_structure>
 
   <layperson_comprehensible>
-  {Can the reasoning be explained to a layperson (defined as an educated adult without specific expertise in the paper's field) with some effort?}
+    <![CDATA[
+      {Can the reasoning be explained to a layperson (defined as an educated adult without specific expertise in the paper's field) with some effort?}
+    ]]>
   <explanation>
-  {If Yes, provide a brief example of how it could be explained. If No, explain why not.}
+    <![CDATA[
+      {If Yes, provide a brief example of how it could be explained. If No, explain why not.}
+    ]]>
   </explanation>
   </layperson_comprehensible>
 
   <minimal_jargon>
-  {Does the paper minimize jargon in the reasoning process, or does it explain necessary technical terms used to derive the answer?}
+    <![CDATA[
+      {Does the paper minimize jargon in the reasoning process, or does it explain necessary technical terms used to derive the answer?}
+    ]]>
   <explanation>
-  {If Yes, provide an example. If No, explain why not.}
+    <![CDATA[
+      {If Yes, provide an example. If No, explain why not.}
+    ]]>
   </explanation>
   </minimal_jargon>
 
   <illustrative_examples>
-  {Are there illustrative examples or analogies in the reasoning that aid in understanding the answer?}
+    <![CDATA[
+      {Are there illustrative examples or analogies in the reasoning that aid in understanding the answer?}
+    ]]>
   <explanation>
-  {If Yes, briefly describe one. If No, explain why not.}
+    <![CDATA[
+      {If Yes, briefly describe one. If No, explain why not.}
+    ]]>
   </explanation>
   </illustrative_examples>
 
   <significant_insights>
-  {Does the reasoning provide significant insights or depth specifically related to the question and its answer?}
+    <![CDATA[
+      {Does the reasoning provide significant insights or depth specifically related to the question and its answer?}
+    ]]>
   <explanation>
-  {If Yes, briefly describe one key insight. If No, explain why not.}
+    <![CDATA[
+      {If Yes, briefly describe one key insight. If No, explain why not.}
+    ]]>
   </explanation>
   </significant_insights>
 
   <verifiable_steps>
-  {Does the paper provide sufficient information for the key reasoning steps to be independently verified or reproduced?}
+    <![CDATA[
+      {Does the paper provide sufficient information for the key reasoning steps to be independently verified or reproduced?}
+    ]]>
   <explanation>
-  {If Yes, provide an example. If No, explain why not.}
+    <![CDATA[
+      {If Yes, provide an example. If No, explain why not.}
+    ]]>
   </explanation>
   </verifiable_steps>
 
   <overall_suitability>
-  {Is the paper suitable for extracting a clear question and an answer arrived at by comprehensible, complex reasoning?}
+    <![CDATA[
+      {Is the paper suitable for extracting a clear question and an answer arrived at by comprehensible, complex reasoning?}
+    ]]>
   <explanation>
-  {If Yes, summarize why. If No, explain why not.}
+    <![CDATA[
+      {If Yes, summarize why. If No, explain why not.}
+    ]]>
   </explanation>
   </overall_suitability>
 </results>
