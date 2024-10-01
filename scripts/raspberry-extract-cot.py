@@ -66,7 +66,7 @@ def write_to_inference_file(args, question, chain_of_reasoning, answer):
 
 def write_to_training_file(args, question, chain_of_reasoning, answer):
     training_data = {
-        "question": question,
+        "prompt": question,
         "response": f"{chain_of_reasoning}\n\nAnswer: {answer}"
     }
     with open(args.training_file, 'a') as file:
