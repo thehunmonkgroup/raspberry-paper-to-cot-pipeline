@@ -140,4 +140,4 @@ XML Template:
 
 This is the paper to extract the question/chain/answer from:
 
-{{ content }}
+{{ paper }}

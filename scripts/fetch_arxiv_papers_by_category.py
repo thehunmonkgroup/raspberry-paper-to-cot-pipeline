@@ -21,13 +21,16 @@ CREATE TABLE IF NOT EXISTS papers (
     paper_url TEXT,
     paper_category TEXT,
     processing_status TEXT,
-    criteria_logical_coherence INT,
-    criteria_evidence_based_reasoning INT,
-    criteria_critical_thinking INT,
-    criteria_clarity_and_precision INT,
-    criteria_context_consideration INT,
-    criteria_intellectual_humility INT,
-    criteria_multiple_perspectives INT,
+    criteria_clear_question INT,
+    criteria_definitive_answer INT,
+    criteria_complex_reasoning INT,
+    criteria_coherent_structure INT,
+    criteria_layperson_comprehensible INT,
+    criteria_minimal_jargon INT,
+    criteria_illustrative_examples INT,
+    criteria_significant_insights INT,
+    criteria_verifiable_steps INT,
+    criteria_overall_suitability INT,
     UNIQUE(paper_url, paper_category)
 );
 """

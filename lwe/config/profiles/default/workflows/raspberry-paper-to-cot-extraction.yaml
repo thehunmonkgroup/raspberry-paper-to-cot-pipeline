@@ -1,17 +1,17 @@
 ---
-- name: Main Playbook for extracting CoT from papers in SQLite database
+- name: Main playbook for extracting CoT from papers in SQLite database
   hosts: localhost
   vars:
+    extraction_preset: "claude-sonnet"
+    # extraction_preset: "llama-3.2-90b"
+    template: "raspberry-extract-cot.md"
     database: "{{ lookup('env', 'PWD') }}/papers.db"
     limit: 1
-    training_file: "{{ lookup('env', 'PWD') }}/results/raspberry-training_data.jsonl"
-    inference_results_directory: "{{ lookup('env', 'PWD') }}/results/raspberry-inference-results"
-    template: "raspberry-extract-cot.md"
+    training_file: "{{ lookup('env', 'PWD') }}/results/training-data.jsonl"
+    inference_results_directory: "{{ lookup('env', 'PWD') }}/results/inference"
     processing_script: "{{ lookup('env', 'PWD') }}/scripts/raspberry-extract-cot.py"
     # Use system independent temp dir
     tmp_pdf_path: "/tmp/raspberry-tmp-pdf.pdf"
-    extraction_preset: "claude-sonnet"
-    # extraction_preset: "llama-3.2-90b"
   tasks:
 
     - name: "Ensure inference results directory exists: {{ inference_results_directory }}"
@@ -23,7 +23,7 @@
     - name: "Fetch papers from SQLite database, limit: {{ limit }}"
       lwe_sqlite_query:
         db: "{{ database }}"
-        query: "SELECT id, paper_url FROM papers WHERE processing_status = 'ready' ORDER BY id LIMIT ?"
+        query: "SELECT id, paper_url FROM papers WHERE processing_status = 'graded' ORDER BY id LIMIT ?"
         query_params:
           - "{{ limit }}"
       register: paper_results
