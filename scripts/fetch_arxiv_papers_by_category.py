@@ -141,7 +141,7 @@ class ArxivPaperFetcher:
     )
     def _fetch_arxiv_data(self, params):
         """Fetch data from arXiv API and return the XML root."""
-        base_url = 'http://export.arxiv.org/api/query'
+        base_url = 'https://export.arxiv.org/api/query'
         response = requests.get(base_url, params=params)
         if response.status_code != 200:
             self.logger.error('Error fetching papers from arXiv: %s', response.text)
@@ -191,7 +191,7 @@ class ArxivPaperFetcher:
         Returns:
             list: List of PDF download URLs.
         """
-        return [f'http://export.arxiv.org/pdf/{arxiv_id}.pdf' for arxiv_id in arxiv_ids]
+        return [f'https://export.arxiv.org/pdf/{arxiv_id}.pdf' for arxiv_id in arxiv_ids]
 
     def write_urls_to_database(self, urls, category):
         """
