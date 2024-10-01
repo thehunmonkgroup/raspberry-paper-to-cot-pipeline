@@ -1,34 +1,64 @@
 ---
-- name: "Download PDF {{ current_url }} to {{ tmp_pdf_path }}"
-  ansible.builtin.get_url:
-    url: "{{ current_url }}"
-    dest: "{{ tmp_pdf_path }}"
-    mode: '0644'
-    force: yes
+- name: Process paper
+  block:
+    - name: "Download PDF {{ current_url }} to {{ tmp_pdf_path }}"
+      ansible.builtin.get_url:
+        url: "{{ current_url }}"
+        dest: "{{ tmp_pdf_path }}"
+        mode: '0644'
+        force: yes
+      register: download_result
+      until: download_result is succeeded
+      retries: 3
+      delay: 5
 
-- name: "Extract text from PDF: {{ current_url }}"
-  text_extractor:
-    path: "{{ tmp_pdf_path }}"
-  register: extracted_text
+    - name: "Extract text from PDF: {{ current_url }}"
+      text_extractor:
+        path: "{{ tmp_pdf_path }}"
+      register: extracted_text
 
-- name: "Run LWE Template: {{ template }} with preset: {{ extraction_preset }}"
-  lwe_llm:
-    preset: "{{ extraction_preset }}"
-    template: "{{ template }}"
-    template_vars:
-      content: "{{ extracted_text.content }}"
-  register: lwe_results
+    - name: "Run LWE Template: {{ template }} with preset: {{ extraction_preset }}"
+      lwe_llm:
+        preset: "{{ extraction_preset }}"
+        template: "{{ template }}"
+        template_vars:
+          content: "{{ extracted_text.content }}"
+      register: lwe_results
+      until: lwe_results is succeeded
+      retries: 3
+      delay: 5
 
-- name: "Run processing script: {{ processing_script }}"
-  ansible.builtin.command:
-    cmd: >-
-      {{ processing_script }}
-      {{ training_file | quote }}
-      {{ inference_results_directory | quote }}
-      {{ current_url | quote }}
-      {{ lwe_results.response | quote }}
-  register: script_output
+    - name: "Run processing script: {{ processing_script }}"
+      ansible.builtin.command:
+        cmd: >-
+          {{ processing_script }}
+          {{ training_file | quote }}
+          {{ inference_results_directory | quote }}
+          {{ current_url | quote }}
+          {{ lwe_results.response | quote }}
+      register: script_output
 
-- name: Output script execution results
-  ansible.builtin.debug:
-    msg: "{{ script_output.stdout }}"
+    - name: "Output script execution results: {{ processing_script }}"
+      ansible.builtin.debug:
+        msg: "{{ script_output.stdout }}"
+
+  rescue:
+    - name: "Set processing status to 'failed' if download fails"
+      lwe_sqlite_query:
+        db: "{{ database }}"
+        query: "UPDATE papers SET processing_status = 'failed' WHERE id = ?"
+        query_params:
+          - "{{ paper_id }}"
+
+  always:
+    - name: Update processing status for processed paper
+      lwe_sqlite_query:
+        db: "{{ database }}"
+        query: "UPDATE papers SET processing_status = 'processed' WHERE id = ?"
+        query_params:
+          - "{{ paper_id }}"
+      when:
+        - download_result is succeeded
+        - extracted_text is succeeded
+        - lwe_results is succeeded
+        - script_output is succeeded
