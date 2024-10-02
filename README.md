@@ -64,16 +64,17 @@ scripts/fetch-papers.py
    ```sh
    /workflow run raspberry-paper-profiler limit=1000
    ```
-   `limit` is the number of papers to profile in one run (default: 1)
+   `order_by`: How to order the papers when retrieving from the database (default `RANDOM()`)
+   `limit`: The number of papers to profile in one run (default: `1`)
 6. Score the papers
    ```sh
    /workflow run raspberry-paper-scorer limit=1000
    ```
-   `limit` is the number of papers to score in one run (default: 1)
+   `limit`: The number of papers to profile in one run (default: `1`)
 7. Extract CoT from the papers
    ```sh
    /workflow run raspberry-paper-to-cot-extraction limit=1000 suitability_score=10
    ```
-   `limit` is the number of papers to extract CoT from in one run (default: 1)
-   `suitability_score` is the minimum suitability score needed, papers with a lower score are ignored (range 3-10, default: 8)
+   `limit`: The number of papers to profile in one run (default: `1`)
+   `suitability_score` is the minimum suitability score needed, papers with a lower score are ignored (range `3-10`, default: `8`)
 8. All artifacts are output to the `results` directory in the root of the repository
