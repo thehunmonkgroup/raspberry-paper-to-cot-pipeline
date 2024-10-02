@@ -23,6 +23,10 @@ DEFAULT_END_DATE = "2020-01-01"
 ARXIV_TAXONOMY_URL = "https://arxiv.org/category_taxonomy"
 DEFAULT_CATEGORIES = [
     "astro-ph.EP",
+    "astro-ph.GA",
+    "astro-ph.HE",
+    "cond-mat.dis-nn",
+    "cond-mat.mtrl-sci",
     "cond-mat.stat-mech",
     "cs.AI",
     "cs.CL",
@@ -40,53 +44,97 @@ DEFAULT_CATEGORIES = [
     "econ.GN",
     "econ.TH",
     "eess.SP",
+    "eess.SY",
+    "gr-qc",
+    "hep-ex",
+    "hep-th",
+    "math.CA",
+    "math.CO",
+    "math.CT",
     "math.HO",
+    "math.IT",
     "math.LO",
+    "math.MP",
+    "math.NA",
+    "math.NT",
     "math.OC",
-    "physics.ed-ph",
-    "physics.hist-ph",
+    "nlin.AO",
+    "nlin.CD",
+    "nlin.PS",
+    "nlin.SI",
+    "nucl-th",
+    "physics.app-ph",
+    "physics.atom-ph",
+    "physics.bio-ph",
+    "physics.chem-ph",
+    "physics.class-ph",
+    "physics.data-an",
+    "physics.flu-dyn",
+    "physics.gen-ph",
+    "physics.geo-ph",
+    "physics.pop-ph",
     "physics.soc-ph",
+    "physics.space-ph",
+    "q-bio.CB",
+    "q-bio.GN",
+    "q-bio.NC",
     "q-bio.PE",
     "q-bio.QM",
     "q-fin.PM",
     "q-fin.RM",
+    "quant-ph",
     "stat.AP",
-    "stat.ME"
+    "stat.ME",
+    "stat.TH",
 ]
 
+
+def parse_arguments() -> argparse.Namespace:
+    """Parse command-line arguments."""
+    parser = argparse.ArgumentParser(description="Pull arXiv papers based on date range and categories.")
+    parser.add_argument("--begin", default=DEFAULT_BEGIN_DATE, help="Start date for paper filtering (YYYY-MM-DD). Default: %(default)s")
+    parser.add_argument("--end", default=DEFAULT_END_DATE, help="End date for paper filtering (YYYY-MM-DD). Default: %(default)s")
+    parser.add_argument("--category", help="Comma-separated list of categories. Default: use default categories")
+    parser.add_argument("--config", action="store_true", help="Display current configuration and exit")
+    parser.add_argument("--list", action="store_true", help="Display all available categories with descriptions and exit")
+    parser.add_argument('--database', type=str, help='Name of the SQLite database file. Default: base fetcher default')
+    parser.add_argument("--debug", action="store_true", help="Enable debug mode")
+    return parser.parse_args()
 
 class ArxivPaperFetcherCLI:
     """
     Command-line interface for fetching arXiv papers.
 
-    This class encapsulates the functionality to parse command-line arguments
-    and initiate the paper fetching process.
+    This class encapsulates the functionality to initiate the paper fetching process.
     """
 
-    def __init__(self):
-        self.args = self.parse_arguments()
+    def __init__(self, begin: str, end: str, category: str, config: bool, list: bool, database: str, debug: bool):
+        self.begin = begin
+        self.end = end
+        self.category = category
+        self.config = config
+        self.list = list
+        self.database = database
+        self.debug = debug
         self.setup_logging()
 
     def setup_logging(self) -> None:
         """Set up logging configuration."""
-        log_level = logging.DEBUG if self.args.debug else logging.INFO
+        log_level = logging.DEBUG if self.debug else logging.INFO
         logging.basicConfig(level=log_level, format='%(asctime)s - %(levelname)s - %(message)s')
         self.logger = logging.getLogger(__name__)
 
-    def parse_arguments(self) -> argparse.Namespace:
-        """Parse command-line arguments."""
-        parser = argparse.ArgumentParser(description="Pull arXiv papers based on date range and categories.")
-        parser.add_argument("--begin", default=DEFAULT_BEGIN_DATE, help="Start date for paper filtering (YYYY-MM-DD). Default: %(default)s")
-        parser.add_argument("--end", default=DEFAULT_END_DATE, help="End date for paper filtering (YYYY-MM-DD). Default: %(default)s")
-        parser.add_argument("--category", help="Comma-separated list of categories. Default: use default categories")
-        parser.add_argument("--config", action="store_true", help="Display current configuration and exit")
-        parser.add_argument("--list", action="store_true", help="Display all available categories with descriptions and exit")
-        parser.add_argument('--database', type=str, help='Name of the SQLite database file. Default: base fetcher default')
-        parser.add_argument("--debug", action="store_true", help="Enable debug mode")
-        return parser.parse_args()
-
     def validate_date(self, date_str: str, date_name: str) -> None:
-        """Validate the format of a date string."""
+        """
+        Validate the format of a date string.
+
+        Args:
+            date_str (str): The date string to validate.
+            date_name (str): The name of the date parameter (for error reporting).
+
+        Raises:
+            SystemExit: If the date format is invalid, exits the program with status code 1.
+        """
         try:
             datetime.strptime(date_str, "%Y-%m-%d")
         except ValueError:
@@ -114,51 +162,73 @@ class ArxivPaperFetcherCLI:
     def display_config(self) -> None:
         """Display the current configuration."""
         print("Current configuration:")
-        print(f"Begin date: {self.args.begin}")
-        print(f"End date: {self.args.end}")
+        print(f"Begin date: {self.begin}")
+        print(f"End date: {self.end}")
         print("Categories:")
         arxiv_taxonomy_map = self.fetch_arxiv_categories()
         for category in DEFAULT_CATEGORIES:
             description = arxiv_taxonomy_map.get(category, "Unknown")
-            print(f"  {category:<20} {description}")
+            print(f"* {category:<20} {description}")
 
     def display_categories(self) -> None:
         """Display all available arXiv categories with descriptions."""
         print("Available arXiv categories:")
         arxiv_taxonomy_map = self.fetch_arxiv_categories()
         for category, description in arxiv_taxonomy_map.items():
-            print(f"{category:<20} {description}")
+            print(f"* {category:<20} {description}")
 
     def get_categories(self) -> List[str]:
         """Get the list of categories to process."""
-        if self.args.category:
-            return [cat.strip() for cat in self.args.category.split(',')]
+        if self.category:
+            return [cat.strip() for cat in self.category.split(',')]
         return DEFAULT_CATEGORIES
 
     def run(self) -> None:
-        """Run the arXiv paper fetcher."""
-        self.fetch_arxiv_categories()
+        """
+        Run the arXiv paper fetcher.
 
-        if self.args.config:
-            self.display_config()
-            return
-        elif self.args.list:
-            self.display_categories()
-            return
+        This method orchestrates the entire process of fetching arXiv papers based on
+        the provided command-line arguments. It handles configuration display, category
+        listing, date validation, and paper fetching for each specified category.
 
-        self.validate_date(self.args.begin, "--begin")
-        self.validate_date(self.args.end, "--end")
+        Raises:
+            SystemExit: If there's an error during the process, exits with status code 1.
+        """
+        try:
+            self.fetch_arxiv_categories()
 
-        categories = self.get_categories()
-        fetcher = ArxivPaperFetcher(self.args.database, self.args.debug)
+            if self.config:
+                self.display_config()
+                return
+            elif self.list:
+                self.display_categories()
+                return
 
-        for category in categories:
-            self.logger.info(f"Fetching papers for category: {category}")
-            fetcher.run(category, self.args.begin, self.args.end)
+            self.validate_date(self.begin, "--begin")
+            self.validate_date(self.end, "--end")
+
+            categories = self.get_categories()
+            fetcher = ArxivPaperFetcher(self.database, self.debug)
+
+            for category in categories:
+                self.logger.info(f"Fetching papers for category: {category}")
+                fetcher.run(category, self.begin, self.end)
+        except Exception as e:
+            self.logger.error(f"An error occurred: {e}")
+            sys.exit(1)
 
 def main():
     """Main entry point of the script."""
-    cli = ArxivPaperFetcherCLI()
+    args = parse_arguments()
+    cli = ArxivPaperFetcherCLI(
+        begin=args.begin,
+        end=args.end,
+        category=args.category,
+        config=args.config,
+        list=args.list,
+        database=args.database,
+        debug=args.debug
+    )
     cli.run()
 
 if __name__ == "__main__":
