@@ -23,6 +23,7 @@ RUBRICS = [
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Grade papers based on the rubric.")
+    parser.add_argument("grading_preset", type=str, help="Model configuration used to perform the grading")
     parser.add_argument("database", type=str, help="Path to the SQLite database")
     parser.add_argument("paper_id", type=str, help="ID of the paper in the database")
     parser.add_argument("paper_url", type=str, help="URL of the paper")
@@ -88,17 +89,18 @@ def update_database(database_path, paper_id, paper_url, criteria):
         if conn:
             conn.close()
 
-def write_inference_artifact(results_directory, paper_url, criteria, xml_content):
+def write_inference_artifact(args, criteria, xml_content):
     # Extract the basename from the paper URL
-    parsed_url = urlparse(paper_url)
+    parsed_url = urlparse(args.paper_url)
     basename = os.path.basename(parsed_url.path)
 
     # Remove file extension if present
     basename = os.path.splitext(basename)[0]
 
-    inference_file_path = os.path.join(results_directory, f"{basename}_paper_grading.txt")
+    inference_file_path = os.path.join(args.inference_results_directory, f"{basename}_paper_grading.txt")
     with open(inference_file_path, 'w') as file:
-        file.write(f"Paper URL: {paper_url}\n\n")
+        file.write(f"Paper URL: {args.paper_url}\n")
+        file.write(f"Grading preset: {args.grading_preset}\n\n")
         file.write("Grading Results:\n\n")
         file.write(get_pretty_printed_rubrics(criteria))
         file.write("\n\n----------------------\n\n")
@@ -114,7 +116,7 @@ def main():
         raise ValueError("Could not extract XML content from paper_content")
 
     criteria = parse_xml(xml_content)
-    write_inference_artifact(args.inference_results_directory, args.paper_url, criteria, xml_content)
+    write_inference_artifact(args, criteria, xml_content)
     update_database(args.database, args.paper_id, args.paper_url, criteria)
 
 if __name__ == "__main__":

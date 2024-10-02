@@ -3,7 +3,10 @@
   hosts: localhost
   vars:
     extraction_preset: "claude-sonnet"
+    # extraction_preset: "claude-opus"
     # extraction_preset: "llama-3.2-90b"
+    # extraction_preset: "llama-3.1-405b"
+    # extraction_preset: "gemini-1.5-pro-002"
     template: "raspberry-extract-cot.md"
     database: "{{ lookup('env', 'PWD') }}/papers.db"
     limit: 1

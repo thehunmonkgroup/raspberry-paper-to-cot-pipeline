@@ -12,6 +12,7 @@ import sqlite3
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Process training and inference files.")
+    parser.add_argument("extraction_preset", type=str, help="Model configuration used to perform the extraction")
     parser.add_argument("database", type=str, help="Path to the SQLite database")
     parser.add_argument("paper_id", type=str, help="ID of the paper in the database")
     parser.add_argument("paper_url", type=str, help="URL of the paper")
@@ -52,7 +53,8 @@ def write_to_inference_file(args, question, chain_of_reasoning, answer):
 
     inference_file_path = os.path.join(args.inference_results_directory, f"{basename}_cot_extraction.txt")
     with open(inference_file_path, 'w') as file:
-        file.write(f"Paper URL: {args.paper_url}\n\n")
+        file.write(f"Paper URL: {args.paper_url}\n")
+        file.write(f"Extraction preset: {args.extraction_preset}\n\n")
         file.write("Extracted Information:\n\n")
         file.write("----------------------\n\n")
         file.write(f"Question:\n\n{question}\n\n")

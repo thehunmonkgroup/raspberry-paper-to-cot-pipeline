@@ -32,6 +32,7 @@
       ansible.builtin.command:
         cmd: >-
           {{ processing_script }}
+          {{ grading_preset | quote }}
           {{ database | quote }}
           {{ paper_id | quote }}
           {{ current_url | quote }}

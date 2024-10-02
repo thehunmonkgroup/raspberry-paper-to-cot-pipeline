@@ -3,7 +3,10 @@
   hosts: localhost
   vars:
     grading_preset: "claude-sonnet"
+    # grading_preset: "claude-opus"
     # grading_preset: "llama-3.2-90b"
+    # grading_preset: "llama-3.1-405b"
+    # grading_preset: "gemini-1.5-pro-002"
     template: "raspberry-paper-grading-rubric.md"
     database: "{{ lookup('env', 'PWD') }}/papers.db"
     limit: 1
