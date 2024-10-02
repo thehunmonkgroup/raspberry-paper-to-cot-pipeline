@@ -104,7 +104,7 @@ def main():
     question, chain_of_reasoning, answer = parse_xml(xml_content)
     write_to_inference_file(args, question, chain_of_reasoning, answer)
     write_to_training_file(args, question, chain_of_reasoning, answer)
-    update_database_status(args.database, args.paper_id, args.paper_url, 'processed')
+    update_database_status(args.database, args.paper_id, args.paper_url, 'cot_extracted')
 
 
 if __name__ == "__main__":
