@@ -288,6 +288,24 @@ class ArxivPaperFetcher:
             self.logger.error("Error writing to database: %s", str(e))
             sys.exit(1)
 
+    def category_exists_in_database(self, category):
+        """
+        Check if the given category already exists in the database.
+
+        Args:
+            category (str): arXiv category to check.
+
+        Returns:
+            bool: True if the category exists, False otherwise.
+        """
+        with sqlite3.connect(self.database) as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT COUNT(*) FROM papers WHERE paper_category = ?", (category,)
+            )
+            count = cursor.fetchone()[0]
+            return count > 0
+
     def run(self, category, date_filter_begin, date_filter_end, start_index=0):
         """
         Run the arXiv paper search and URL generation process.
@@ -307,6 +325,11 @@ class ArxivPaperFetcher:
         )
 
         try:
+            # Check if the category already exists in the database
+            if self.category_exists_in_database(category):
+                self.logger.info(f"Category {category} already exists in the database. Skipping.")
+                return
+
             arxiv_ids = self.fetch_arxiv_papers(
                 [category], date_filter_begin, date_filter_end, start_index
             )
