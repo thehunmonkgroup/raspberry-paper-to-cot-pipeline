@@ -49,7 +49,7 @@
     - name: "Set processing status to 'failed' if any step fails"
       lwe_sqlite_query:
         db: "{{ database }}"
-        query: "UPDATE papers SET processing_status = 'failed' WHERE id = ?"
+        query: "UPDATE papers SET processing_status = 'failed_cot_extraction' WHERE id = ?"
         query_params:
           - "{{ paper_id }}"
 
