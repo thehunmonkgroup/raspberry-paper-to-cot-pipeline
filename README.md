@@ -72,7 +72,6 @@ scripts/fetch-papers.py
    `limit` is the number of papers to score in one run (default: 1)
 7. Extract CoT from the papers
    ```sh
-   /workflow run raspberry-paper-scorer
    /workflow run raspberry-paper-to-cot-extraction limit=1000 suitability_score=10
    ```
    `limit` is the number of papers to extract CoT from in one run (default: 1)
