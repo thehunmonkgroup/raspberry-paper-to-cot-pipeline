@@ -10,6 +10,7 @@
     template: "raspberry-extract-cot.md"
     database: "{{ lookup('env', 'PWD') }}/papers.db"
     limit: 1
+    suitability_score: 8
     training_file: "{{ lookup('env', 'PWD') }}/results/training-data.jsonl"
     inference_results_directory: "{{ lookup('env', 'PWD') }}/results/inference"
     training_results_directory: "{{ lookup('env', 'PWD') }}/results/training"
@@ -24,11 +25,12 @@
         state: directory
         mode: '0755'
 
-    - name: "Fetch papers from SQLite database, limit: {{ limit }}"
+    - name: "Fetch papers from SQLite database, suitability_score >= {{ suitability_score }}, limit: {{ limit }}"
       lwe_sqlite_query:
         db: "{{ database }}"
-        query: "SELECT id, paper_url FROM papers WHERE processing_status = 'scored' ORDER BY id LIMIT ?"
+        query: "SELECT id, paper_url FROM papers WHERE processing_status = 'scored' AND suitability_score >= ? ORDER BY id LIMIT ?"
         query_params:
+          - "{{ suitability_score }}"
           - "{{ limit }}"
       register: paper_results
 
