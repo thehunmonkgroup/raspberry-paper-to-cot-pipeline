@@ -1,3 +1,8 @@
+---
+request_overrides:
+  system_message: "You adhere precisely to the provided instructions for the given task, you output only the final XML according to the provided template and template instructions"
+---
+
 ## TASK
 
 Your task is to examine the provided research paper, and extract three pieces of related data:
@@ -138,6 +143,8 @@ XML Template:
 
 ## PAPER
 
-This is the paper to extract the question/chain/answer from:
+The paper to extract the question/chain/answer from is fully enclosed within the `paper_to_extract_cot_from` XML tags below.
 
+<paper_to_extract_cot_from>
 {{ paper }}
+</paper_to_extract_cot_from>

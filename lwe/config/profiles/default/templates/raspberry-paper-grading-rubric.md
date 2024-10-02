@@ -1,3 +1,8 @@
+---
+request_overrides:
+  system_message: "You adhere precisely to the provided instructions for the given task, you output only the final XML according to the provided template and template instructions"
+---
+
 ## TASK
 
 This rubric is designed to assess an academic paper's suitability for extracting a clear question with an answer derived through complex, multi-step reasoning that is comprehensible to a layperson with some effort. The ideal paper will present a well-defined question, provide a clear answer, and demonstrate a logical reasoning process that bridges the gap between the question and the answer. This reasoning should be sufficiently complex to offer meaningful insights, yet accessible enough for an educated non-expert to understand with some effort.
@@ -139,6 +144,10 @@ XML Template:
 
 ## PAPER TO BE ANALYZED AND GRADED
 
-Analyze and grade the following paper according to the provided rubric, output your analysis in XML according to the provided template and template instructions:
+Analyze and grade the paper according to the provided rubric, output your analysis in XML according to the provided template and template instructions.
 
+The paper to grade is fully enclosed within the `paper_to_grade` XML tags below
+
+<paper_to_grade>
 {{ paper }}
+</paper_to_grade>
