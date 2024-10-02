@@ -18,7 +18,7 @@ plugins:
     - provider_chat_fireworks
     - provider_chat_google_genai
     # - provider_chat_groq
-    # - provider_openrouter
+    - provider_openrouter
   gist:
     include_raw_link: true
     exclude_system_messages: true

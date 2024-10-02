@@ -1,0 +1,7 @@
+metadata:
+  name: claude-sonnet-openrouter
+  provider: openrouter
+model_customizations:
+  max_tokens: 4096
+  model_name: anthropic/claude-3.5-sonnet
+  temperature: 0.0
