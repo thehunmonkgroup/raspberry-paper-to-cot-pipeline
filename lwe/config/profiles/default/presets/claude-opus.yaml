@@ -1,0 +1,7 @@
+metadata:
+  name: claude-opus
+  provider: chat_anthropic
+model_customizations:
+  max_tokens: 4096
+  model: claude-3-opus-20240229
+  temperature: 0.0

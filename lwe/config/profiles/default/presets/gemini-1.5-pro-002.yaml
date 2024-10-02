@@ -1,0 +1,10 @@
+metadata:
+  name: gemini-1.5-pro-002
+  provider: chat_google_genai
+model_customizations:
+  max_output_tokens: 4096
+  model: models/gemini-1.5-pro-002
+  n: 1
+  safety_settings: null
+  temperature: 0.0
+  top_k: null

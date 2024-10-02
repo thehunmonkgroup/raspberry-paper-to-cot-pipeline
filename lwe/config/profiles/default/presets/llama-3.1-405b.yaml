@@ -1,8 +1,8 @@
 metadata:
-  name: llama-3.2-90b
+  name: llama-3.1-405b
   provider: chat_fireworks
 model_customizations:
   max_tokens: 4096
-  model_name: accounts/fireworks/models/llama-v3p2-90b-vision-instruct
+  model_name: accounts/fireworks/models/llama-v3p1-405b-instruct
   n: 1
   temperature: 0.0
