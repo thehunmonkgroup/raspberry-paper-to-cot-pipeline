@@ -1,5 +1,5 @@
 ---
-- name: Process paper
+- name: Profile paper
   block:
     - name: "Download PDF {{ current_url }} to {{ tmp_pdf_path }}"
       ansible.builtin.get_url:
@@ -17,9 +17,9 @@
         path: "{{ tmp_pdf_path }}"
       register: extracted_text
 
-    - name: "Run LWE Template: {{ template }} with preset: {{ grading_preset }}"
+    - name: "Run LWE Template: {{ template }} with preset: {{ profiler_preset }}"
       lwe_llm:
-        preset: "{{ grading_preset }}"
+        preset: "{{ profiler_preset }}"
         template: "{{ template }}"
         template_vars:
           paper: "{{ extracted_text.content }}"
@@ -28,11 +28,11 @@
       retries: 3
       delay: 5
 
-    - name: "Run processing script: {{ processing_script }}"
+    - name: "Run profiler script: {{ profiler_script }}"
       ansible.builtin.command:
         cmd: >-
-          {{ processing_script }}
-          {{ grading_preset | quote }}
+          {{ profiler_script }}
+          {{ profiler_preset | quote }}
           {{ database | quote }}
           {{ paper_id | quote }}
           {{ current_url | quote }}
@@ -40,7 +40,7 @@
           {{ inference_results_directory | quote }}
       register: script_output
 
-    - name: "Output script execution results: {{ processing_script }}"
+    - name: "Output script execution results: {{ profiler_script }}"
       ansible.builtin.debug:
         msg: "{{ script_output.stdout }}"
 

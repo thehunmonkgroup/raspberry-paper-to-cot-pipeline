@@ -1,17 +1,17 @@
 ---
-- name: Main playbook for grading papers in SQLite database for CoT using a rubric
+- name: Main playbook for profiling papers in SQLite database for CoT using a rubric
   hosts: localhost
   vars:
-    grading_preset: "claude-sonnet"
-    # grading_preset: "claude-opus"
-    # grading_preset: "llama-3.2-90b"
-    # grading_preset: "llama-3.1-405b"
-    # grading_preset: "gemini-1.5-pro-002"
-    template: "raspberry-paper-grading-rubric.md"
+    profiler_preset: "claude-sonnet"
+    # profiler_preset: "claude-opus"
+    # profiler_preset: "llama-3.2-90b"
+    # profiler_preset: "llama-3.1-405b"
+    # profiler_preset: "gemini-1.5-pro-002"
+    template: "raspberry-paper-profiler.md"
     database: "{{ lookup('env', 'PWD') }}/papers.db"
     limit: 1
     inference_results_directory: "{{ lookup('env', 'PWD') }}/results/inference"
-    processing_script: "{{ lookup('env', 'PWD') }}/scripts/raspberry-paper-grading.py"
+    profiler_script: "{{ lookup('env', 'PWD') }}/scripts/raspberry-paper-profiler.py"
     # Use system independent temp dir
     tmp_pdf_path: "/tmp/raspberry-tmp-pdf.pdf"
   tasks:
@@ -25,13 +25,13 @@
     - name: "Fetch papers from SQLite database, limit: {{ limit }}"
       lwe_sqlite_query:
         db: "{{ database }}"
-        query: "SELECT id, paper_url FROM papers WHERE processing_status = 'ready_to_grade' ORDER BY id LIMIT ?"
+        query: "SELECT id, paper_url FROM papers WHERE processing_status = 'ready_to_profile' ORDER BY id LIMIT ?"
         query_params:
           - "{{ limit }}"
       register: paper_results
 
     - name: Process each paper
-      ansible.builtin.include_tasks: raspberry-paper-rubric-grader-grade.yaml
+      ansible.builtin.include_tasks: raspberry-paper-profiler-profile.yaml
       loop: "{{ paper_results.data }}"
       loop_control:
         loop_var: paper
