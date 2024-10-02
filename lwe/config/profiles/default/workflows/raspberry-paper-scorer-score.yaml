@@ -1,0 +1,23 @@
+---
+- name: Score paper
+  block:
+    - name: "Run scorer script: {{ scorer_script }}"
+      ansible.builtin.command:
+        cmd: >-
+          {{ scorer_script }}
+          {{ database | quote }}
+          {{ paper_id | quote }}
+          {{ current_url | quote }}
+      register: script_output
+
+    - name: "Output script execution results: {{ scorer_script }}"
+      ansible.builtin.debug:
+        msg: "{{ script_output.stdout }}"
+
+  rescue:
+    - name: "Set processing status to 'failed' if any step fails"
+      lwe_sqlite_query:
+        db: "{{ database }}"
+        query: "UPDATE papers SET processing_status = 'failed_scoring' WHERE id = ?"
+        query_params:
+          - "{{ paper_id }}"
