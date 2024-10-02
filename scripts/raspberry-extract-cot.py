@@ -23,15 +23,27 @@ def parse_arguments() -> argparse.Namespace:
 
     :return: Parsed arguments
     """
-    parser = argparse.ArgumentParser(description="Process training and inference files.")
-    parser.add_argument("extraction_preset", type=str, help="Model configuration used to perform the extraction")
+    parser = argparse.ArgumentParser(
+        description="Process training and inference files."
+    )
+    parser.add_argument(
+        "extraction_preset",
+        type=str,
+        help="Model configuration used to perform the extraction",
+    )
     parser.add_argument("database", type=str, help="Path to the SQLite database")
     parser.add_argument("paper_id", type=str, help="ID of the paper in the database")
     parser.add_argument("paper_url", type=str, help="URL of the paper")
-    parser.add_argument("paper_content", type=str, help="Content to be written and logged")
+    parser.add_argument(
+        "paper_content", type=str, help="Content to be written and logged"
+    )
     parser.add_argument("training_file", type=str, help="Path to the training file")
-    parser.add_argument("inference_results_directory", type=str, help="Directory for inference results")
-    parser.add_argument("training_results_directory", type=str, help="Directory for training results")
+    parser.add_argument(
+        "inference_results_directory", type=str, help="Directory for inference results"
+    )
+    parser.add_argument(
+        "training_results_directory", type=str, help="Directory for training results"
+    )
     parser.add_argument("--debug", action="store_true", help="Enable debug logging")
     return parser.parse_args()
 
@@ -41,9 +53,18 @@ class CoTExtractor:
     A class to handle Chain of Thought (CoT) extraction from research papers.
     """
 
-    def __init__(self, extraction_preset: str, database: str, paper_id: str, paper_url: str,
-                 paper_content: str, training_file: str, inference_results_directory: str,
-                 training_results_directory: str, debug: bool):
+    def __init__(
+        self,
+        extraction_preset: str,
+        database: str,
+        paper_id: str,
+        paper_url: str,
+        paper_content: str,
+        training_file: str,
+        inference_results_directory: str,
+        training_results_directory: str,
+        debug: bool,
+    ):
         """
         Initialize the CoTExtractor with individual arguments.
 
@@ -70,16 +91,22 @@ class CoTExtractor:
 
     def setup_logging(self) -> None:
         """Set up logging configuration."""
-        logging.basicConfig(level=logging.DEBUG if self.debug else logging.INFO,
-                            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        logging.basicConfig(
+            level=logging.DEBUG if self.debug else logging.INFO,
+            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        )
         self.logger = logging.getLogger(__name__)
 
     def make_results_directories(self) -> None:
         """Create the inference and training results directories if they don't exist."""
         Path(self.inference_results_directory).mkdir(parents=True, exist_ok=True)
         Path(self.training_results_directory).mkdir(parents=True, exist_ok=True)
-        self.logger.debug(f"Ensured inference results directory exists: {self.inference_results_directory}")
-        self.logger.debug(f"Ensured training results directory exists: {self.training_results_directory}")
+        self.logger.debug(
+            f"Ensured inference results directory exists: {self.inference_results_directory}"
+        )
+        self.logger.debug(
+            f"Ensured training results directory exists: {self.training_results_directory}"
+        )
 
     def extract_xml(self) -> Optional[str]:
         """
@@ -87,7 +114,9 @@ class CoTExtractor:
 
         :return: Extracted XML content or None if not found
         """
-        match = re.search(r'<results>(?:(?!</results>).)*</results>', self.paper_content, re.DOTALL)
+        match = re.search(
+            r"<results>(?:(?!</results>).)*</results>", self.paper_content, re.DOTALL
+        )
         return match.group(0) if match else None
 
     @staticmethod
@@ -99,9 +128,11 @@ class CoTExtractor:
         :return: Tuple of (question, chain_of_reasoning, answer)
         """
         root = ET.fromstring(xml_string)
-        question = root.find('.//question').text.strip()
-        chain_of_reasoning = textwrap.dedent(root.find('.//chain_of_reasoning').text).strip()
-        answer = root.find('.//answer').text.strip()
+        question = root.find(".//question").text.strip()
+        chain_of_reasoning = textwrap.dedent(
+            root.find(".//chain_of_reasoning").text
+        ).strip()
+        answer = root.find(".//answer").text.strip()
         return question, chain_of_reasoning, answer
 
     def get_file_basename(self) -> str:
@@ -113,7 +144,9 @@ class CoTExtractor:
         parsed_url = urlparse(self.paper_url)
         return Path(parsed_url.path).stem
 
-    def write_to_inference_file(self, question: str, chain_of_reasoning: str, answer: str) -> None:
+    def write_to_inference_file(
+        self, question: str, chain_of_reasoning: str, answer: str
+    ) -> None:
         """
         Write extracted information to the inference file.
 
@@ -122,9 +155,11 @@ class CoTExtractor:
         :param answer: Extracted answer
         """
         basename = self.get_file_basename()
-        inference_file_path = Path(self.inference_results_directory) / f"{basename}-cot-extraction.txt"
+        inference_file_path = (
+            Path(self.inference_results_directory) / f"{basename}-cot-extraction.txt"
+        )
 
-        with open(inference_file_path, 'w') as file:
+        with open(inference_file_path, "w") as file:
             file.write(f"Paper URL: {self.paper_url}\n")
             file.write(f"Extraction preset: {self.extraction_preset}\n\n")
             file.write("Extracted Information:\n\n")
@@ -138,7 +173,9 @@ class CoTExtractor:
 
         self.log_file_operation("inference", inference_file_path)
 
-    def write_to_training_file(self, question: str, chain_of_reasoning: str, answer: str) -> None:
+    def write_to_training_file(
+        self, question: str, chain_of_reasoning: str, answer: str
+    ) -> None:
         """
         Write extracted information to a separate training file for each paper.
 
@@ -147,13 +184,15 @@ class CoTExtractor:
         :param answer: Extracted answer
         """
         basename = self.get_file_basename()
-        training_file_path = Path(self.training_results_directory) / f"{basename}-training-data.jsonl"
+        training_file_path = (
+            Path(self.training_results_directory) / f"{basename}-training-data.jsonl"
+        )
 
         training_data = {
             "prompt": question,
-            "response": f"{chain_of_reasoning}\n\nAnswer: {answer}"
+            "response": f"{chain_of_reasoning}\n\nAnswer: {answer}",
         }
-        with open(training_file_path, 'w') as file:
+        with open(training_file_path, "w") as file:
             file.write(json.dumps(training_data) + "\n")
 
         self.log_file_operation("training", training_file_path)
@@ -178,10 +217,15 @@ class CoTExtractor:
         try:
             conn = sqlite3.connect(self.database)
             cursor = conn.cursor()
-            cursor.execute("UPDATE papers SET processing_status = ? WHERE id = ?", (status, self.paper_id))
+            cursor.execute(
+                "UPDATE papers SET processing_status = ? WHERE id = ?",
+                (status, self.paper_id),
+            )
             conn.commit()
             print(f"Updated paper {self.paper_url} status to {status}")
-            self.logger.debug(f"Updated database status for paper {self.paper_id} to '{status}'")
+            self.logger.debug(
+                f"Updated database status for paper {self.paper_id} to '{status}'"
+            )
         except sqlite3.Error as e:
             if conn:
                 conn.rollback()
@@ -202,7 +246,7 @@ class CoTExtractor:
         question, chain_of_reasoning, answer = self.parse_xml(xml_content)
         self.write_to_inference_file(question, chain_of_reasoning, answer)
         self.write_to_training_file(question, chain_of_reasoning, answer)
-        self.update_database_status('cot_extracted')
+        self.update_database_status("cot_extracted")
         self.logger.info("CoT extraction process completed successfully")
 
 
@@ -218,7 +262,7 @@ def main():
         training_file=args.training_file,
         inference_results_directory=args.inference_results_directory,
         training_results_directory=args.training_results_directory,
-        debug=args.debug
+        debug=args.debug,
     )
     extractor.run()
 

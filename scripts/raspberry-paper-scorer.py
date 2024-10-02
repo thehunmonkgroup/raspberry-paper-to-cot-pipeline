@@ -11,10 +11,11 @@ import logging
 from typing import Dict, List
 
 REQUIRED_CRITERIA: List[str] = [
-    'criteria_clear_question',
-    'criteria_definitive_answer',
-    'criteria_complex_reasoning',
+    "criteria_clear_question",
+    "criteria_definitive_answer",
+    "criteria_complex_reasoning",
 ]
+
 
 def parse_arguments() -> argparse.Namespace:
     """
@@ -22,12 +23,15 @@ def parse_arguments() -> argparse.Namespace:
 
     :return: Parsed arguments
     """
-    parser = argparse.ArgumentParser(description="Score papers based on profiling criteria.")
+    parser = argparse.ArgumentParser(
+        description="Score papers based on profiling criteria."
+    )
     parser.add_argument("database", type=str, help="Path to the SQLite database")
     parser.add_argument("paper_id", type=str, help="ID of the paper in the database")
     parser.add_argument("paper_url", type=str, help="URL of the paper")
     parser.add_argument("--debug", action="store_true", help="Enable debug logging")
     return parser.parse_args()
+
 
 class PaperScorer:
     """
@@ -51,8 +55,10 @@ class PaperScorer:
 
     def setup_logging(self) -> None:
         """Set up logging configuration."""
-        logging.basicConfig(level=logging.DEBUG if self.debug else logging.INFO,
-                            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        logging.basicConfig(
+            level=logging.DEBUG if self.debug else logging.INFO,
+            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        )
         self.logger = logging.getLogger(__name__)
 
     def missing_required_criteria(self, criteria: Dict[str, int]) -> bool:
@@ -83,13 +89,18 @@ class PaperScorer:
         try:
             conn = sqlite3.connect(self.database)
             cursor = conn.cursor()
-            cursor.execute("""
+            cursor.execute(
+                """
                 UPDATE papers
                 SET processing_status = 'scored', suitability_score = ?
                 WHERE id = ?
-            """, (suitability_score, self.paper_id))
+            """,
+                (suitability_score, self.paper_id),
+            )
             conn.commit()
-            print(f"Updated suitability score for paper {self.paper_url} to {suitability_score}")
+            print(
+                f"Updated suitability score for paper {self.paper_url} to {suitability_score}"
+            )
             print(f"Set processing status for paper {self.paper_url} to 'scored'")
             self.logger.debug(f"Updated database for paper {self.paper_id}")
         except sqlite3.Error as e:
@@ -111,27 +122,30 @@ class PaperScorer:
         try:
             conn = sqlite3.connect(self.database)
             cursor = conn.cursor()
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT criteria_clear_question, criteria_definitive_answer, criteria_complex_reasoning,
                        criteria_coherent_structure, criteria_layperson_comprehensible, criteria_minimal_jargon,
                        criteria_illustrative_examples, criteria_significant_insights, criteria_verifiable_steps,
                        criteria_overall_suitability
                 FROM papers
                 WHERE id = ?
-            """, (self.paper_id,))
+            """,
+                (self.paper_id,),
+            )
             result = cursor.fetchone()
             if result:
                 return {
-                    'criteria_clear_question': result[0],
-                    'criteria_definitive_answer': result[1],
-                    'criteria_complex_reasoning': result[2],
-                    'criteria_coherent_structure': result[3],
-                    'criteria_layperson_comprehensible': result[4],
-                    'criteria_minimal_jargon': result[5],
-                    'criteria_illustrative_examples': result[6],
-                    'criteria_significant_insights': result[7],
-                    'criteria_verifiable_steps': result[8],
-                    'criteria_overall_suitability': result[9]
+                    "criteria_clear_question": result[0],
+                    "criteria_definitive_answer": result[1],
+                    "criteria_complex_reasoning": result[2],
+                    "criteria_coherent_structure": result[3],
+                    "criteria_layperson_comprehensible": result[4],
+                    "criteria_minimal_jargon": result[5],
+                    "criteria_illustrative_examples": result[6],
+                    "criteria_significant_insights": result[7],
+                    "criteria_verifiable_steps": result[8],
+                    "criteria_overall_suitability": result[9],
                 }
             else:
                 raise ValueError(f"No criteria found for paper ID {self.paper_id}")
@@ -146,6 +160,7 @@ class PaperScorer:
         self.update_database(suitability_score)
         self.logger.info("Paper scoring process completed successfully")
 
+
 def main():
     """Main entry point of the script."""
     args = parse_arguments()
@@ -153,9 +168,10 @@ def main():
         database=args.database,
         paper_id=args.paper_id,
         paper_url=args.paper_url,
-        debug=args.debug
+        debug=args.debug,
     )
     scorer.run()
+
 
 if __name__ == "__main__":
     main()
