@@ -18,8 +18,8 @@ The following diagram illustrates the pipeline workflow:
 
 ![Pipeline Diagram](pipeline-diagram.png)
 
-1. **Fetch Papers**: Retrieve academic papers from arXiv.org.
-2. **Profile Papers**: Analyze and profile the papers based on specific criteria.
+1. **Fetch Papers**: Retrieve academic papers from arXiv.org
+2. **Profile Papers**: Analyze and profile the papers based on specific criteria
    * Store criteria data in database
    * Generate profiling inference artifact
 3. **Score Papers**: Assign suitability scores to the papers based on profiling criteria, store in database
