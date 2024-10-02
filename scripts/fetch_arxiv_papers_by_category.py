@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
 
+"""
+This script fetches arXiv papers based on specified categories and date range.
+It uses the arXiv API to retrieve paper information, stores the results in a SQLite database,
+and handles pagination and error recovery.
+"""
+
 import argparse
 import time
 import logging
@@ -13,6 +19,7 @@ from dateutil.parser import parse as parse_date
 import xml.etree.ElementTree as ET
 from xml.etree.ElementTree import ParseError
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from typing import List
 
 DEFAULT_DB_NAME = 'papers.db'
 CREATE_TABLE_QUERY = """
@@ -35,6 +42,7 @@ CREATE TABLE IF NOT EXISTS papers (
     UNIQUE(paper_url, paper_category)
 );
 """
+DEFAULT_PROCESSING_STATUS = 'ready_to_profile'
 MAX_EMPTY_RESULTS_ATTEMPTS = 25
 
 class ArxivPaperFetcher:
@@ -78,18 +86,22 @@ class ArxivPaperFetcher:
             self.logger.error(f"An error occurred while creating database {db_path}: {e}")
             raise
 
-    def fetch_arxiv_papers(self, categories, date_filter_begin, date_filter_end, start_index):
+    def fetch_arxiv_papers(self, categories: List[str], date_filter_begin: str, date_filter_end: str, start_index: int) -> List[str]:
         """
         Fetch papers from arXiv within the specified date range and categories.
 
         Args:
-            categories (list): List of arXiv categories to search.
+            categories (List[str]): List of arXiv categories to search.
             date_filter_begin (str): Start date for paper filter (YYYY-MM-DD).
             date_filter_end (str): End date for paper filter (YYYY-MM-DD).
             start_index (int): Starting index for the search.
 
         Returns:
-            list: List of arXiv IDs for papers within the specified date range and categories.
+            List[str]: List of arXiv IDs for papers within the specified date range and categories.
+
+        Raises:
+            RequestException: If there's an error fetching data from the arXiv API.
+            ParseError: If there's an error parsing the XML response from arXiv.
         """
         self.logger.info('Searching for papers from %s to %s in categories: %s, starting from index %d',
                          date_filter_begin, date_filter_end, ', '.join(categories), start_index)
@@ -210,10 +222,10 @@ class ArxivPaperFetcher:
                 cursor = conn.cursor()
                 cursor.executemany(
                     """
-                    INSERT OR IGNORE INTO papers (paper_url, paper_category)
-                    VALUES (?, ?)
+                    INSERT OR IGNORE INTO papers (paper_url, paper_category, processing_status)
+                    VALUES (?, ?, ?)
                     """,
-                    [(url, category) for url in urls]
+                    [(url, category, DEFAULT_PROCESSING_STATUS) for url in urls]
                 )
                 conn.commit()
             self.logger.info('Successfully wrote %d new entries with category %s to the database', cursor.rowcount, category)
