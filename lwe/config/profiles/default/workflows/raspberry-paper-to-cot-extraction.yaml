@@ -12,6 +12,7 @@
     limit: 1
     training_file: "{{ lookup('env', 'PWD') }}/results/training-data.jsonl"
     inference_results_directory: "{{ lookup('env', 'PWD') }}/results/inference"
+    training_results_directory: "{{ lookup('env', 'PWD') }}/results/training"
     processing_script: "{{ lookup('env', 'PWD') }}/scripts/raspberry-extract-cot.py"
     # Use system independent temp dir
     tmp_pdf_path: "/tmp/raspberry-tmp-pdf.pdf"

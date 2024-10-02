@@ -39,6 +39,7 @@
           {{ lwe_results.response | quote }}
           {{ training_file | quote }}
           {{ inference_results_directory | quote }}
+          {{ training_results_directory | quote }}
       register: script_output
 
     - name: "Output script execution results: {{ processing_script }}"
