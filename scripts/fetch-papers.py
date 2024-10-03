@@ -256,7 +256,9 @@ class ArxivPaperFetcherCLI:
                 try:
                     fetcher.run(category, self.begin, self.end)
                 except KeyboardInterrupt:
-                    self.logger.info("Keyboard interrupt received. Stopping the process.")
+                    self.logger.info(
+                        "Keyboard interrupt received. Stopping the process."
+                    )
                     break
         except Exception as e:
             self.logger.error(f"An error occurred: {e}")

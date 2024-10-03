@@ -153,7 +153,9 @@ class ArxivPaperFetcher:
                 if root is False:
                     if params["max_results"] == MAX_RESULTS_DEFAULT:
                         params["max_results"] = MAX_RESULTS_FALLBACK
-                        self.logger.warning(f"Reducing max_results to {MAX_RESULTS_FALLBACK} due to XML parsing error.")
+                        self.logger.warning(
+                            f"Reducing max_results to {MAX_RESULTS_FALLBACK} due to XML parsing error."
+                        )
                     attempts += 1
                 else:
                     entries = root.findall("{http://www.w3.org/2005/Atom}entry")
@@ -199,9 +201,7 @@ class ArxivPaperFetcher:
     @retry(
         stop=stop_after_attempt(10),
         wait=wait_exponential(multiplier=1, min=4, max=60),
-        retry=(
-            retry_if_exception_type(RequestException)
-        ),
+        retry=(retry_if_exception_type(RequestException)),
         reraise=True,
     )
     def _fetch_arxiv_data(self, params):
@@ -295,40 +295,42 @@ class ArxivPaperFetcher:
         try:
             with sqlite3.connect(self.database) as conn:
                 cursor = conn.cursor()
-                
+
                 # Use a transaction for efficiency and atomicity
                 conn.execute("BEGIN TRANSACTION")
-                
+
                 # Insert papers
                 cursor.executemany(
                     """
                     INSERT OR IGNORE INTO papers (paper_url, processing_status)
                     VALUES (?, ?)
                     """,
-                    [(url, DEFAULT_PROCESSING_STATUS) for url in urls]
+                    [(url, DEFAULT_PROCESSING_STATUS) for url in urls],
                 )
-                
+
                 # Get the paper_ids for the inserted/existing papers
                 cursor.execute(
                     """
                     SELECT id, paper_url FROM papers 
                     WHERE paper_url IN ({})
-                    """.format(','.join(['?']*len(urls))), 
-                    urls
+                    """.format(
+                        ",".join(["?"] * len(urls))
+                    ),
+                    urls,
                 )
                 paper_ids = {row[1]: row[0] for row in cursor.fetchall()}
-                
+
                 # Insert categories
                 cursor.executemany(
                     """
                     INSERT OR IGNORE INTO paper_categories (paper_id, category)
                     VALUES (?, ?)
                     """,
-                    [(paper_ids[url], category) for url in urls if url in paper_ids]
+                    [(paper_ids[url], category) for url in urls if url in paper_ids],
                 )
-                
+
                 conn.commit()
-            
+
             self.logger.info(
                 f"Successfully processed {len(urls)} papers with category {category}"
             )
@@ -375,7 +377,9 @@ class ArxivPaperFetcher:
         try:
             # Check if the category already exists in the database
             if self.category_exists_in_database(category):
-                self.logger.info(f"Category {category} already exists in the database. Skipping.")
+                self.logger.info(
+                    f"Category {category} already exists in the database. Skipping."
+                )
                 return
 
             arxiv_ids = self.fetch_arxiv_papers(
