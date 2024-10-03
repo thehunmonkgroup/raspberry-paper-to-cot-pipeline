@@ -27,6 +27,8 @@ from tenacity import (
 from typing import List
 
 DEFAULT_DB_NAME = "papers.db"
+MAX_RESULTS_DEFAULT = 1000
+MAX_RESULTS_FALLBACK = 100
 CREATE_TABLE_QUERY = """
 CREATE TABLE IF NOT EXISTS papers (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -136,6 +138,9 @@ class ArxivPaperFetcher:
             if root is None:
                 return []
             if root is False:
+                if params["max_results"] == MAX_RESULTS_DEFAULT:
+                    params["max_results"] = MAX_RESULTS_FALLBACK
+                    self.logger.warning(f"Reducing max_results to {MAX_RESULTS_FALLBACK} due to XML parsing error.")
                 attempts += 1
             else:
                 entries = root.findall("{http://www.w3.org/2005/Atom}entry")
@@ -170,7 +175,7 @@ class ArxivPaperFetcher:
         return {
             "search_query": f"({category_query})",
             "start": start_index,
-            "max_results": 500,
+            "max_results": MAX_RESULTS_DEFAULT,
             "sortBy": "lastUpdatedDate",
             "sortOrder": "ascending",
         }
