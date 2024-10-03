@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS papers (
 );
 """
 DEFAULT_PROCESSING_STATUS = "ready_to_profile"
-MAX_EMPTY_RESULTS_ATTEMPTS = 25
+MAX_EMPTY_RESULTS_ATTEMPTS = 10
 
 
 class ArxivPaperFetcher:
@@ -117,7 +117,6 @@ class ArxivPaperFetcher:
 
         Raises:
             RequestException: If there's an error fetching data from the arXiv API.
-            ParseError: If there's an error parsing the XML response from arXiv.
         """
         self.logger.info(
             "Searching for papers from %s to %s in categories: %s, starting from index %d",
@@ -136,24 +135,26 @@ class ArxivPaperFetcher:
             root = self._fetch_arxiv_data(params)
             if root is None:
                 return []
-
-            entries = root.findall("{http://www.w3.org/2005/Atom}entry")
-            if entries:
-                attempts = 0
-                for entry in entries:
-                    fetched += 1
-                    arxiv_id = self._process_entry(
-                        entry, date_filter_begin, date_filter_end
-                    )
-                    if arxiv_id is None:
-                        continue
-                    if arxiv_id == "BREAK":
-                        break
-                    results.append(arxiv_id)
-
-                params["start"] += len(entries)
-            else:
+            if root is False:
                 attempts += 1
+            else:
+                entries = root.findall("{http://www.w3.org/2005/Atom}entry")
+                if entries:
+                    attempts = 0
+                    for entry in entries:
+                        fetched += 1
+                        arxiv_id = self._process_entry(
+                            entry, date_filter_begin, date_filter_end
+                        )
+                        if arxiv_id is None:
+                            continue
+                        if arxiv_id == "BREAK":
+                            break
+                        results.append(arxiv_id)
+
+                    params["start"] += len(entries)
+                else:
+                    attempts += 1
 
             if self._should_stop_fetching(
                 root, fetched, entries, results, date_filter_end, attempts
@@ -169,7 +170,7 @@ class ArxivPaperFetcher:
         return {
             "search_query": f"({category_query})",
             "start": start_index,
-            "max_results": 1000,
+            "max_results": 500,
             "sortBy": "lastUpdatedDate",
             "sortOrder": "ascending",
         }
@@ -179,7 +180,6 @@ class ArxivPaperFetcher:
         wait=wait_exponential(multiplier=1, min=4, max=60),
         retry=(
             retry_if_exception_type(RequestException)
-            | retry_if_exception_type(ParseError)
         ),
         reraise=True,
     )
@@ -197,7 +197,7 @@ class ArxivPaperFetcher:
             self.logger.debug(
                 f"Response content: {response.content[:1000]}..."
             )  # Log first 1000 characters
-            raise
+            return False
 
     def _process_entry(self, entry, date_filter_begin, date_filter_end):
         """Process a single entry from the arXiv API response."""
@@ -223,6 +223,8 @@ class ArxivPaperFetcher:
                 f"Reached maximum number of attempts ({MAX_EMPTY_RESULTS_ATTEMPTS}) without fetching any results. Stopping search."
             )
             return True
+        if root is False:
+            return False
         total_results = int(
             root.find("{http://a9.com/-/spec/opensearch/1.1/}totalResults").text
         )
@@ -343,8 +345,6 @@ class ArxivPaperFetcher:
             self.logger.info("Process completed successfully.")
         except RequestException as e:
             self.logger.error(f"Network error occurred: {e}")
-        except ParseError as e:
-            self.logger.error(f"XML parsing error occurred: {e}")
         except Exception as e:
             self.logger.error(f"An unexpected error occurred: {e}")
             self.logger.debug("", exc_info=True)  # Log full traceback at debug level
