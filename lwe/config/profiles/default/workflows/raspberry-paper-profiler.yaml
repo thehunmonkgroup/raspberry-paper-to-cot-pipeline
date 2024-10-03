@@ -3,6 +3,7 @@
   hosts: localhost
   vars:
     profiler_preset: "claude-sonnet"
+    # profiler_preset: "claude-sonnet-openrouter"
     # profiler_preset: "claude-opus"
     # profiler_preset: "llama-3.2-90b"
     # profiler_preset: "llama-3.1-405b"
