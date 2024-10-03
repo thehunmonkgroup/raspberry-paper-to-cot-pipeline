@@ -13,6 +13,7 @@ import sqlite3
 import requests
 import sys
 import signal
+import signal
 from pathlib import Path
 from requests.exceptions import RequestException
 from dateutil.parser import parse as parse_date
@@ -29,11 +30,10 @@ from typing import List
 DEFAULT_DB_NAME = "papers.db"
 MAX_RESULTS_DEFAULT = 1000
 MAX_RESULTS_FALLBACK = 100
-CREATE_TABLE_QUERY = """
+CREATE_TABLES_QUERY = """
 CREATE TABLE IF NOT EXISTS papers (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    paper_url TEXT,
-    paper_category TEXT,
+    paper_url TEXT UNIQUE,
     processing_status TEXT,
     criteria_clear_question INT DEFAULT 0,
     criteria_definitive_answer INT DEFAULT 0,
@@ -45,8 +45,15 @@ CREATE TABLE IF NOT EXISTS papers (
     criteria_significant_insights INT DEFAULT 0,
     criteria_verifiable_steps INT DEFAULT 0,
     criteria_overall_suitability INT DEFAULT 0,
-    suitability_score INT DEFAULT 0,
-    UNIQUE(paper_url, paper_category)
+    suitability_score INT DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS paper_categories (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    paper_id INTEGER,
+    category TEXT,
+    FOREIGN KEY (paper_id) REFERENCES papers(id),
+    UNIQUE(paper_id, category)
 );
 """
 DEFAULT_PROCESSING_STATUS = "ready_to_profile"
@@ -54,6 +61,8 @@ MAX_EMPTY_RESULTS_ATTEMPTS = 10
 
 
 class ArxivPaperFetcher:
+    interrupt_received = False
+
     def __init__(self, database=None, debug_mode=False):
         self.setup_logging(debug_mode)
         self.logger = logging.getLogger(__name__)
@@ -74,10 +83,10 @@ class ArxivPaperFetcher:
 
     def create_database(self) -> None:
         """
-        Conditionally creates an SQLite database with the required table and columns.
+        Conditionally creates an SQLite database with the required tables and columns.
 
         This method connects to the SQLite database specified by self.database,
-        creates the necessary table if it doesn't exist, and handles any errors
+        creates the necessary tables if they don't exist, and handles any errors
         that may occur during the process.
 
         Raises:
@@ -89,7 +98,7 @@ class ArxivPaperFetcher:
         try:
             with sqlite3.connect(db_path) as conn:
                 cursor = conn.cursor()
-                cursor.execute(CREATE_TABLE_QUERY)
+                cursor.executescript(CREATE_TABLES_QUERY)
                 conn.commit()
             self.logger.info(f"Database '{db_path}' is ready.")
         except sqlite3.Error as e:
@@ -133,38 +142,45 @@ class ArxivPaperFetcher:
         fetched = start_index
         attempts = 0
 
-        while True:
-            root = self._fetch_arxiv_data(params)
-            if root is None:
-                return []
-            if root is False:
-                if params["max_results"] == MAX_RESULTS_DEFAULT:
-                    params["max_results"] = MAX_RESULTS_FALLBACK
-                    self.logger.warning(f"Reducing max_results to {MAX_RESULTS_FALLBACK} due to XML parsing error.")
-                attempts += 1
-            else:
-                entries = root.findall("{http://www.w3.org/2005/Atom}entry")
-                if entries:
-                    attempts = 0
-                    for entry in entries:
-                        fetched += 1
-                        arxiv_id = self._process_entry(
-                            entry, date_filter_begin, date_filter_end
-                        )
-                        if arxiv_id is None:
-                            continue
-                        if arxiv_id == "BREAK":
-                            break
-                        results.append(arxiv_id)
-
-                    params["start"] += len(entries)
-                else:
+        try:
+            while True:
+                if self.interrupt_received:
+                    self.logger.info("Interrupt received. Stopping paper fetch.")
+                    break
+                root = self._fetch_arxiv_data(params)
+                if root is None:
+                    return []
+                if root is False:
+                    if params["max_results"] == MAX_RESULTS_DEFAULT:
+                        params["max_results"] = MAX_RESULTS_FALLBACK
+                        self.logger.warning(f"Reducing max_results to {MAX_RESULTS_FALLBACK} due to XML parsing error.")
                     attempts += 1
+                else:
+                    entries = root.findall("{http://www.w3.org/2005/Atom}entry")
+                    if entries:
+                        attempts = 0
+                        for entry in entries:
+                            fetched += 1
+                            arxiv_id = self._process_entry(
+                                entry, date_filter_begin, date_filter_end
+                            )
+                            if arxiv_id is None:
+                                continue
+                            if arxiv_id == "BREAK":
+                                break
+                            results.append(arxiv_id)
 
-            if self._should_stop_fetching(
-                root, fetched, entries, results, date_filter_end, attempts
-            ):
-                break
+                        params["start"] += len(entries)
+                    else:
+                        attempts += 1
+
+                if self._should_stop_fetching(
+                    root, fetched, entries, results, date_filter_end, attempts
+                ):
+                    break
+        except KeyboardInterrupt:
+            self.logger.info("Keyboard interrupt received. Stopping paper fetch.")
+            self.interrupt_received = True
 
         self.logger.info("Total papers fetched: %d, stored: %d", fetched, len(results))
         return results
@@ -191,6 +207,7 @@ class ArxivPaperFetcher:
     def _fetch_arxiv_data(self, params):
         """Fetch data from arXiv API and return the XML root."""
         base_url = "https://export.arxiv.org/api/query"
+        self.logger.debug("Fetching papers from arXiv: %s: %s", base_url, params)
         response = requests.get(base_url, params=params)
         if response.status_code != 200:
             self.logger.error("Error fetching papers from arXiv: %s", response.text)
@@ -278,18 +295,42 @@ class ArxivPaperFetcher:
         try:
             with sqlite3.connect(self.database) as conn:
                 cursor = conn.cursor()
+                
+                # Use a transaction for efficiency and atomicity
+                conn.execute("BEGIN TRANSACTION")
+                
+                # Insert papers
                 cursor.executemany(
                     """
-                    INSERT OR IGNORE INTO papers (paper_url, paper_category, processing_status)
-                    VALUES (?, ?, ?)
+                    INSERT OR IGNORE INTO papers (paper_url, processing_status)
+                    VALUES (?, ?)
                     """,
-                    [(url, category, DEFAULT_PROCESSING_STATUS) for url in urls],
+                    [(url, DEFAULT_PROCESSING_STATUS) for url in urls]
                 )
+                
+                # Get the paper_ids for the inserted/existing papers
+                cursor.execute(
+                    """
+                    SELECT id, paper_url FROM papers 
+                    WHERE paper_url IN ({})
+                    """.format(','.join(['?']*len(urls))), 
+                    urls
+                )
+                paper_ids = {row[1]: row[0] for row in cursor.fetchall()}
+                
+                # Insert categories
+                cursor.executemany(
+                    """
+                    INSERT OR IGNORE INTO paper_categories (paper_id, category)
+                    VALUES (?, ?)
+                    """,
+                    [(paper_ids[url], category) for url in urls if url in paper_ids]
+                )
+                
                 conn.commit()
+            
             self.logger.info(
-                "Successfully wrote %d new entries with category %s to the database",
-                cursor.rowcount,
-                category,
+                f"Successfully processed {len(urls)} papers with category {category}"
             )
         except sqlite3.Error as e:
             self.logger.error("Error writing to database: %s", str(e))
@@ -308,7 +349,7 @@ class ArxivPaperFetcher:
         with sqlite3.connect(self.database) as conn:
             cursor = conn.cursor()
             cursor.execute(
-                "SELECT COUNT(*) FROM papers WHERE paper_category = ?", (category,)
+                "SELECT COUNT(*) FROM paper_categories WHERE category = ?", (category,)
             )
             count = cursor.fetchone()[0]
             return count > 0
@@ -340,6 +381,10 @@ class ArxivPaperFetcher:
             arxiv_ids = self.fetch_arxiv_papers(
                 [category], date_filter_begin, date_filter_end, start_index
             )
+            if self.interrupt_received:
+                self.logger.info("Interrupt received. Exiting.")
+                return
+
             if not arxiv_ids:
                 self.logger.warning("No papers found for the given criteria.")
                 return
@@ -401,7 +446,7 @@ def signal_handler(signum, frame):
     Handle interrupt signal (Ctrl+C).
     """
     print("\nInterrupt received. Exiting gracefully...")
-    sys.exit(0)
+    ArxivPaperFetcher.interrupt_received = True
 
 
 def main():
@@ -420,11 +465,8 @@ def main():
             args.date_filter_end,
             args.start_index,
         )
-    except KeyboardInterrupt:
-        print("\nInterrupt received. Exiting gracefully...")
-        sys.exit(0)
     except Exception as e:
-        print(f"An error occurred: {e}")
+        logging.error(f"An error occurred: {e}")
         sys.exit(1)
 
 
