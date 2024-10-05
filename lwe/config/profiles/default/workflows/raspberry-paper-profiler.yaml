@@ -27,7 +27,7 @@
     - name: "Fetch papers from SQLite database, limit: {{ limit }}"
       lwe_sqlite_query:
         db: "{{ database }}"
-        query: "SELECT id, paper_url FROM papers WHERE processing_status = 'ready_to_profile' ORDER BY {{ order_by }} LIMIT ?"
+        query: "SELECT id, paper_url FROM papers WHERE processing_status = 'cleaned' ORDER BY {{ order_by }} LIMIT ?"
         query_params:
           - "{{ limit }}"
       register: paper_results

@@ -19,11 +19,12 @@ The following diagram illustrates the pipeline workflow:
 ![Pipeline Diagram](pipeline-diagram.png)
 
 1. **Fetch Papers**: Retrieve academic papers from arXiv.org
-2. **Profile Papers**: Analyze and profile the papers based on specific criteria
+2. **Clean Papers**: Verify paper accessibility and remove inaccessible papers
+3. **Profile Papers**: Analyze and profile the papers based on specific criteria
    * Store criteria data in database
    * Generate profiling inference artifact
-3. **Score Papers**: Assign suitability scores to the papers based on profiling criteria, store in database
-4. **Extract CoT**: Extract Chain of Thought sets from the papers.
+4. **Score Papers**: Assign suitability scores to the papers based on profiling criteria, store in database
+5. **Extract CoT**: Extract Chain of Thought sets from the papers.
    * Generate CoT extraction inference artifact
    * Generate training data artifact
 
@@ -60,21 +61,26 @@ scripts/fetch-papers.py
      ```sh
      ./cli.sh
      ```
-5. Profile the papers
+5. Clean the papers
+   ```sh
+   /workflow run raspberry-paper-cleaner limit=1000
+   ```
+   `limit`: The number of papers to clean in one run (default: `1`)
+6. Profile the papers
    ```sh
    /workflow run raspberry-paper-profiler limit=1000
    ```
    `order_by`: How to order the papers when retrieving from the database (default `RANDOM()`)
    `limit`: The number of papers to profile in one run (default: `1`)
-6. Score the papers
+7. Score the papers
    ```sh
    /workflow run raspberry-paper-scorer limit=1000
    ```
    `limit`: The number of papers to profile in one run (default: `1`)
-7. Extract CoT from the papers
+8. Extract CoT from the papers
    ```sh
    /workflow run raspberry-paper-to-cot-extraction limit=1000 suitability_score=10
    ```
    `limit`: The number of papers to profile in one run (default: `1`)
    `suitability_score` is the minimum suitability score needed, papers with a lower score are ignored (range `3-10`, default: `8`)
-8. All artifacts are output to the `results` directory in the root of the repository
+9. All artifacts are output to the `results` directory in the root of the repository

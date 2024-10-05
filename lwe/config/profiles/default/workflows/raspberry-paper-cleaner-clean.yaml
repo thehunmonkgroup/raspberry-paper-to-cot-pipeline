@@ -1,0 +1,36 @@
+---
+- name: Clean paper
+  block:
+    - name: "Check if paper URL is accessible: {{ current_url }}"
+      ansible.builtin.uri:
+        url: "{{ current_url }}"
+        method: HEAD
+        validate_certs: no
+        follow_redirects: all
+        status_code: 200
+      register: url_check
+      retries: 3
+      delay: 5
+
+    - name: "Update paper status to 'cleaned' if accessible: {{ current_url }}"
+      lwe_sqlite_query:
+        db: "{{ database }}"
+        query: "UPDATE papers SET processing_status = 'cleaned' WHERE id = ?"
+        query_params:
+          - "{{ paper_id }}"
+      when: url_check is success
+
+  rescue:
+    - name: "Delete paper from database if not accessible: {{ current_url }}"
+      lwe_sqlite_query:
+        db: "{{ database }}"
+        query:
+          - DELETE FROM paper_categories WHERE paper_id = ?
+          - DELETE FROM papers WHERE id = ?
+        query_params:
+          - ["{{ paper_id }}"]
+          - ["{{ paper_id }}"]
+
+    - name: "Log deletion of inaccessible paper"
+      ansible.builtin.debug:
+        msg: "Deleted inaccessible paper with ID {{ paper_id }} and URL {{ current_url }}"

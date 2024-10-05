@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS paper_categories (
     UNIQUE(paper_id, category)
 );
 """
-DEFAULT_PROCESSING_STATUS = "ready_to_profile"
+DEFAULT_PROCESSING_STATUS = "ready_to_clean"
 MAX_EMPTY_RESULTS_ATTEMPTS = 10
 
 
