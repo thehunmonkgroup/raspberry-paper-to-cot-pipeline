@@ -54,33 +54,32 @@ scripts/fetch-papers.py
 
 1. Install [LWE](https://llm-workflow-engine.readthedocs.io/en/latest/installation.html) and any needed [provider plugins](https://llm-workflow-engine.readthedocs.io/en/latest/plugins.html#provider-plugins)
 2. [Configure](https://llm-workflow-engine.readthedocs.io/en/latest/initial_setup.html) any needed API keys for the models used in the pipeline
-3. Clone this repository
-4. From the root of the repository
-   * Fetch papers as described above
-   * Start the CLI
-     ```sh
-     ./cli.sh
-     ```
+3. Clone this repository, change directory into the root
+4. Fetch papers as described above
 5. Clean the papers
    ```sh
    python scripts/clean-paper-urls.py
    ```
    `--limit`: The number of papers to clean in one run (optional)
-6. Profile the papers
+6. Start the CLI
+   ```sh
+   ./cli.sh
+   ```
+7. Profile the papers
    ```sh
    /workflow run raspberry-paper-profiler limit=1000
    ```
    `order_by`: How to order the papers when retrieving from the database (default `RANDOM()`)
    `limit`: The number of papers to profile in one run (default: `1`)
-7. Score the papers
+8. Score the papers
    ```sh
    /workflow run raspberry-paper-scorer limit=1000
    ```
    `limit`: The number of papers to profile in one run (default: `1`)
-8. Extract CoT from the papers
+9. Extract CoT from the papers
    ```sh
    /workflow run raspberry-paper-to-cot-extraction limit=1000 suitability_score=10
    ```
    `limit`: The number of papers to profile in one run (default: `1`)
    `suitability_score` is the minimum suitability score needed, papers with a lower score are ignored (range `3-10`, default: `8`)
-9. All artifacts are output to the `results` directory in the root of the repository
+10. All artifacts are output to the `results` directory in the root of the repository
