@@ -16,6 +16,8 @@ import logging
 from pathlib import Path
 from typing import Tuple, Optional
 
+SYSTEM_MESSAGE = "You are a thinking agent responsible for developing a detailed, step-by-step thought process in response to a request, problem, or conversation. Your task is to break down the situation into a structured reasoning process. If feedback is provided, integrate it into your thought process for refinement."
+
 
 def parse_arguments() -> argparse.Namespace:
     """
@@ -189,8 +191,9 @@ class CoTExtractor:
         )
 
         training_data = {
-            "prompt": question,
-            "response": f"{chain_of_reasoning}\n\nAnswer: {answer}",
+            "system": SYSTEM_MESSAGE,
+            "user": question,
+            "assistant": f"{chain_of_reasoning}\n\nAnswer: {answer}",
         }
         with open(training_file_path, "w") as file:
             file.write(json.dumps(training_data) + "\n")
