@@ -63,9 +63,9 @@ scripts/fetch-papers.py
      ```
 5. Clean the papers
    ```sh
-   /workflow run raspberry-paper-cleaner limit=1000
+   python scripts/clean-paper-urls.py
    ```
-   `limit`: The number of papers to clean in one run (default: `1`)
+   `--limit`: The number of papers to clean in one run (optional)
 6. Profile the papers
    ```sh
    /workflow run raspberry-paper-profiler limit=1000
