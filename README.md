@@ -84,5 +84,5 @@ scripts/fetch-papers.py
    ```
    Args: 
    * `limit`: The number of papers to profile in one run (default: `1`)
-   *`suitability_score` is the minimum suitability score needed, papers with a lower score are ignored (range `3-10`, default: `8`)
+   * `suitability_score` is the minimum suitability score needed, papers with a lower score are ignored (range `3-10`, default: `8`)
 10. All artifacts are output to the `results` directory in the root of the repository
