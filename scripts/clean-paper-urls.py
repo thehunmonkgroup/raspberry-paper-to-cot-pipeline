@@ -63,13 +63,13 @@ class PaperCleaner:
         query = """
         SELECT id, paper_url FROM papers
         WHERE processing_status = ?
-        ORDER BY id
+        ORDER BY RANDOM()
         """
         params = [READY_TO_CLEAN_STATUS]
         if self.limit is not None:
             query += " LIMIT ?"
             params.append(self.limit)
-        
+
         self.logger.debug("Fetching papers from database")
         with get_db_connection(self.database) as conn:
             conn.row_factory = sqlite3.Row
