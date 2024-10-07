@@ -10,6 +10,7 @@ ranked_papers AS (
     ROW_NUMBER() OVER (ORDER BY RANDOM()) AS global_row_num
   FROM paper_categories pc
   JOIN papers p ON pc.paper_id = p.id
+  WHERE p.processing_status = 'cleaned'
 ),
 selected_papers AS (
   SELECT category, paper_url, category_row_num, global_row_num
