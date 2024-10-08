@@ -80,7 +80,7 @@ class PaperCleaner:
         self.logger.debug("Finished fetching papers from database")
 
     @retry(
-        stop=stop_after_attempt(3),
+        stop=stop_after_attempt(2),
         wait=wait_exponential(multiplier=1, min=1, max=5),
         retry=retry_if_exception_type(requests.RequestException),
         reraise=True
@@ -92,7 +92,7 @@ class PaperCleaner:
         :param url: The URL to check
         :return: True if accessible, False otherwise
         """
-        response = requests.head(url, allow_redirects=True, timeout=10)
+        response = requests.head(url, allow_redirects=True, timeout=15)
         if response.status_code != 200:
             self.logger.warning(f"URL NOT accessible: {url}")
             raise requests.RequestException(f"URL not accessible: {url}")
