@@ -19,7 +19,7 @@ from bs4 import BeautifulSoup
 from fetch_arxiv_papers_by_category import ArxivPaperFetcher
 
 DEFAULT_BEGIN_DATE = "1970-01-01"
-DEFAULT_END_DATE = "2020-01-01"
+DEFAULT_END_DATE = "2021-01-01"
 ARXIV_TAXONOMY_URL = "https://arxiv.org/category_taxonomy"
 DEFAULT_CATEGORIES = [
     "astro-ph.EP",
