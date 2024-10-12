@@ -19,6 +19,7 @@ from requests.exceptions import RequestException
 from dateutil.parser import parse as parse_date
 import xml.etree.ElementTree as ET
 from xml.etree.ElementTree import ParseError
+from urllib.parse import urlparse
 from tenacity import (
     retry,
     stop_after_attempt,
@@ -27,6 +28,7 @@ from tenacity import (
 )
 from typing import List
 
+ARXIV_EXPORT_BASE = "https://export.arxiv.org"
 DEFAULT_DB_NAME = "papers.db"
 MAX_RESULTS_DEFAULT = 1000
 MAX_RESULTS_FALLBACK = 100
@@ -124,7 +126,7 @@ class ArxivPaperFetcher:
             start_index (int): Starting index for the search.
 
         Returns:
-            List[str]: List of arXiv IDs for papers within the specified date range and categories.
+            List[str]: List of arXiv PDF URLs for papers within the specified date range and categories.
 
         Raises:
             RequestException: If there's an error fetching data from the arXiv API.
@@ -163,14 +165,14 @@ class ArxivPaperFetcher:
                         attempts = 0
                         for entry in entries:
                             fetched += 1
-                            arxiv_id = self._process_entry(
+                            pdf_url = self._process_entry(
                                 entry, date_filter_begin, date_filter_end
                             )
-                            if arxiv_id is None:
+                            if pdf_url is None:
                                 continue
-                            if arxiv_id == "BREAK":
+                            if pdf_url == "BREAK":
                                 break
-                            results.append(arxiv_id)
+                            results.append(pdf_url)
 
                         params["start"] += len(entries)
                     else:
@@ -234,7 +236,13 @@ class ArxivPaperFetcher:
         if updated_date > parse_date(date_filter_end).date():
             self.logger.debug("Reached papers after end date. Stopping search.")
             return "BREAK"
-        return entry.find("{http://www.w3.org/2005/Atom}id").text.split("/")[-1]
+        id = entry.find("{http://www.w3.org/2005/Atom}id").text
+        pdf_link = entry.find("{http://www.w3.org/2005/Atom}link[@title='pdf'][@type='application/pdf']")
+        if pdf_link is not None:
+            return pdf_link.get('href')
+        else:
+            self.logger.warning(f"PDF link not found for entry: {id}")
+            return None
 
     def _should_stop_fetching(
         self, root, fetched, entries, results, date_filter_end, attempts
@@ -270,19 +278,24 @@ class ArxivPaperFetcher:
             self.logger.debug("No entries returned. Sleeping for 1 second...")
             return False
 
-    def generate_pdf_urls(self, arxiv_ids):
+    def generate_pdf_urls(self, arxiv_pdf_urls):
         """
-        Generate PDF download URLs for given arXiv IDs.
+        Process the retrieved PDF URLs.
 
         Args:
-            arxiv_ids (list): List of arXiv IDs.
+            arxiv_pdf_urls (list): List of arXiv PDF URLs.
 
         Returns:
-            list: List of PDF download URLs.
+            list: List of processed PDF download URLs.
         """
-        return [
-            f"https://export.arxiv.org/pdf/{arxiv_id}.pdf" for arxiv_id in arxiv_ids
-        ]
+        processed_urls = []
+        for url in arxiv_pdf_urls:
+            path = urlparse(url).path
+            processed_url = f"{ARXIV_EXPORT_BASE}{path}"
+            if not processed_url.endswith('.pdf'):
+                processed_url += '.pdf'
+            processed_urls.append(processed_url)
+        return processed_urls
 
     def write_urls_to_database(self, urls, category):
         """
@@ -311,7 +324,7 @@ class ArxivPaperFetcher:
                 # Get the paper_ids for the inserted/existing papers
                 cursor.execute(
                     """
-                    SELECT id, paper_url FROM papers 
+                    SELECT id, paper_url FROM papers
                     WHERE paper_url IN ({})
                     """.format(
                         ",".join(["?"] * len(urls))
@@ -382,18 +395,18 @@ class ArxivPaperFetcher:
                 )
                 return
 
-            arxiv_ids = self.fetch_arxiv_papers(
+            arxiv_pdf_urls = self.fetch_arxiv_papers(
                 [category], date_filter_begin, date_filter_end, start_index
             )
             if self.interrupt_received:
                 self.logger.info("Interrupt received. Exiting.")
                 return
 
-            if not arxiv_ids:
+            if not arxiv_pdf_urls:
                 self.logger.warning("No papers found for the given criteria.")
                 return
 
-            pdf_urls = self.generate_pdf_urls(arxiv_ids)
+            pdf_urls = self.generate_pdf_urls(arxiv_pdf_urls)
             self.write_urls_to_database(pdf_urls, category)
 
             self.logger.info("Process completed successfully.")
