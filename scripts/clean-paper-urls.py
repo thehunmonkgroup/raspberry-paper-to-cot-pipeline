@@ -139,28 +139,19 @@ class PaperCleaner:
         retry=retry_if_exception_type(sqlite3.OperationalError),
         reraise=True
     )
-    def delete_paper(self, paper_id: int) -> None:
+    def mark_paper_as_missing(self, paper_id: int) -> None:
         """
-        Delete a paper and its categories from the database.
+        Mark a paper as missing in the database.
 
-        :param paper_id: The ID of the paper to delete
+        :param paper_id: The ID of the paper to mark as missing
         """
-        queries = [
-            "DELETE FROM paper_categories WHERE paper_id = ?",
-            "DELETE FROM papers WHERE id = ?"
-        ]
-        self.logger.debug(f"Attempting to delete paper: ID={paper_id}")
-        with get_db_connection(self.database) as conn:
-            try:
-                cursor = conn.cursor()
-                for query in queries:
-                    cursor.execute(query, (paper_id,))
-                conn.commit()
-                self.logger.debug(f"Successfully deleted paper: ID={paper_id}")
-            except sqlite3.Error as e:
-                conn.rollback()
-                self.logger.error(f"Error deleting paper: ID={paper_id}, error={str(e)}")
-                raise
+        self.logger.debug(f"Attempting to mark paper as missing: ID={paper_id}")
+        try:
+            self.update_paper_status(paper_id, "missing")
+            self.logger.debug(f"Successfully marked paper as missing: ID={paper_id}")
+        except sqlite3.Error as e:
+            self.logger.error(f"Error marking paper as missing: ID={paper_id}, error={str(e)}")
+            raise
 
     def process_paper(self, paper_id: int, paper_url: str) -> None:
         """
@@ -172,16 +163,16 @@ class PaperCleaner:
         self.logger.info(f"Processing paper ID {paper_id} with URL: {paper_url}")
         if self.is_url_accessible(paper_url):
             try:
-                self.update_paper_status(paper_id, "cleaned")
-                self.logger.info(f"Paper ID {paper_id} ({paper_url}) is accessible. Status updated to 'cleaned'.")
+                self.update_paper_status(paper_id, "verified")
+                self.logger.info(f"Paper ID {paper_id} ({paper_url}) is accessible. Status updated to 'verified'.")
             except Exception as e:
                 self.logger.error(f"Failed to update status of paper {paper_id} ({paper_url}): {e}")
         else:
             try:
-                self.delete_paper(paper_id)
-                self.logger.warning(f"Paper ID {paper_id} ({paper_url}) is inaccessible. Deleted from the database.")
+                self.mark_paper_as_missing(paper_id)
+                self.logger.warning(f"Paper ID {paper_id} ({paper_url}) is inaccessible. Marked as missing in the database.")
             except Exception as e:
-                self.logger.error(f"Failed to delete missing paper {paper_id} ({paper_url}): {e}")
+                self.logger.error(f"Failed to mark paper as missing {paper_id} ({paper_url}): {e}")
 
     def run(self) -> None:
         """Run the paper cleaning process."""
