@@ -108,8 +108,7 @@ class PaperProfiler:
         self.template = template
         self.debug = debug
         self.logger = Utils.setup_logging(__name__, self.debug)
-        self.utils = Utils(self.logger)
-        self.lwe_backend = self.utils.setup_lwe(self.profiling_preset)
+        self.utils = Utils(self.tmp_pdf_path, self.profiling_preset, self.logger)
 
     def run_lwe_template(self, paper_content: str) -> str:
         """
@@ -119,7 +118,7 @@ class PaperProfiler:
         :return: Response on success
         """
         template_vars = {"paper": paper_content}
-        return self.utils.run_lwe_template(self.lwe_backend, self.template, template_vars)
+        return self.utils.run_lwe_template(self.template, template_vars)
 
     def fetch_papers(self) -> List[Dict[str, str]]:
         """
@@ -301,8 +300,7 @@ class PaperProfiler:
         papers = self.fetch_papers()
         for paper in papers:
             try:
-                self.utils.download_pdf(paper['url'])
-                text = self.extract_text(self.tmp_pdf_path)
+                text = self.utils.get_pdf_text(paper['url'])
                 lwe_response = self.run_lwe_template(text)
                 xml_content = self.extract_xml(lwe_response)
                 if not xml_content:
@@ -314,9 +312,6 @@ class PaperProfiler:
             except Exception as e:
                 self.logger.error(f"Error processing paper {paper['id']}: {str(e)}")
                 self.update_paper_status(paper['id'], 'failed_profiling')
-            finally:
-                if os.path.exists(self.tmp_pdf_path):
-                    os.remove(self.tmp_pdf_path)
         self.logger.info("Paper profiling process completed")
 
 
