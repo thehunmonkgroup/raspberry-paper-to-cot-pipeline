@@ -1,6 +1,6 @@
 1. Always encapsulate the core functionality of the script into a class.
 
-2. Use type hints consistently throughout the code.
+2. Use type hints consistently throughout the code -- if any type hints in existing code are wrong or missing, fix them.
 
 3. Include a clear, concise module-level docstring explaining the script's purpose.
 
@@ -10,7 +10,7 @@
    * Group related arguments together.
    * Maintain the same order of arguments in the argparse definition and when passing them to methods/functions.
 
-5. Utilize the logging module for consistent and configurable output. Use detailed logging throughout the script:
+5. Utilize the logging module or a provided logging class or setup method for consistent and configurable logging output. Use detailed logging throughout the script:
    * Use appropriate log levels (DEBUG, INFO, WARNING, ERROR, CRITICAL) based on the importance of the log message.
    * Include DEBUG level logs to show detailed progress of the script's execution.
 
@@ -20,11 +20,11 @@
 
 8. Use clear, descriptive names for all functions, methods, and variables.
 
-9. Separate concerns by breaking down functionality into distinct methods or functions.
+9. Separate concerns by breaking down functionality into distinct methods or functions. If any existing methods or functions do not follow best practices in this regard, fix them by breaking them down into distinct methods or functions.
 
-10. Use f-strings for string formatting.
+10. Use f-strings for string formatting. If any existing strings do not use f-strings and can be easily fixed, fixed them.
 
-11. Define constants and default values clearly, preferably at the module or class level.
+11. Define constants and default values clearly, preferably at the module or class level. If you find existing hard-coded values that would be more appropriate as a constant, fix them.
 
 12. Include a main guard (if __name__ == "__main__":) to control script execution.
 
