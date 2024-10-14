@@ -9,84 +9,15 @@ and can dynamically fetch the latest category taxonomy from the arXiv website.
 """
 
 import argparse
-import logging
 import sys
 from datetime import datetime
-from typing import List, Dict
+from typing import List, Dict, Optional
 import requests
 from bs4 import BeautifulSoup
 
-from fetch_arxiv_papers_by_category import ArxivPaperFetcher
-
-DEFAULT_BEGIN_DATE = "1970-01-01"
-DEFAULT_END_DATE = "2021-01-01"
-ARXIV_TAXONOMY_URL = "https://arxiv.org/category_taxonomy"
-DEFAULT_CATEGORIES = [
-    "astro-ph.EP",
-    "astro-ph.GA",
-    "astro-ph.HE",
-    "cond-mat.dis-nn",
-    "cond-mat.mtrl-sci",
-    "cond-mat.stat-mech",
-    "cs.AI",
-    "cs.CL",
-    "cs.CV",
-    "cs.CY",
-    "cs.DS",
-    "cs.GT",
-    "cs.HC",
-    "cs.LG",
-    "cs.LO",
-    "cs.RO",
-    "cs.SE",
-    "cs.SI",
-    "econ.EM",
-    "econ.GN",
-    "econ.TH",
-    "eess.SP",
-    "eess.SY",
-    "gr-qc",
-    "hep-ex",
-    "hep-th",
-    "math.CA",
-    "math.CO",
-    "math.CT",
-    "math.HO",
-    "math.IT",
-    "math.LO",
-    "math.MP",
-    "math.NA",
-    "math.NT",
-    "math.OC",
-    "nlin.AO",
-    "nlin.CD",
-    "nlin.PS",
-    "nlin.SI",
-    "nucl-th",
-    "physics.app-ph",
-    "physics.atom-ph",
-    "physics.bio-ph",
-    "physics.chem-ph",
-    "physics.class-ph",
-    "physics.data-an",
-    "physics.flu-dyn",
-    "physics.gen-ph",
-    "physics.geo-ph",
-    "physics.pop-ph",
-    "physics.soc-ph",
-    "physics.space-ph",
-    "q-bio.CB",
-    "q-bio.GN",
-    "q-bio.NC",
-    "q-bio.PE",
-    "q-bio.QM",
-    "q-fin.PM",
-    "q-fin.RM",
-    "quant-ph",
-    "stat.AP",
-    "stat.ME",
-    "stat.TH",
-]
+from raspberry_paper_to_cot_pipeline import constants
+from raspberry_paper_to_cot_pipeline.utils import Utils
+from raspberry_paper_to_cot_pipeline.fetch_arxiv_paper_urls_by_category import ArxivPaperUrlFetcher
 
 
 def parse_arguments() -> argparse.Namespace:
@@ -96,12 +27,12 @@ def parse_arguments() -> argparse.Namespace:
     )
     parser.add_argument(
         "--begin",
-        default=DEFAULT_BEGIN_DATE,
+        default=constants.FETCH_DEFAULT_BEGIN_DATE,
         help="Start date for paper filtering (YYYY-MM-DD). Default: %(default)s",
     )
     parser.add_argument(
         "--end",
-        default=DEFAULT_END_DATE,
+        default=constants.FETCH_DEFAULT_END_DATE,
         help="End date for paper filtering (YYYY-MM-DD). Default: %(default)s",
     )
     parser.add_argument(
@@ -119,13 +50,14 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument(
         "--database",
         type=str,
-        help="Name of the SQLite database file. Default: base fetcher default",
+        default=constants.DEFAULT_DB_NAME,
+        help="Name of the SQLite database file. Default: %(default)s",
     )
     parser.add_argument("--debug", action="store_true", help="Enable debug mode")
     return parser.parse_args()
 
 
-class ArxivPaperFetcherCLI:
+class ArxivPaperUrlFetcherCLI:
     """
     Command-line interface for fetching arXiv papers.
 
@@ -149,15 +81,8 @@ class ArxivPaperFetcherCLI:
         self.list = list
         self.database = database
         self.debug = debug
-        self.setup_logging()
-
-    def setup_logging(self) -> None:
-        """Set up logging configuration."""
-        log_level = logging.DEBUG if self.debug else logging.INFO
-        logging.basicConfig(
-            level=log_level, format="%(asctime)s - %(levelname)s - %(message)s"
-        )
-        self.logger = logging.getLogger(__name__)
+        self.logger = Utils.setup_logging(__name__, self.debug)
+        self.utils = Utils(database=self.database, logger=self.logger)
 
     def validate_date(self, date_str: str, date_name: str) -> None:
         """
@@ -178,7 +103,7 @@ class ArxivPaperFetcherCLI:
 
     def fetch_arxiv_categories(self) -> Dict[str, str]:
         """Fetch arXiv categories from the official taxonomy page."""
-        response = requests.get(ARXIV_TAXONOMY_URL)
+        response = requests.get(constants.ARXIV_TAXONOMY_URL)
         soup = BeautifulSoup(response.text, "html.parser")
         categories = {}
         taxonomy_list = soup.find("div", id="category_taxonomy_list")
@@ -207,7 +132,7 @@ class ArxivPaperFetcherCLI:
         print(f"End date: {self.end}")
         print("Categories:")
         arxiv_taxonomy_map = self.fetch_arxiv_categories()
-        for category in DEFAULT_CATEGORIES:
+        for category in constants.ARXIV_DEFAULT_CATEGORIES:
             description = arxiv_taxonomy_map.get(category, "Unknown")
             print(f"* {category:<20} {description}")
 
@@ -222,7 +147,7 @@ class ArxivPaperFetcherCLI:
         """Get the list of categories to process."""
         if self.category:
             return [cat.strip() for cat in self.category.split(",")]
-        return DEFAULT_CATEGORIES
+        return constants.ARXIV_DEFAULT_CATEGORIES
 
     def run(self) -> None:
         """
@@ -249,7 +174,7 @@ class ArxivPaperFetcherCLI:
             self.validate_date(self.end, "--end")
 
             categories = self.get_categories()
-            fetcher = ArxivPaperFetcher(self.database, self.debug)
+            fetcher = ArxivPaperUrlFetcher(self.database, self.debug)
 
             for category in categories:
                 self.logger.info(f"Fetching papers for category: {category}")
@@ -268,7 +193,7 @@ class ArxivPaperFetcherCLI:
 def main():
     """Main entry point of the script."""
     args = parse_arguments()
-    cli = ArxivPaperFetcherCLI(
+    cli = ArxivPaperUrlFetcherCLI(
         begin=args.begin,
         end=args.end,
         category=args.category,

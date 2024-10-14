@@ -92,6 +92,7 @@ class PaperProfiler:
                            lwe_default_preset=self.profiling_preset,
                            logger=self.logger,
                            )
+        self.utils.setup_lwe()
 
     def run_lwe_template(self, paper_content: str) -> str:
         """

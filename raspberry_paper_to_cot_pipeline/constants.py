@@ -3,9 +3,6 @@ from pathlib import Path
 
 CWD = Path(os.getcwd())
 
-# System messages.
-SYSTEM_MESSAGE_COT_EXTRACTION = "You are a thinking agent responsible for developing a detailed, step-by-step thought process in response to a request, problem, or conversation. Your task is to break down the situation into a structured reasoning process. If feedback is provided, integrate it into your thought process for refinement."
-
 # LWE
 DEFAULT_LWE_PRESET = "claude-sonnet"
 DEFAULT_PAPER_PROFILER_TEMPLATE = "raspberry-paper-profiler.md"
@@ -14,7 +11,7 @@ LWE_CONFIG_DIR = CWD / "lwe" / "config"
 LWE_DATA_DIR = CWD / "lwe" / "storage"
 
 # Categories.
-DEFAULT_CATEGORIES = [
+ARXIV_DEFAULT_CATEGORIES = [
     "astro-ph.EP",
     "astro-ph.GA",
     "astro-ph.HE",
@@ -121,7 +118,8 @@ DEFAULT_DB_NAME = CWD / "papers.db"
 CREATE_TABLES_QUERY = """
 CREATE TABLE IF NOT EXISTS papers (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    paper_url TEXT UNIQUE,
+    paper_id TEXT UNIQUE,
+    paper_url TEXT,
     processing_status TEXT,
     criteria_clear_question INT DEFAULT 0,
     criteria_definitive_answer INT DEFAULT 0,

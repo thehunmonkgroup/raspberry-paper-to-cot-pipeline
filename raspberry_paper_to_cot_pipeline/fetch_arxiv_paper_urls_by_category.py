@@ -13,7 +13,6 @@ import sqlite3
 import requests
 import sys
 import signal
-from pathlib import Path
 from requests.exceptions import RequestException
 from dateutil.parser import parse as parse_date
 import xml.etree.ElementTree as ET
@@ -27,88 +26,19 @@ from tenacity import (
     retry_if_exception_type,
 )
 from typing import List, Tuple
-
-ARXIV_EXPORT_BASE = "https://export.arxiv.org"
-DEFAULT_DB_NAME = "papers.db"
-MAX_RESULTS_DEFAULT = 1000
-MAX_RESULTS_FALLBACK = 100
-CREATE_TABLES_QUERY = """
-CREATE TABLE IF NOT EXISTS papers (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    paper_id TEXT UNIQUE,
-    paper_url TEXT,
-    processing_status TEXT,
-    criteria_clear_question INT DEFAULT 0,
-    criteria_definitive_answer INT DEFAULT 0,
-    criteria_complex_reasoning INT DEFAULT 0,
-    criteria_coherent_structure INT DEFAULT 0,
-    criteria_layperson_comprehensible INT DEFAULT 0,
-    criteria_minimal_jargon INT DEFAULT 0,
-    criteria_illustrative_examples INT DEFAULT 0,
-    criteria_significant_insights INT DEFAULT 0,
-    criteria_verifiable_steps INT DEFAULT 0,
-    criteria_overall_suitability INT DEFAULT 0,
-    suitability_score INT DEFAULT 0
-);
-
-CREATE TABLE IF NOT EXISTS paper_categories (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    paper_id INTEGER,
-    category TEXT,
-    FOREIGN KEY (paper_id) REFERENCES papers(id),
-    UNIQUE(paper_id, category)
-);
-"""
-DEFAULT_PROCESSING_STATUS = "ready_to_clean"
-MAX_EMPTY_RESULTS_ATTEMPTS = 10
+from raspberry_paper_to_cot_pipeline import constants
+from raspberry_paper_to_cot_pipeline.utils import Utils
 
 
-class ArxivPaperFetcher:
+class ArxivPaperUrlFetcher:
     interrupt_received = False
 
-    def __init__(self, database=None, debug_mode=False):
-        self.setup_logging(debug_mode)
-        self.logger = logging.getLogger(__name__)
-        self.database = database or DEFAULT_DB_NAME
-        self.create_database()
-
-    def setup_logging(self, debug_mode):
-        """
-        Set up logging configuration.
-
-        Args:
-            debug_mode (bool): If True, set logging level to DEBUG, otherwise INFO.
-        """
-        log_level = logging.DEBUG if debug_mode else logging.INFO
-        logging.basicConfig(
-            level=log_level, format="%(asctime)s - %(levelname)s - %(message)s"
-        )
-
-    def create_database(self) -> None:
-        """
-        Conditionally creates an SQLite database with the required tables and columns.
-
-        This method connects to the SQLite database specified by self.database,
-        creates the necessary tables if they don't exist, and handles any errors
-        that may occur during the process.
-
-        Raises:
-            sqlite3.Error: If there's an issue with the SQLite operations.
-        """
-        db_path = Path(self.database)
-        self.logger.info(f"Creating/connecting to database: {db_path}")
-
-        try:
-            with sqlite3.connect(db_path) as conn:
-                cursor = conn.cursor()
-                cursor.executescript(CREATE_TABLES_QUERY)
-                conn.commit()
-            self.logger.info(f"Database '{db_path}' is ready.")
-        except sqlite3.Error as e:
-            self.logger.error(
-                f"An error occurred while creating database {db_path}: {e}"
-            )
-            raise
+    def __init__(self, database=None, debug=False):
+        self.database = database or constants.DEFAULT_DB_NAME
+        self.debug = debug
+        self.logger = Utils.setup_logging(__name__, self.debug)
+        self.utils = Utils(database=self.database, logger=self.logger)
+        self.utils.create_database()
 
     def fetch_arxiv_papers(
         self,
@@ -155,10 +85,10 @@ class ArxivPaperFetcher:
                     return []
                 entries = []
                 if root is False:
-                    if params["max_results"] == MAX_RESULTS_DEFAULT:
-                        params["max_results"] = MAX_RESULTS_FALLBACK
+                    if params["max_results"] == constants.FETCH_MAX_RESULTS_DEFAULT:
+                        params["max_results"] = constants.FETCH_MAX_RESULTS_FALLBACK
                         self.logger.warning(
-                            f"Reducing max_results to {MAX_RESULTS_FALLBACK} due to XML parsing error."
+                            f"Reducing max_results to {constants.FETCH_MAX_RESULTS_FALLBACK} due to XML parsing error."
                         )
                     attempts += 1
                 else:
@@ -197,7 +127,7 @@ class ArxivPaperFetcher:
         return {
             "search_query": f"({category_query})",
             "start": start_index,
-            "max_results": MAX_RESULTS_DEFAULT,
+            "max_results": constants.FETCH_MAX_RESULTS_DEFAULT,
             "sortBy": "lastUpdatedDate",
             "sortOrder": "ascending",
         }
@@ -251,9 +181,9 @@ class ArxivPaperFetcher:
         self, root, fetched, entries, results, date_filter_end, attempts
     ):
         """Determine if we should stop fetching more results."""
-        if attempts >= MAX_EMPTY_RESULTS_ATTEMPTS:
+        if attempts >= constants.FETCH_MAX_EMPTY_RESULTS_ATTEMPTS:
             self.logger.warning(
-                f"Reached maximum number of attempts ({MAX_EMPTY_RESULTS_ATTEMPTS}) without fetching any results. Stopping search."
+                f"Reached maximum number of attempts ({constants.FETCH_MAX_EMPTY_RESULTS_ATTEMPTS}) without fetching any results. Stopping search."
             )
             return True
         if root is False:
@@ -294,7 +224,7 @@ class ArxivPaperFetcher:
         processed_data = []
         for paper_id, url in arxiv_paper_data:
             path = urlparse(url).path
-            processed_url = f"{ARXIV_EXPORT_BASE}{path}"
+            processed_url = f"{constants.ARXIV_EXPORT_BASE}{path}"
             if not processed_url.endswith('.pdf'):
                 processed_url += '.pdf'
             processed_data.append((paper_id, processed_url))
@@ -321,7 +251,7 @@ class ArxivPaperFetcher:
                     INSERT OR IGNORE INTO papers (paper_id, paper_url, processing_status)
                     VALUES (?, ?, ?)
                     """,
-                    [(paper_id, url, DEFAULT_PROCESSING_STATUS) for paper_id, url in paper_data],
+                    [(paper_id, url, constants.STATUS_READY_TO_CLEAN) for paper_id, url in paper_data],
                 )
 
                 # Get the paper_ids for the inserted/existing papers
@@ -456,7 +386,7 @@ def parse_arguments():
     parser.add_argument(
         "--database",
         type=str,
-        default=DEFAULT_DB_NAME,
+        default=constants.DEFAULT_DB_NAME,
         help="Name of the SQLite database file (default: %(default)s)",
     )
     parser.add_argument("--debug", action="store_true", help="Enable debug logging.")
@@ -468,7 +398,7 @@ def signal_handler(signum, frame):
     Handle interrupt signal (Ctrl+C).
     """
     print("\nInterrupt received. Exiting gracefully...")
-    ArxivPaperFetcher.interrupt_received = True
+    ArxivPaperUrlFetcher.interrupt_received = True
 
 
 def main():
@@ -479,7 +409,7 @@ def main():
     signal.signal(signal.SIGINT, signal_handler)
 
     args = parse_arguments()
-    fetcher = ArxivPaperFetcher(args.database, debug_mode=args.debug)
+    fetcher = ArxivPaperUrlFetcher(args.database, debug=args.debug)
     try:
         fetcher.run(
             args.category,

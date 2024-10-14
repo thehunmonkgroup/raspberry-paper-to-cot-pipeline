@@ -4,14 +4,25 @@ import sqlite3
 import pymupdf4llm
 import re
 import os
+from contextlib import contextmanager
 from urllib.parse import urlparse
 from pathlib import Path
-from typing import Optional, List, Dict, Any
+from typing import Optional, Dict, Generator
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 from lwe.core.config import Config
 from lwe import ApiBackend
 from raspberry_paper_to_cot_pipeline import constants
 
+
+@contextmanager
+def get_db_connection(database_path):
+    conn = sqlite3.connect(database_path, timeout=30)
+    conn.execute("PRAGMA journal_mode=WAL")
+    conn.isolation_level = "IMMEDIATE"
+    try:
+        yield conn
+    finally:
+        conn.close()
 
 class Utils:
     def __init__(self,
@@ -28,26 +39,30 @@ class Utils:
         self.pdf_cache_dir = pdf_cache_dir
         self.lwe_default_preset = lwe_default_preset
         self.logger = logger if logger else self.setup_logging("Utils", False)
-        self.lwe_backend = self.setup_lwe()
+        self.lwe_backend = None
 
     @staticmethod
     def setup_logging(logger_name: str, debug: bool) -> logging.Logger:
-        """Set up logging configuration."""
-        logging.basicConfig(
-            level=logging.DEBUG if debug else logging.INFO,
-            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        )
-        return logging.getLogger(logger_name)
+        """Set up logging configuration for a specific logger."""
+        logging.getLogger().addHandler(logging.NullHandler())
+        logger = logging.getLogger(logger_name)
+        logger.setLevel(logging.DEBUG if debug else logging.INFO)
+        logger.propagate = False
+        ch = logging.StreamHandler()
+        ch.setLevel(logging.DEBUG if debug else logging.INFO)
+        formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        ch.setFormatter(formatter)
+        logger.addHandler(ch)
+        return logger
 
     def setup_lwe(self) -> ApiBackend:
         """Set up LWE configuration and API backend."""
         config = Config(config_dir=str(constants.LWE_CONFIG_DIR), data_dir=str(constants.LWE_DATA_DIR))
         config.load_from_file()
-        config.set("debug.log.enabled", True)
         config.set("model.default_preset", self.lwe_default_preset)
-        lwe_backend = ApiBackend(config)
-        lwe_backend.set_return_only(True)
-        return lwe_backend
+        self.lwe_backend = ApiBackend(config)
+        self.lwe_backend.set_return_only(True)
+        return self.lwe_backend
 
     def run_lwe_template(self, template: str, template_vars: dict, overrides: dict = None) -> str:
         """
@@ -58,6 +73,9 @@ class Utils:
         :param template_vars: Template variables
         :return: Response on success
         """
+        # Check if self.lwe_backend is None, if so, raise a RuntimeError
+        if self.lwe_backend is None:
+            raise RuntimeError("LWE backend not initialized")
         overrides = overrides or {}
         success, response, user_message = self.lwe_backend.run_template(template, template_vars, overrides)
         if not success:
@@ -164,9 +182,39 @@ class Utils:
         )
         return match.group(0) if match else None
 
-    def fetch_papers_by_processing_status(self, status: str, order_by: str, limit: int = 1) -> List[Dict[str, Any]]:
+    def create_database(self) -> None:
         """
-        Fetch papers from the database.
+        Conditionally creates an SQLite database with the required tables and columns.
+
+        This method connects to the SQLite database specified by self.database,
+        creates the necessary tables if they don't exist, and handles any errors
+        that may occur during the process.
+
+        Raises:
+            sqlite3.Error: If there's an issue with the SQLite operations.
+        """
+        db_path = Path(self.database)
+        self.logger.info(f"Creating/connecting to database: {db_path}")
+
+        try:
+            with sqlite3.connect(db_path) as conn:
+                cursor = conn.cursor()
+                cursor.executescript(constants.CREATE_TABLES_QUERY)
+                conn.commit()
+            self.logger.info(f"Database '{db_path}' is ready.")
+        except sqlite3.Error as e:
+            self.logger.error(
+                f"An error occurred while creating database {db_path}: {e}"
+            )
+            raise
+
+    def fetch_papers_by_processing_status(self, status: str, order_by: Optional[str] = "RANDOM()", limit: Optional[int] = 1) -> Generator[sqlite3.Row, None, None]:
+        """
+        Fetch papers from the database, by processing status and order them by the given field.
+
+        :param status: Processing status of the papers to fetch
+        :param order_by: Field to order the papers by
+        :param limit: Maximum number of papers to fetch
 
         :return: List of dictionaries containing paper information
         """
@@ -179,12 +227,17 @@ class Utils:
             FROM papers
             WHERE processing_status = ?
             ORDER BY {order_by}
-            LIMIT ?
             """
-            cursor.execute(query, (status, limit))
-            papers = [{"id": row[0], "paper_id": row[1], "paper_url": row[2]} for row in cursor.fetchall()]
-            self.logger.debug(f"Fetched {len(papers)} papers from the database")
-            return papers
+            params = (status,)
+            if limit is not None:
+                query += " LIMIT ?"
+                params += (limit,)
+            with get_db_connection(self.database) as conn:
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+                cursor.execute(query, params)
+                for row in cursor:
+                    yield row
         except sqlite3.Error as e:
             self.logger.error(f"Database error: {e}")
             raise

@@ -10,6 +10,9 @@ chat:
 debug:
   log:
     enabled: true
+log:
+  console:
+    level: error
 plugins:
   enabled:
     - gist
