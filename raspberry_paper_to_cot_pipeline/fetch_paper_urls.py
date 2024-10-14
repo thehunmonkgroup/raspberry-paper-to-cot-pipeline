@@ -17,7 +17,9 @@ from bs4 import BeautifulSoup
 
 from raspberry_paper_to_cot_pipeline import constants
 from raspberry_paper_to_cot_pipeline.utils import Utils
-from raspberry_paper_to_cot_pipeline.fetch_arxiv_paper_urls_by_category import ArxivPaperUrlFetcher
+from raspberry_paper_to_cot_pipeline.fetch_arxiv_paper_urls_by_category import (
+    ArxivPaperUrlFetcher,
+)
 
 
 def parse_arguments() -> argparse.Namespace:

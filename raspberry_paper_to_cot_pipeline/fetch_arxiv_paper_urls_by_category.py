@@ -170,9 +170,11 @@ class ArxivPaperUrlFetcher:
             return "BREAK"
         id_url = entry.find("{http://www.w3.org/2005/Atom}id").text
         paper_id = os.path.basename(urlparse(id_url).path)
-        pdf_link = entry.find("{http://www.w3.org/2005/Atom}link[@title='pdf'][@type='application/pdf']")
+        pdf_link = entry.find(
+            "{http://www.w3.org/2005/Atom}link[@title='pdf'][@type='application/pdf']"
+        )
         if pdf_link is not None:
-            return paper_id, pdf_link.get('href')
+            return paper_id, pdf_link.get("href")
         else:
             self.logger.warning(f"PDF link not found for entry: {paper_id}")
             return None
@@ -225,8 +227,8 @@ class ArxivPaperUrlFetcher:
         for paper_id, url in arxiv_paper_data:
             path = urlparse(url).path
             processed_url = f"{constants.ARXIV_EXPORT_BASE}{path}"
-            if not processed_url.endswith('.pdf'):
-                processed_url += '.pdf'
+            if not processed_url.endswith(".pdf"):
+                processed_url += ".pdf"
             processed_data.append((paper_id, processed_url))
         return processed_data
 
@@ -251,7 +253,10 @@ class ArxivPaperUrlFetcher:
                     INSERT OR IGNORE INTO papers (paper_id, paper_url, processing_status)
                     VALUES (?, ?, ?)
                     """,
-                    [(paper_id, url, constants.STATUS_READY_TO_CLEAN) for paper_id, url in paper_data],
+                    [
+                        (paper_id, url, constants.STATUS_READY_TO_CLEAN)
+                        for paper_id, url in paper_data
+                    ],
                 )
 
                 # Get the paper_ids for the inserted/existing papers
@@ -273,7 +278,11 @@ class ArxivPaperUrlFetcher:
                     INSERT OR IGNORE INTO paper_categories (paper_id, category)
                     VALUES (?, ?)
                     """,
-                    [(ids_map[paper_id], category) for paper_id in paper_ids if paper_id in ids_map],
+                    [
+                        (ids_map[paper_id], category)
+                        for paper_id in paper_ids
+                        if paper_id in ids_map
+                    ],
                 )
                 self.logger.info(f"Inserted {cursor.rowcount} new category entries")
 

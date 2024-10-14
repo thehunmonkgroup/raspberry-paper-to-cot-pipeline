@@ -7,7 +7,12 @@ from contextlib import contextmanager
 from urllib.parse import urlparse
 from pathlib import Path
 from typing import Optional, List, Dict, Generator, Any
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_exponential,
+    retry_if_exception_type,
+)
 from lwe.core.config import Config
 from lwe import ApiBackend
 from raspberry_paper_to_cot_pipeline import constants
@@ -36,8 +41,12 @@ class Utils:
     def __init__(
         self,
         database: Optional[str] = constants.DEFAULT_DB_NAME,
-        inference_artifacts_directory: Optional[str] = constants.DEFAULT_INFERENCE_ARTIFACTS_DIR,
-        training_artifacts_directory: Optional[str] = constants.DEFAULT_TRAINING_ARTIFACTS_DIR,
+        inference_artifacts_directory: Optional[
+            str
+        ] = constants.DEFAULT_INFERENCE_ARTIFACTS_DIR,
+        training_artifacts_directory: Optional[
+            str
+        ] = constants.DEFAULT_TRAINING_ARTIFACTS_DIR,
         pdf_cache_dir: Optional[str] = constants.DEFAULT_PDF_CACHE_DIR,
         lwe_default_preset: Optional[str] = constants.DEFAULT_LWE_PRESET,
         logger: Optional[logging.Logger] = None,
@@ -69,21 +78,31 @@ class Utils:
         logger.propagate = False
         ch = logging.StreamHandler()
         ch.setLevel(logging.DEBUG if debug else logging.INFO)
-        formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        formatter = logging.Formatter(
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        )
         ch.setFormatter(formatter)
         logger.addHandler(ch)
         return logger
 
     def setup_lwe(self) -> ApiBackend:
         """Set up LWE configuration and API backend."""
-        config = Config(config_dir=str(constants.LWE_CONFIG_DIR), data_dir=str(constants.LWE_DATA_DIR))
+        config = Config(
+            config_dir=str(constants.LWE_CONFIG_DIR),
+            data_dir=str(constants.LWE_DATA_DIR),
+        )
         config.load_from_file()
         config.set("model.default_preset", self.lwe_default_preset)
         self.lwe_backend = ApiBackend(config)
         self.lwe_backend.set_return_only(True)
         return self.lwe_backend
 
-    def run_lwe_template(self, template: str, template_vars: Dict[str, Any], overrides: Optional[Dict[str, Any]] = None) -> str:
+    def run_lwe_template(
+        self,
+        template: str,
+        template_vars: Dict[str, Any],
+        overrides: Optional[Dict[str, Any]] = None,
+    ) -> str:
         """
         Run the LWE template with the given variables.
 
@@ -96,7 +115,9 @@ class Utils:
         if self.lwe_backend is None:
             raise RuntimeError("LWE backend not initialized")
         overrides = overrides or {}
-        success, response, user_message = self.lwe_backend.run_template(template, template_vars, overrides)
+        success, response, user_message = self.lwe_backend.run_template(
+            template, template_vars, overrides
+        )
         if not success:
             message = f"Error running LWE template: {user_message}"
             self.logger.error(message)
@@ -116,7 +137,7 @@ class Utils:
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=1, max=10),
-        retry=retry_if_exception_type(requests.RequestException)
+        retry=retry_if_exception_type(requests.RequestException),
     )
     def download_pdf(self, paper: Dict[str, Any]) -> str:
         """
@@ -227,7 +248,7 @@ class Utils:
         status: str,
         select_columns: Optional[List[str]] = constants.DEFAULT_FETCH_BY_STATUS_COLUMNS,
         order_by: Optional[str] = "RANDOM()",
-        limit: Optional[int] = 1
+        limit: Optional[int] = 1,
     ) -> Generator[sqlite3.Row, None, None]:
         """
         Fetch papers from the database, by processing status and order them by the given field.
@@ -274,9 +295,7 @@ class Utils:
                 cursor = conn.cursor()
 
                 if data:
-                    update_fields = ", ".join(
-                        [f"{field} = ?" for field in data.keys()]
-                    )
+                    update_fields = ", ".join([f"{field} = ?" for field in data.keys()])
                     update_query = f"""
                     UPDATE papers SET
                         {update_fields}

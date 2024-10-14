@@ -30,21 +30,41 @@ def parse_arguments() -> argparse.Namespace:
         default=constants.DEFAULT_LWE_PRESET,
         help="Model configuration used to perform the profiling, default: %(default)s",
     )
-    parser.add_argument("--database", type=str, default=constants.DEFAULT_DB_NAME, help="Path to the SQLite database, default: %(default)s")
     parser.add_argument(
-        "--inference-artifacts-directory", type=str, default=constants.DEFAULT_INFERENCE_ARTIFACTS_DIR, help="Directory for inference artifacts, default: %(default)s"
+        "--database",
+        type=str,
+        default=constants.DEFAULT_DB_NAME,
+        help="Path to the SQLite database, default: %(default)s",
     )
     parser.add_argument(
-        "--limit", type=int, default=1, help="Number of papers to process, default: %(default)s"
+        "--inference-artifacts-directory",
+        type=str,
+        default=constants.DEFAULT_INFERENCE_ARTIFACTS_DIR,
+        help="Directory for inference artifacts, default: %(default)s",
     )
     parser.add_argument(
-        "--order_by", type=str, default="RANDOM()", help="Order of paper selection, default: %(default)s"
+        "--limit",
+        type=int,
+        default=1,
+        help="Number of papers to process, default: %(default)s",
     )
     parser.add_argument(
-        "--pdf-cache-dir", type=str, default=constants.DEFAULT_PDF_CACHE_DIR, help="PDF cache directory, default: %(default)s"
+        "--order_by",
+        type=str,
+        default="RANDOM()",
+        help="Order of paper selection, default: %(default)s",
     )
     parser.add_argument(
-        "--template", type=str, default=constants.DEFAULT_PAPER_PROFILER_TEMPLATE, help="LWE paper profiler template name, default: %(default)s"
+        "--pdf-cache-dir",
+        type=str,
+        default=constants.DEFAULT_PDF_CACHE_DIR,
+        help="PDF cache directory, default: %(default)s",
+    )
+    parser.add_argument(
+        "--template",
+        type=str,
+        default=constants.DEFAULT_PAPER_PROFILER_TEMPLATE,
+        help="LWE paper profiler template name, default: %(default)s",
     )
     parser.add_argument("--debug", action="store_true", help="Enable debug logging")
     return parser.parse_args()
@@ -87,12 +107,13 @@ class PaperProfiler:
         self.template = template
         self.debug = debug
         self.logger = Utils.setup_logging(__name__, self.debug)
-        self.utils = Utils(database=self.database,
-                           inference_artifacts_directory=self.inference_artifacts_directory,
-                           pdf_cache_dir=self.pdf_cache_dir,
-                           lwe_default_preset=self.profiling_preset,
-                           logger=self.logger,
-                           )
+        self.utils = Utils(
+            database=self.database,
+            inference_artifacts_directory=self.inference_artifacts_directory,
+            pdf_cache_dir=self.pdf_cache_dir,
+            lwe_default_preset=self.profiling_preset,
+            logger=self.logger,
+        )
         self.utils.setup_lwe()
 
     def run_lwe_template(self, paper_content: str) -> str:
@@ -181,22 +202,28 @@ Raw Inference Output:
             criteria = self.parse_xml(xml_content)
             self.write_inference_artifact(paper, criteria, xml_content)
             data = copy.deepcopy(criteria)
-            data['processing_status'] = constants.STATUS_PROFILED
-            self.utils.update_paper(paper['id'], data)
+            data["processing_status"] = constants.STATUS_PROFILED
+            self.utils.update_paper(paper["id"], data)
             self.logger.info(f"Successfully profiled paper {paper['paper_id']}")
         except Exception as e:
             self.logger.error(f"Error processing paper {paper['paper_id']}: {str(e)}")
-            self.utils.update_paper_status(paper['id'], 'failed_profiling')
+            self.utils.update_paper_status(paper["id"], "failed_profiling")
 
     def run(self) -> None:
         """Execute the main logic of the paper profiling process."""
         try:
-            papers = self.utils.fetch_papers_by_processing_status(status=constants.STATUS_VERIFIED, order_by=self.order_by, limit=self.limit)
+            papers = self.utils.fetch_papers_by_processing_status(
+                status=constants.STATUS_VERIFIED,
+                order_by=self.order_by,
+                limit=self.limit,
+            )
             for paper in papers:
                 self.process_paper(paper)
             self.logger.info("Paper profiling process completed")
         except Exception as e:
-            self.logger.error(f"An error occurred during the paper profiling process: {e}")
+            self.logger.error(
+                f"An error occurred during the paper profiling process: {e}"
+            )
             sys.exit(1)
 
 

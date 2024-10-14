@@ -15,9 +15,20 @@ from raspberry_paper_to_cot_pipeline.utils import Utils
 
 def parse_arguments() -> argparse.Namespace:
     """Parse command-line arguments."""
-    parser = argparse.ArgumentParser(description="Score papers based on profiling criteria.")
-    parser.add_argument("--database", type=str, default=constants.DEFAULT_DB_NAME, help="Path to the SQLite database. Default: %(default)s")
-    parser.add_argument("--limit", type=int, help="Optional. Limit the number of papers to score. Default: no limit")
+    parser = argparse.ArgumentParser(
+        description="Score papers based on profiling criteria."
+    )
+    parser.add_argument(
+        "--database",
+        type=str,
+        default=constants.DEFAULT_DB_NAME,
+        help="Path to the SQLite database. Default: %(default)s",
+    )
+    parser.add_argument(
+        "--limit",
+        type=int,
+        help="Optional. Limit the number of papers to score. Default: no limit",
+    )
     parser.add_argument("--debug", action="store_true", help="Enable debug logging")
     return parser.parse_args()
 
@@ -76,8 +87,14 @@ class PaperScorer:
 
         :return: Generator of paper data
         """
-        select_columns = constants.DEFAULT_FETCH_BY_STATUS_COLUMNS + self.build_criteria_columns()
-        return self.utils.fetch_papers_by_processing_status(status=constants.STATUS_PROFILED, select_columns=select_columns, limit=self.limit)
+        select_columns = (
+            constants.DEFAULT_FETCH_BY_STATUS_COLUMNS + self.build_criteria_columns()
+        )
+        return self.utils.fetch_papers_by_processing_status(
+            status=constants.STATUS_PROFILED,
+            select_columns=select_columns,
+            limit=self.limit,
+        )
 
     def process_paper(self, paper: sqlite3.Row) -> None:
         """
@@ -90,12 +107,16 @@ class PaperScorer:
             "processing_status": constants.STATUS_SCORED,
             "suitability_score": suitability_score,
         }
-        self.utils.update_paper(paper['id'], data)
-        self.logger.info(f"Scored paper {paper['paper_id']}, suitability score: {suitability_score}")
+        self.utils.update_paper(paper["id"], data)
+        self.logger.info(
+            f"Scored paper {paper['paper_id']}, suitability score: {suitability_score}"
+        )
 
     def run(self) -> None:
         """Run the paper scoring process."""
-        self.logger.info(f"Starting paper scoring process. Database: {self.database}, Limit: {self.limit}")
+        self.logger.info(
+            f"Starting paper scoring process. Database: {self.database}, Limit: {self.limit}"
+        )
         try:
             papers = self.fetch_papers_for_scoring()
             processed_count = 0
@@ -104,9 +125,13 @@ class PaperScorer:
                 processed_count += 1
                 if processed_count % 1000 == 0:
                     self.logger.info(f"Processed {processed_count} papers so far.")
-            self.logger.info(f"Paper scoring process completed. Total papers scored: {processed_count}")
+            self.logger.info(
+                f"Paper scoring process completed. Total papers scored: {processed_count}"
+            )
         except Exception as e:
-            self.logger.error(f"An error occurred during the paper scoring process: {e}")
+            self.logger.error(
+                f"An error occurred during the paper scoring process: {e}"
+            )
             sys.exit(1)
 
 

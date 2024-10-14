@@ -143,7 +143,7 @@ CREATE TABLE IF NOT EXISTS paper_categories (
 );
 """
 DEFAULT_FETCH_BY_STATUS_COLUMNS = ["id", "paper_id", "paper_url"]
-STATUS_READY_TO_CLEAN = 'ready_to_clean'
+STATUS_READY_TO_CLEAN = "ready_to_clean"
 STATUS_VERIFIED = "verified"
 STATUS_MISSING = "missing"
 STATUS_PROFILED = "profiled"

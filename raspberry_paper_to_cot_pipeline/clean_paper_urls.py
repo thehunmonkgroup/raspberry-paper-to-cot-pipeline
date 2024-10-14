@@ -6,7 +6,12 @@ and updating or deleting entries accordingly.
 
 import argparse
 from typing import Optional
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_exponential,
+    retry_if_exception_type,
+)
 import requests
 import sys
 
@@ -16,9 +21,20 @@ from raspberry_paper_to_cot_pipeline.utils import Utils
 
 def parse_arguments() -> argparse.Namespace:
     """Parse command-line arguments."""
-    parser = argparse.ArgumentParser(description="Clean paper URLs in the SQLite database.")
-    parser.add_argument("--database", type=str, default=constants.DEFAULT_DB_NAME, help="Path to the SQLite database. Default: %(default)s")
-    parser.add_argument("--limit", type=int, help="Optional. Limit the number of papers to clean. Default: no limit")
+    parser = argparse.ArgumentParser(
+        description="Clean paper URLs in the SQLite database."
+    )
+    parser.add_argument(
+        "--database",
+        type=str,
+        default=constants.DEFAULT_DB_NAME,
+        help="Path to the SQLite database. Default: %(default)s",
+    )
+    parser.add_argument(
+        "--limit",
+        type=int,
+        help="Optional. Limit the number of papers to clean. Default: no limit",
+    )
     parser.add_argument("--debug", action="store_true", help="Enable debug logging")
     return parser.parse_args()
 
@@ -46,7 +62,7 @@ class PaperCleaner:
         stop=stop_after_attempt(2),
         wait=wait_exponential(multiplier=1, min=1, max=5),
         retry=retry_if_exception_type(requests.RequestException),
-        reraise=True
+        reraise=True,
     )
     def check_url_accessibility(self, url: str) -> bool:
         """
@@ -87,27 +103,39 @@ class PaperCleaner:
         try:
             if self.is_url_accessible(paper_url):
                 self.utils.update_paper_status(paper_id, constants.STATUS_VERIFIED)
-                self.logger.info(f"Paper ID {paper_id} ({paper_url}) is accessible. Status updated to 'verified'.")
+                self.logger.info(
+                    f"Paper ID {paper_id} ({paper_url}) is accessible. Status updated to 'verified'."
+                )
             else:
                 self.utils.update_paper_status(paper_id, constants.STATUS_MISSING)
-                self.logger.warning(f"Paper ID {paper_id} ({paper_url}) is inaccessible. Marked as missing in the database.")
+                self.logger.warning(
+                    f"Paper ID {paper_id} ({paper_url}) is inaccessible. Marked as missing in the database."
+                )
         except Exception as e:
             self.logger.error(f"Error processing paper {paper_id} ({paper_url}): {e}")
 
     def run(self) -> None:
         """Run the paper cleaning process."""
-        self.logger.info(f"Starting paper cleaning process. Database: {self.database}, Limit: {self.limit}")
+        self.logger.info(
+            f"Starting paper cleaning process. Database: {self.database}, Limit: {self.limit}"
+        )
         try:
-            papers = self.utils.fetch_papers_by_processing_status(status=constants.STATUS_READY_TO_CLEAN, limit=self.limit)
+            papers = self.utils.fetch_papers_by_processing_status(
+                status=constants.STATUS_READY_TO_CLEAN, limit=self.limit
+            )
             processed_count = 0
             for paper in papers:
                 self.process_paper(paper["id"], paper["paper_url"])
                 processed_count += 1
                 if processed_count % 1000 == 0:
                     self.logger.info(f"Processed {processed_count} papers so far.")
-            self.logger.info(f"Paper cleaning process completed. Total papers processed: {processed_count}")
+            self.logger.info(
+                f"Paper cleaning process completed. Total papers processed: {processed_count}"
+            )
         except Exception as e:
-            self.logger.error(f"An error occurred during the paper cleaning process: {e}")
+            self.logger.error(
+                f"An error occurred during the paper cleaning process: {e}"
+            )
             sys.exit(1)
 
 
