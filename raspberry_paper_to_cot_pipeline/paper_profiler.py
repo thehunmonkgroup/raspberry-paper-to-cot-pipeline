@@ -166,7 +166,7 @@ Raw Inference Output:
 
     def run(self) -> None:
         """Execute the main logic of the paper profiling process."""
-        papers = self.utils.fetch_papers_by_processing_status(constants.STATUS_VERIFIED, self.order_by, self.limit)
+        papers = self.utils.fetch_papers_by_processing_status(status=constants.STATUS_VERIFIED, order_by=self.order_by, limit=self.limit)
         for paper in papers:
             try:
                 text = self.utils.get_pdf_text(paper)
@@ -179,9 +179,9 @@ Raw Inference Output:
                 data = copy.deepcopy(criteria)
                 data['processing_status'] = constants.STATUS_PROFILED
                 self.utils.update_paper(paper['id'], data)
-                self.logger.info(f"Successfully profiled paper {paper['id']}")
+                self.logger.info(f"Successfully profiled paper {paper['paper_id']}")
             except Exception as e:
-                self.logger.error(f"Error processing paper {paper['id']}: {str(e)}")
+                self.logger.error(f"Error processing paper {paper['paper_id']}: {str(e)}")
                 self.utils.update_paper_status(paper['id'], 'failed_profiling')
         self.logger.info("Paper profiling process completed")
 

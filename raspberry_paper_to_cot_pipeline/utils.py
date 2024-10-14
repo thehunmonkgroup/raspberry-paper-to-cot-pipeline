@@ -7,7 +7,7 @@ import os
 from contextlib import contextmanager
 from urllib.parse import urlparse
 from pathlib import Path
-from typing import Optional, Dict, Generator
+from typing import Optional, List, Dict, Generator
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 from lwe.core.config import Config
 from lwe import ApiBackend
@@ -208,7 +208,7 @@ class Utils:
             )
             raise
 
-    def fetch_papers_by_processing_status(self, status: str, order_by: Optional[str] = "RANDOM()", limit: Optional[int] = 1) -> Generator[sqlite3.Row, None, None]:
+    def fetch_papers_by_processing_status(self, status: str, select_columns: Optional[List[str]] = constants.DEFAULT_FETCH_BY_STATUS_COLUMNS, order_by: Optional[str] = "RANDOM()", limit: Optional[int] = 1) -> Generator[sqlite3.Row, None, None]:
         """
         Fetch papers from the database, by processing status and order them by the given field.
 
@@ -219,11 +219,12 @@ class Utils:
         :return: List of dictionaries containing paper information
         """
         conn = None
+        columns = ", ".join(select_columns)
         try:
             conn = sqlite3.connect(self.database)
             cursor = conn.cursor()
             query = f"""
-            SELECT id, paper_id, paper_url
+            SELECT {columns}
             FROM papers
             WHERE processing_status = ?
             ORDER BY {order_by}

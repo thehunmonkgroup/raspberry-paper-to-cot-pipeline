@@ -13,6 +13,7 @@ raspberry-paper-profiler = "raspberry_paper_to_cot_pipeline.paper_profiler:main"
 raspberry-fetch-paper-urls = "raspberry_paper_to_cot_pipeline.fetch_paper_urls:main"
 raspberry-fetch-arxiv-paper-urls-by-category = "raspberry_paper_to_cot_pipeline.fetch_arxiv_paper_urls_by_category:main"
 raspberry-clean-paper-urls = "raspberry_paper_to_cot_pipeline.clean_paper_urls:main"
+raspberry-paper-scorer = "raspberry_paper_to_cot_pipeline.paper_scorer:main"
 
 [tool.setuptools.packages.find]
 include = ["raspberry_paper_to_cot_pipeline*"]
