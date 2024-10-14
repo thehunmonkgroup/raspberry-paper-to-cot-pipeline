@@ -11,7 +11,7 @@ and can dynamically fetch the latest category taxonomy from the arXiv website.
 import argparse
 import sys
 from datetime import datetime
-from typing import List, Dict, Optional
+from typing import List, Dict
 import requests
 from bs4 import BeautifulSoup
 
@@ -74,6 +74,17 @@ class ArxivPaperUrlFetcherCLI:
         database: str,
         debug: bool,
     ):
+        """
+        Initialize the ArxivPaperUrlFetcherCLI.
+
+        :param begin: Start date for paper filtering
+        :param end: End date for paper filtering
+        :param category: Comma-separated list of categories
+        :param config: Flag to display current configuration
+        :param list: Flag to display all available categories
+        :param database: Name of the SQLite database file
+        :param debug: Flag to enable debug mode
+        """
         self.begin = begin
         self.end = end
         self.category = category
@@ -88,22 +99,25 @@ class ArxivPaperUrlFetcherCLI:
         """
         Validate the format of a date string.
 
-        Args:
-            date_str (str): The date string to validate.
-            date_name (str): The name of the date parameter (for error reporting).
-
-        Raises:
-            SystemExit: If the date format is invalid, exits the program with status code 1.
+        :param date_str: The date string to validate
+        :param date_name: The name of the date parameter (for error reporting)
+        :raises ValueError: If the date format is invalid
         """
         try:
             datetime.strptime(date_str, "%Y-%m-%d")
         except ValueError:
             self.logger.error(f"Invalid date format for {date_name}. Use YYYY-MM-DD.")
-            sys.exit(1)
+            raise ValueError(f"Invalid date format for {date_name}")
 
     def fetch_arxiv_categories(self) -> Dict[str, str]:
-        """Fetch arXiv categories from the official taxonomy page."""
+        """
+        Fetch arXiv categories from the official taxonomy page.
+
+        :return: Dictionary of category codes and names
+        :raises requests.RequestException: If there's an error fetching the categories
+        """
         response = requests.get(constants.ARXIV_TAXONOMY_URL)
+        response.raise_for_status()
         soup = BeautifulSoup(response.text, "html.parser")
         categories = {}
         taxonomy_list = soup.find("div", id="category_taxonomy_list")
@@ -144,7 +158,11 @@ class ArxivPaperUrlFetcherCLI:
             print(f"* {category:<20} {description}")
 
     def get_categories(self) -> List[str]:
-        """Get the list of categories to process."""
+        """
+        Get the list of categories to process.
+
+        :return: List of category codes
+        """
         if self.category:
             return [cat.strip() for cat in self.category.split(",")]
         return constants.ARXIV_DEFAULT_CATEGORIES
@@ -157,8 +175,7 @@ class ArxivPaperUrlFetcherCLI:
         the provided command-line arguments. It handles configuration display, category
         listing, date validation, and paper fetching for each specified category.
 
-        Raises:
-            SystemExit: If there's an error during the process, exits with status code 1.
+        :raises Exception: For any other unexpected errors
         """
         try:
             self.fetch_arxiv_categories()

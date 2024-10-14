@@ -7,11 +7,11 @@ and updating or deleting entries accordingly.
 import argparse
 from typing import Optional
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+import requests
+import sys
 
 from raspberry_paper_to_cot_pipeline import constants
 from raspberry_paper_to_cot_pipeline.utils import Utils
-
-import requests
 
 
 def parse_arguments() -> argparse.Namespace:
@@ -54,6 +54,7 @@ class PaperCleaner:
 
         :param url: The URL to check
         :return: True if accessible, False otherwise
+        :raises requests.RequestException: If the URL is not accessible
         """
         response = requests.head(url, allow_redirects=True, timeout=15)
         if response.status_code != 200:
@@ -83,30 +84,31 @@ class PaperCleaner:
         :param paper_url: The URL of the paper to check
         """
         self.logger.info(f"Processing paper ID {paper_id} with URL: {paper_url}")
-        if self.is_url_accessible(paper_url):
-            try:
+        try:
+            if self.is_url_accessible(paper_url):
                 self.utils.update_paper_status(paper_id, constants.STATUS_VERIFIED)
                 self.logger.info(f"Paper ID {paper_id} ({paper_url}) is accessible. Status updated to 'verified'.")
-            except Exception as e:
-                self.logger.error(f"Failed to update status of paper {paper_id} ({paper_url}): {e}")
-        else:
-            try:
+            else:
                 self.utils.update_paper_status(paper_id, constants.STATUS_MISSING)
                 self.logger.warning(f"Paper ID {paper_id} ({paper_url}) is inaccessible. Marked as missing in the database.")
-            except Exception as e:
-                self.logger.error(f"Failed to mark paper as missing {paper_id} ({paper_url}): {e}")
+        except Exception as e:
+            self.logger.error(f"Error processing paper {paper_id} ({paper_url}): {e}")
 
     def run(self) -> None:
         """Run the paper cleaning process."""
         self.logger.info(f"Starting paper cleaning process. Database: {self.database}, Limit: {self.limit}")
-        papers = self.utils.fetch_papers_by_processing_status(status=constants.STATUS_READY_TO_CLEAN, limit=self.limit)
-        processed_count = 0
-        for paper in papers:
-            self.process_paper(paper["id"], paper["paper_url"])
-            processed_count += 1
-            if processed_count % 1000 == 0:
-                self.logger.info(f"Processed {processed_count} papers so far.")
-        self.logger.info(f"Paper cleaning process completed. Total papers processed: {processed_count}")
+        try:
+            papers = self.utils.fetch_papers_by_processing_status(status=constants.STATUS_READY_TO_CLEAN, limit=self.limit)
+            processed_count = 0
+            for paper in papers:
+                self.process_paper(paper["id"], paper["paper_url"])
+                processed_count += 1
+                if processed_count % 1000 == 0:
+                    self.logger.info(f"Processed {processed_count} papers so far.")
+            self.logger.info(f"Paper cleaning process completed. Total papers processed: {processed_count}")
+        except Exception as e:
+            self.logger.error(f"An error occurred during the paper cleaning process: {e}")
+            sys.exit(1)
 
 
 def main():

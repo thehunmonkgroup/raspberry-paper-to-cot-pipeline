@@ -9,7 +9,8 @@ profiles the papers, and updates the results in the database.
 import argparse
 import copy
 import xml.etree.ElementTree as ET
-from typing import Dict
+from typing import Dict, Any
+import sys
 from raspberry_paper_to_cot_pipeline import constants
 from raspberry_paper_to_cot_pipeline.utils import Utils
 
@@ -100,10 +101,10 @@ class PaperProfiler:
 
         :param paper_content: Extracted text content of the paper
         :return: Response on success
+        :raises RuntimeError: If LWE template execution fails
         """
         template_vars = {"paper": paper_content}
         return self.utils.run_lwe_template(self.template, template_vars)
-
 
     def parse_xml(self, xml_string: str) -> Dict[str, int]:
         """
@@ -111,6 +112,7 @@ class PaperProfiler:
 
         :param xml_string: XML string to parse
         :return: Dictionary of criteria and their values
+        :raises ValueError: If a required question is not found in the XML
         """
         root = ET.fromstring(xml_string)
         criteria = {}
@@ -139,7 +141,7 @@ class PaperProfiler:
         return "\n".join(output)
 
     def write_inference_artifact(
-        self, paper: Dict, criteria: Dict[str, int], xml_content: str
+        self, paper: Dict[str, Any], criteria: Dict[str, int], xml_content: str
     ) -> None:
         """
         Write inference artifact to a file.
@@ -164,26 +166,38 @@ Raw Inference Output:
 """
         self.utils.write_inference_artifact(artifact_name, content)
 
+    def process_paper(self, paper: Dict[str, Any]) -> None:
+        """
+        Process a single paper.
+
+        :param paper: Paper data
+        """
+        try:
+            text = self.utils.get_pdf_text(paper)
+            lwe_response = self.run_lwe_template(text)
+            xml_content = self.utils.extract_xml(lwe_response)
+            if not xml_content:
+                raise ValueError("Could not extract XML content from LWE response")
+            criteria = self.parse_xml(xml_content)
+            self.write_inference_artifact(paper, criteria, xml_content)
+            data = copy.deepcopy(criteria)
+            data['processing_status'] = constants.STATUS_PROFILED
+            self.utils.update_paper(paper['id'], data)
+            self.logger.info(f"Successfully profiled paper {paper['paper_id']}")
+        except Exception as e:
+            self.logger.error(f"Error processing paper {paper['paper_id']}: {str(e)}")
+            self.utils.update_paper_status(paper['id'], 'failed_profiling')
+
     def run(self) -> None:
         """Execute the main logic of the paper profiling process."""
-        papers = self.utils.fetch_papers_by_processing_status(status=constants.STATUS_VERIFIED, order_by=self.order_by, limit=self.limit)
-        for paper in papers:
-            try:
-                text = self.utils.get_pdf_text(paper)
-                lwe_response = self.run_lwe_template(text)
-                xml_content = self.utils.extract_xml(lwe_response)
-                if not xml_content:
-                    raise ValueError("Could not extract XML content from LWE response")
-                criteria = self.parse_xml(xml_content)
-                self.write_inference_artifact(paper, criteria, xml_content)
-                data = copy.deepcopy(criteria)
-                data['processing_status'] = constants.STATUS_PROFILED
-                self.utils.update_paper(paper['id'], data)
-                self.logger.info(f"Successfully profiled paper {paper['paper_id']}")
-            except Exception as e:
-                self.logger.error(f"Error processing paper {paper['paper_id']}: {str(e)}")
-                self.utils.update_paper_status(paper['id'], 'failed_profiling')
-        self.logger.info("Paper profiling process completed")
+        try:
+            papers = self.utils.fetch_papers_by_processing_status(status=constants.STATUS_VERIFIED, order_by=self.order_by, limit=self.limit)
+            for paper in papers:
+                self.process_paper(paper)
+            self.logger.info("Paper profiling process completed")
+        except Exception as e:
+            self.logger.error(f"An error occurred during the paper profiling process: {e}")
+            sys.exit(1)
 
 
 def main():
