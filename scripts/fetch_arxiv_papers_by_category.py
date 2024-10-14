@@ -13,7 +13,6 @@ import sqlite3
 import requests
 import sys
 import signal
-import signal
 from pathlib import Path
 from requests.exceptions import RequestException
 from dateutil.parser import parse as parse_date
@@ -154,6 +153,7 @@ class ArxivPaperFetcher:
                 root = self._fetch_arxiv_data(params)
                 if root is None:
                     return []
+                entries = []
                 if root is False:
                     if params["max_results"] == MAX_RESULTS_DEFAULT:
                         params["max_results"] = MAX_RESULTS_FALLBACK
