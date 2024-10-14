@@ -1,5 +1,17 @@
+import os
+from pathlib import Path
+
+CWD = Path(os.getcwd())
+
 # System messages.
 SYSTEM_MESSAGE_COT_EXTRACTION = "You are a thinking agent responsible for developing a detailed, step-by-step thought process in response to a request, problem, or conversation. Your task is to break down the situation into a structured reasoning process. If feedback is provided, integrate it into your thought process for refinement."
+
+# LWE
+DEFAULT_LWE_PRESET = "claude-sonnet"
+DEFAULT_PAPER_PROFILER_TEMPLATE = "raspberry-paper-profiler.md"
+# TODO: This should use the package root, not CWD.
+LWE_CONFIG_DIR = CWD / "lwe" / "config"
+LWE_DATA_DIR = CWD / "lwe" / "storage"
 
 # Categories.
 DEFAULT_CATEGORIES = [
@@ -69,6 +81,11 @@ DEFAULT_CATEGORIES = [
     "stat.TH",
 ]
 
+# Paths.
+DEFAULT_INFERENCE_ARTIFACTS_DIR = CWD / "results" / "inference"
+DEFAULT_TRAINING_ARTIFACTS_DIR = CWD / "results" / "training"
+DEFAULT_PDF_CACHE_DIR = CWD / "pdf_cache"
+
 # Profiling.
 PROFILING_CRITERIA = [
     "clear_question",
@@ -100,7 +117,7 @@ FETCH_MAX_RESULTS_FALLBACK = 100
 FETCH_MAX_EMPTY_RESULTS_ATTEMPTS = 10
 
 # Database.
-DEFAULT_DB_NAME = "papers.db"
+DEFAULT_DB_NAME = CWD / "papers.db"
 CREATE_TABLES_QUERY = """
 CREATE TABLE IF NOT EXISTS papers (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -128,4 +145,5 @@ CREATE TABLE IF NOT EXISTS paper_categories (
 );
 """
 STATUS_READY_TO_CLEAN = 'ready_to_clean'
-STATUS_DEFAULT_PROCESSING = "ready_to_clean"
+STATUS_VERIFIED = "verified"
+STATUS_PROFILED = "profiled"

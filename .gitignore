@@ -1,3 +1,4 @@
 lwe/storage/
 results/
+pdf_cache/
 papers.db*
