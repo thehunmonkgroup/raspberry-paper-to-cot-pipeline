@@ -5,6 +5,7 @@ and updating or deleting entries accordingly.
 """
 
 import argparse
+import sqlite3
 from typing import Optional
 from tenacity import (
     retry,
@@ -31,6 +32,11 @@ def parse_arguments() -> argparse.Namespace:
         help="Path to the SQLite database. Default: %(default)s",
     )
     parser.add_argument(
+        "--skip-cleaning",
+        action="store_true",
+        help="Skip cleaning and mark all papers as verified",
+    )
+    parser.add_argument(
         "--limit",
         type=int,
         help="Optional. Limit the number of papers to clean. Default: no limit",
@@ -44,15 +50,17 @@ class PaperCleaner:
     A class to handle cleaning of paper URLs in the SQLite database.
     """
 
-    def __init__(self, database: Optional[str], limit: Optional[int], debug: bool):
+    def __init__(self, database: Optional[str], skip_cleaning: bool, limit: Optional[int], debug: bool):
         """
         Initialize the PaperCleaner.
 
         :param database: Path to the SQLite database
+        :param skip_cleaning: Skip cleaning and mark all papers as verified
         :param limit: Limit the number of papers to process (optional)
         :param debug: Enable debug logging
         """
         self.database = database or constants.DEFAULT_DB_NAME
+        self.skip_cleaning = skip_cleaning
         self.limit = limit
         self.debug = debug
         self.logger = Utils.setup_logging(__name__, self.debug)
@@ -117,32 +125,55 @@ class PaperCleaner:
     def run(self) -> None:
         """Run the paper cleaning process."""
         self.logger.info(
-            f"Starting paper cleaning process. Database: {self.database}, Limit: {self.limit}"
+            f"Starting paper cleaning process. Database: {self.database}, Limit: {self.limit}, Skip cleaning: {self.skip_cleaning}"
         )
         try:
-            papers = self.utils.fetch_papers_by_processing_status(
-                status=constants.STATUS_READY_TO_CLEAN, limit=self.limit
-            )
-            processed_count = 0
-            for paper in papers:
-                self.process_paper(paper["id"], paper["paper_url"])
-                processed_count += 1
-                if processed_count % 1000 == 0:
-                    self.logger.info(f"Processed {processed_count} papers so far.")
-            self.logger.info(
-                f"Paper cleaning process completed. Total papers processed: {processed_count}"
-            )
+            if self.skip_cleaning:
+                self.mark_all_papers_as_verified()
+            else:
+                papers = self.utils.fetch_papers_by_processing_status(
+                    status=constants.STATUS_READY_TO_CLEAN, limit=self.limit
+                )
+                processed_count = 0
+                for paper in papers:
+                    self.process_paper(paper["id"], paper["paper_url"])
+                    processed_count += 1
+                    if processed_count % 1000 == 0:
+                        self.logger.info(f"Processed {processed_count} papers so far.")
+                self.logger.info(
+                    f"Paper cleaning process completed. Total papers processed: {processed_count}"
+                )
         except Exception as e:
             self.logger.error(
                 f"An error occurred during the paper cleaning process: {e}"
             )
             sys.exit(1)
 
+    def mark_all_papers_as_verified(self) -> None:
+        """Mark all papers with STATUS_READY_TO_CLEAN as STATUS_VERIFIED."""
+        try:
+            with self.utils.get_db_connection(self.database) as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    f"""
+                    UPDATE papers
+                    SET processing_status = ?
+                    WHERE processing_status = ?
+                    """,
+                    (constants.STATUS_VERIFIED, constants.STATUS_READY_TO_CLEAN),
+                )
+                updated_count = cursor.rowcount
+                conn.commit()
+            self.logger.info(f"Marked {updated_count} papers as verified, skipping cleaning process.")
+        except sqlite3.Error as e:
+            self.logger.error(f"Database error while marking papers as verified: {e}")
+            raise
+
 
 def main():
     """Main function to run the script."""
     args = parse_arguments()
-    cleaner = PaperCleaner(database=args.database, limit=args.limit, debug=args.debug)
+    cleaner = PaperCleaner(database=args.database, skip_cleaning=args.skip_cleaning, limit=args.limit, debug=args.debug)
     cleaner.run()
 
 
