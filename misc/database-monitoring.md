@@ -4,6 +4,8 @@ watch "sqlite3 papers.db 'select count(id) from papers; select count(paper_id) f
 
 watch "sqlite3 -table papers.db 'SELECT pc.category, COUNT(p.id) AS count FROM papers p INNER JOIN paper_categories pc ON p.id = pc.paper_id GROUP BY pc.category ORDER BY count DESC'"
 
+watch "sqlite3 papers.db 'select count(distinct(category)) as count from paper_categories;'"
+
 sqlite3 -table papers.db 'SELECT pc.category, COUNT(p.id) AS count FROM papers p INNER JOIN paper_categories pc ON p.id = pc.paper_id GROUP BY pc.category ORDER BY count DESC'
 ```
 
