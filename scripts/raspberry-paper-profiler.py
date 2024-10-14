@@ -7,19 +7,20 @@ profiles the papers, and updates the results in the database.
 """
 
 import argparse
-import re
 import xml.etree.ElementTree as ET
 import sqlite3
-import logging
 import os
+import re
+import logging
 import requests
-import pymupdf4llm
 from pathlib import Path
 from urllib.parse import urlparse
 from typing import Dict, Optional, List, Tuple
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 from lwe.core.config import Config
 from lwe import ApiBackend
+import pymupdf4llm
+from raspberry_paper_to_cot_pipeline.utils import Utils
 
 # Define the rubric questions as a constant list
 QUESTIONS = [
@@ -106,19 +107,11 @@ class PaperProfiler:
         self.tmp_pdf_path = tmp_pdf_path
         self.template = template
         self.debug = debug
-        self.setup_logging()
-        self.setup_lwe()
+        self.logger = Utils.setup_logging(__name__, self.debug)
+        self.utils = Utils(self.logger)
+        self.lwe_backend = self.utils.setup_lwe(self.profiling_preset)
 
-    def setup_lwe(self) -> None:
-        """Set up LWE configuration and API backend."""
-        config = Config()
-        config.load_from_file()
-        config.set("debug.log.enabled", True)
-        config.set("model.default_preset", self.profiling_preset)
-        self.lwe_backend = ApiBackend(config)
-        self.lwe_backend.set_return_only(True)
-
-    def run_lwe_template(self, paper_content: str) -> Tuple[bool, str, str]:
+    def run_lwe_template(self, paper_content: str) -> str:
         """
         Run the LWE template with the paper content.
 
@@ -126,22 +119,7 @@ class PaperProfiler:
         :return: Response on success
         """
         template_vars = {"paper": paper_content}
-
-        success, response, user_message = self.lwe_backend.run_template(self.template, template_vars)
-        if not success:
-            message = f"Error running LWE template: {user_message}"
-            self.logger.error(message)
-            raise RuntimeError(message)
-        return response
-
-
-    def setup_logging(self) -> None:
-        """Set up logging configuration."""
-        logging.basicConfig(
-            level=logging.DEBUG if self.debug else logging.INFO,
-            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        )
-        self.logger = logging.getLogger(__name__)
+        return self.utils.run_lwe_template(self.lwe_backend, self.template, template_vars)
 
     def fetch_papers(self) -> List[Dict[str, str]]:
         """
@@ -201,6 +179,7 @@ class PaperProfiler:
         except Exception as e:
             message = f"Error extracting {pdf_path} content with pymupdf4llm: {str(e)}"
             self.logger.error(message)
+            raise
 
     def extract_xml(self, content: str) -> Optional[str]:
         """
@@ -322,7 +301,7 @@ class PaperProfiler:
         papers = self.fetch_papers()
         for paper in papers:
             try:
-                self.download_pdf(paper['url'])
+                self.utils.download_pdf(paper['url'])
                 text = self.extract_text(self.tmp_pdf_path)
                 lwe_response = self.run_lwe_template(text)
                 xml_content = self.extract_xml(lwe_response)
