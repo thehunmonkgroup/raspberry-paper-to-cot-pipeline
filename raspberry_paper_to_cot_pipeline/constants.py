@@ -6,6 +6,7 @@ CWD = Path(os.getcwd())
 # LWE
 DEFAULT_LWE_PRESET = "claude-sonnet"
 DEFAULT_PAPER_PROFILER_TEMPLATE = "raspberry-paper-profiler.md"
+DEFAULT_COT_EXTRACTION_TEMPLATE = "raspberry-extract-cot.md"
 # TODO: This should use the package root, not CWD.
 LWE_CONFIG_DIR = CWD / "lwe" / "config"
 LWE_DATA_DIR = CWD / "lwe" / "storage"
@@ -113,6 +114,9 @@ FETCH_MAX_RESULTS_DEFAULT = 1000
 FETCH_MAX_RESULTS_FALLBACK = 100
 FETCH_MAX_EMPTY_RESULTS_ATTEMPTS = 10
 
+# CoT extraction.
+COT_EXTRACTION_DEFAULT_SUITABILITY_SCORE = 8
+
 # Database.
 DEFAULT_DB_NAME = CWD / "papers.db"
 CREATE_TABLES_QUERY = """
@@ -148,3 +152,8 @@ STATUS_VERIFIED = "verified"
 STATUS_MISSING = "missing"
 STATUS_PROFILED = "profiled"
 STATUS_SCORED = "scored"
+STATUS_COT_EXTRACTED = "cot_extracted"
+STATUS_FAILED_COT_EXTRACTION = "failed_cot_extraction"
+
+# Training
+TRAINING_SYSTEM_MESSAGE = "You are a thinking agent responsible for developing a detailed, step-by-step thought process in response to a request, problem, or conversation. Your task is to break down the situation into a structured reasoning process. If feedback is provided, integrate it into your thought process for refinement."

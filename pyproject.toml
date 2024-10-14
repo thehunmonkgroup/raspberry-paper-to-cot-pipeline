@@ -14,6 +14,7 @@ raspberry-fetch-paper-urls = "raspberry_paper_to_cot_pipeline.fetch_paper_urls:m
 raspberry-fetch-arxiv-paper-urls-by-category = "raspberry_paper_to_cot_pipeline.fetch_arxiv_paper_urls_by_category:main"
 raspberry-clean-paper-urls = "raspberry_paper_to_cot_pipeline.clean_paper_urls:main"
 raspberry-paper-scorer = "raspberry_paper_to_cot_pipeline.paper_scorer:main"
+raspberry-paper-extract-cot = "raspberry_paper_to_cot_pipeline.paper_extract_cot:main"
 
 [tool.setuptools.packages.find]
 include = ["raspberry_paper_to_cot_pipeline*"]

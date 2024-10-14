@@ -1,6 +1,7 @@
 import logging
 import requests
 import sqlite3
+import json
 import pymupdf4llm
 import re
 from contextlib import contextmanager
@@ -337,3 +338,36 @@ class Utils:
         artifact_file_path = self.inference_artifacts_directory / filename
         artifact_file_path.write_text(content)
         self.logger.debug(f"Wrote inference artifact to {artifact_file_path}")
+
+    def write_training_artifact(self, filename: str, content: str) -> None:
+        """
+        Write training artifact to a file.
+
+        :param filename: Name of the file to write
+        :param content: Content of the training artifact
+        """
+        self.ensure_directory_exists(self.training_artifacts_directory)
+        artifact_file_path = self.training_artifacts_directory / filename
+        artifact_file_path.write_text(json.dumps(content))
+        self.logger.debug(f"Wrote training artifact to {artifact_file_path}")
+
+    def fetch_papers_by_custom_query(
+        self, query: str, params: tuple
+    ) -> Generator[sqlite3.Row, None, None]:
+        """
+        Fetch papers from the database using a custom query.
+
+        :param query: Custom SQL query to execute
+        :param params: Tuple of parameters for the query
+        :return: Generator of dictionaries containing paper information
+        :raises sqlite3.Error: If there's an issue with the database operations
+        """
+        try:
+            with get_db_connection(self.database) as conn:
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+                cursor.execute(query, params)
+                yield from cursor
+        except sqlite3.Error as e:
+            self.logger.error(f"Database error: {e}")
+            raise
