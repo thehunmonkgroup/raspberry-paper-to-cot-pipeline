@@ -20,13 +20,14 @@ from dateutil.parser import parse as parse_date
 import xml.etree.ElementTree as ET
 from xml.etree.ElementTree import ParseError
 from urllib.parse import urlparse
+import os.path
 from tenacity import (
     retry,
     stop_after_attempt,
     wait_exponential,
     retry_if_exception_type,
 )
-from typing import List
+from typing import List, Tuple
 
 ARXIV_EXPORT_BASE = "https://export.arxiv.org"
 DEFAULT_DB_NAME = "papers.db"
@@ -35,7 +36,8 @@ MAX_RESULTS_FALLBACK = 100
 CREATE_TABLES_QUERY = """
 CREATE TABLE IF NOT EXISTS papers (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    paper_url TEXT UNIQUE,
+    paper_id TEXT UNIQUE,
+    paper_url TEXT,
     processing_status TEXT,
     criteria_clear_question INT DEFAULT 0,
     criteria_definitive_answer INT DEFAULT 0,
@@ -115,7 +117,7 @@ class ArxivPaperFetcher:
         date_filter_begin: str,
         date_filter_end: str,
         start_index: int,
-    ) -> List[str]:
+    ) -> List[Tuple[str, str]]:
         """
         Fetch papers from arXiv within the specified date range and categories.
 
@@ -126,7 +128,7 @@ class ArxivPaperFetcher:
             start_index (int): Starting index for the search.
 
         Returns:
-            List[str]: List of arXiv PDF URLs for papers within the specified date range and categories.
+            List[Tuple[str, str]]: List of tuples containing arXiv paper IDs and PDF URLs for papers within the specified date range and categories.
 
         Raises:
             RequestException: If there's an error fetching data from the arXiv API.
@@ -165,14 +167,14 @@ class ArxivPaperFetcher:
                         attempts = 0
                         for entry in entries:
                             fetched += 1
-                            pdf_url = self._process_entry(
+                            result = self._process_entry(
                                 entry, date_filter_begin, date_filter_end
                             )
-                            if pdf_url is None:
+                            if result is None:
                                 continue
-                            if pdf_url == "BREAK":
+                            if result == "BREAK":
                                 break
-                            results.append(pdf_url)
+                            results.append(result)
 
                         params["start"] += len(entries)
                     else:
@@ -236,12 +238,13 @@ class ArxivPaperFetcher:
         if updated_date > parse_date(date_filter_end).date():
             self.logger.debug("Reached papers after end date. Stopping search.")
             return "BREAK"
-        id = entry.find("{http://www.w3.org/2005/Atom}id").text
+        id_url = entry.find("{http://www.w3.org/2005/Atom}id").text
+        paper_id = os.path.basename(urlparse(id_url).path)
         pdf_link = entry.find("{http://www.w3.org/2005/Atom}link[@title='pdf'][@type='application/pdf']")
         if pdf_link is not None:
-            return pdf_link.get('href')
+            return paper_id, pdf_link.get('href')
         else:
-            self.logger.warning(f"PDF link not found for entry: {id}")
+            self.logger.warning(f"PDF link not found for entry: {paper_id}")
             return None
 
     def _should_stop_fetching(
@@ -278,31 +281,31 @@ class ArxivPaperFetcher:
             self.logger.debug("No entries returned. Sleeping for 1 second...")
             return False
 
-    def generate_pdf_urls(self, arxiv_pdf_urls):
+    def generate_pdf_data(self, arxiv_paper_data):
         """
-        Process the retrieved PDF URLs.
+        Process the retrieved paper data.
 
         Args:
-            arxiv_pdf_urls (list): List of arXiv PDF URLs.
+            arxiv_paper_data (list): List of tuples containing arXiv paper IDs and PDF URLs.
 
         Returns:
-            list: List of processed PDF download URLs.
+            list: List of tuples containing paper IDs and processed PDF download URLs.
         """
-        processed_urls = []
-        for url in arxiv_pdf_urls:
+        processed_data = []
+        for paper_id, url in arxiv_paper_data:
             path = urlparse(url).path
             processed_url = f"{ARXIV_EXPORT_BASE}{path}"
             if not processed_url.endswith('.pdf'):
                 processed_url += '.pdf'
-            processed_urls.append(processed_url)
-        return processed_urls
+            processed_data.append((paper_id, processed_url))
+        return processed_data
 
-    def write_urls_to_database(self, urls, category):
+    def write_pdf_data_to_database(self, paper_data, category):
         """
-        Write URLs and category to the SQLite database.
+        Write paper data and category to the SQLite database.
 
         Args:
-            urls (list): List of URLs to write.
+            paper_data (list): List of tuples containing paper IDs and URLs to write.
             category (str): arXiv category of the papers.
         """
         try:
@@ -315,23 +318,24 @@ class ArxivPaperFetcher:
                 # Insert papers
                 cursor.executemany(
                     """
-                    INSERT OR IGNORE INTO papers (paper_url, processing_status)
-                    VALUES (?, ?)
+                    INSERT OR IGNORE INTO papers (paper_id, paper_url, processing_status)
+                    VALUES (?, ?, ?)
                     """,
-                    [(url, DEFAULT_PROCESSING_STATUS) for url in urls],
+                    [(paper_id, url, DEFAULT_PROCESSING_STATUS) for paper_id, url in paper_data],
                 )
 
                 # Get the paper_ids for the inserted/existing papers
+                paper_ids = [paper_id for paper_id, _ in paper_data]
                 cursor.execute(
                     """
-                    SELECT id, paper_url FROM papers
-                    WHERE paper_url IN ({})
+                    SELECT id, paper_id FROM papers
+                    WHERE paper_id IN ({})
                     """.format(
-                        ",".join(["?"] * len(urls))
+                        ",".join(["?"] * len(paper_ids))
                     ),
-                    urls,
+                    paper_ids,
                 )
-                paper_ids = {row[1]: row[0] for row in cursor.fetchall()}
+                ids_map = {row[1]: row[0] for row in cursor.fetchall()}
 
                 # Insert categories
                 cursor.executemany(
@@ -339,13 +343,14 @@ class ArxivPaperFetcher:
                     INSERT OR IGNORE INTO paper_categories (paper_id, category)
                     VALUES (?, ?)
                     """,
-                    [(paper_ids[url], category) for url in urls if url in paper_ids],
+                    [(ids_map[paper_id], category) for paper_id in paper_ids if paper_id in ids_map],
                 )
+                self.logger.info(f"Inserted {cursor.rowcount} new category entries")
 
                 conn.commit()
 
             self.logger.info(
-                f"Successfully processed {len(urls)} papers with category {category}"
+                f"Successfully processed {len(paper_data)} papers with category {category}"
             )
         except sqlite3.Error as e:
             self.logger.error("Error writing to database: %s", str(e))
@@ -395,19 +400,19 @@ class ArxivPaperFetcher:
                 )
                 return
 
-            arxiv_pdf_urls = self.fetch_arxiv_papers(
+            arxiv_paper_data = self.fetch_arxiv_papers(
                 [category], date_filter_begin, date_filter_end, start_index
             )
             if self.interrupt_received:
                 self.logger.info("Interrupt received. Exiting.")
                 return
 
-            if not arxiv_pdf_urls:
+            if not arxiv_paper_data:
                 self.logger.warning("No papers found for the given criteria.")
                 return
 
-            pdf_urls = self.generate_pdf_urls(arxiv_pdf_urls)
-            self.write_urls_to_database(pdf_urls, category)
+            processed_paper_data = self.generate_pdf_data(arxiv_paper_data)
+            self.write_pdf_data_to_database(processed_paper_data, category)
 
             self.logger.info("Process completed successfully.")
         except RequestException as e:
