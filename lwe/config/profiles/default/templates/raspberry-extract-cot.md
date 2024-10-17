@@ -1,4 +1,5 @@
 ---
+description: Performs the initial CoT extraction on a paper
 request_overrides:
   system_message: "You adhere precisely to the provided instructions for the given task, you output only the final XML according to the provided template and template instructions"
 ---

@@ -1,4 +1,5 @@
 ---
+description: Profiles a paper for suitability for CoT extraction
 request_overrides:
   system_message: "You adhere precisely to the provided instructions for the given task, you output only the final XML according to the provided template and template instructions"
 ---
