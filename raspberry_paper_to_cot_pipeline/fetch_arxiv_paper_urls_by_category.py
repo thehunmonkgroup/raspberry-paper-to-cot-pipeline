@@ -254,7 +254,7 @@ class ArxivPaperUrlFetcher:
                     VALUES (?, ?, ?)
                     """,
                     [
-                        (paper_id, url, constants.STATUS_READY_TO_CLEAN)
+                        (paper_id, url, constants.STATUS_DOWNLOADED)
                         for paper_id, url in paper_data
                     ],
                 )

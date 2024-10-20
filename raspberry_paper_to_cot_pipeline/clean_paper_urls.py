@@ -132,7 +132,7 @@ class PaperCleaner:
                 self.mark_all_papers_as_verified()
             else:
                 papers = self.utils.fetch_papers_by_processing_status(
-                    status=constants.STATUS_READY_TO_CLEAN, limit=self.limit
+                    status=constants.STATUS_DOWNLOADED, limit=self.limit
                 )
                 processed_count = 0
                 for paper in papers:
@@ -150,7 +150,7 @@ class PaperCleaner:
             sys.exit(1)
 
     def mark_all_papers_as_verified(self) -> None:
-        """Mark all papers with STATUS_READY_TO_CLEAN as STATUS_VERIFIED."""
+        """Mark all papers with STATUS_DOWNLOADED as STATUS_VERIFIED."""
         try:
             with self.utils.get_db_connection(self.database) as conn:
                 cursor = conn.cursor()
@@ -160,7 +160,7 @@ class PaperCleaner:
                     SET processing_status = ?
                     WHERE processing_status = ?
                     """,
-                    (constants.STATUS_VERIFIED, constants.STATUS_READY_TO_CLEAN),
+                    (constants.STATUS_VERIFIED, constants.STATUS_DOWNLOADED),
                 )
                 updated_count = cursor.rowcount
                 conn.commit()
