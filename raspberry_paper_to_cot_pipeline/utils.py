@@ -7,7 +7,9 @@ import re
 from contextlib import contextmanager
 from urllib.parse import urlparse
 from pathlib import Path
-from typing import Optional, List, Dict, Generator, Any
+import xml.etree.ElementTree as ET
+import textwrap
+from typing import Optional, List, Dict, Generator, Any, Tuple
 from tenacity import (
     retry,
     stop_after_attempt,
@@ -223,6 +225,24 @@ class Utils:
         )
         return match.group(0) if match else None
 
+    def extract_question_chain_of_reasoning_answer(self, content: str) -> Tuple[str, str, str]:
+        """
+        Parse the content to extract question, chain of reasoning, and answer from the XML template.
+
+        :param xml_string: The string to parse
+        :return: Tuple of (question, chain_of_reasoning, answer)
+        """
+        xml_string = self.extract_xml(content)
+        if not xml_string:
+            raise ValueError("Could not extract XML content")
+        root = ET.fromstring(xml_string)
+        question = root.find(".//question").text.strip()
+        chain_of_reasoning = textwrap.dedent(
+            root.find(".//chain_of_reasoning").text
+        ).strip()
+        answer = root.find(".//answer").text.strip()
+        return question, chain_of_reasoning, answer
+
     def create_database(self) -> None:
         """
         Conditionally creates an SQLite database with the required tables and columns.
@@ -326,6 +346,21 @@ class Utils:
         :param directory: Path to the directory
         """
         directory.mkdir(parents=True, exist_ok=True)
+
+    def read_inference_artifact(self, filename: str) -> str:
+        """
+        Read inference artifact from a file.
+
+        :param filename: Name of the file to read
+        """
+        artifact_file_path = self.inference_artifacts_directory / filename
+        try:
+            content = artifact_file_path.read_text()
+            self.logger.debug(f"Read inference artifact from {artifact_file_path}")
+            return content
+        except FileNotFoundError:
+            self.logger.error(f"Artifact file {artifact_file_path} not found")
+            raise
 
     def write_inference_artifact(self, filename: str, content: str) -> None:
         """

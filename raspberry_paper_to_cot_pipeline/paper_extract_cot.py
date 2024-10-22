@@ -6,9 +6,7 @@ It downloads PDFs, extracts text, runs LWE templates, and processes the results.
 """
 
 import argparse
-import xml.etree.ElementTree as ET
-import textwrap
-from typing import Dict, Any, Tuple
+from typing import Dict, Any
 import sys
 from raspberry_paper_to_cot_pipeline import constants
 from raspberry_paper_to_cot_pipeline.utils import Utils
@@ -153,10 +151,7 @@ class CoTExtractor:
             lwe_response = self.utils.run_lwe_template(
                 self.template, {"paper": pdf_text}
             )
-            xml_content = self.utils.extract_xml(lwe_response)
-            if not xml_content:
-                raise ValueError("Could not extract XML content from LWE response")
-            question, chain_of_reasoning, answer = self.parse_xml(xml_content)
+            question, chain_of_reasoning, answer = self.utils.extract_question_chain_of_reasoning_answer(lwe_response)
             self.write_inference_artifact(
                 paper, question, chain_of_reasoning, answer, lwe_response
             )
@@ -170,22 +165,6 @@ class CoTExtractor:
             self.utils.update_paper_status(
                 paper["id"], constants.STATUS_FAILED_COT_EXTRACTION
             )
-
-    @staticmethod
-    def parse_xml(xml_string: str) -> Tuple[str, str, str]:
-        """
-        Parse the XML string to extract question, chain of reasoning, and answer.
-
-        :param xml_string: XML string to parse
-        :return: Tuple of (question, chain_of_reasoning, answer)
-        """
-        root = ET.fromstring(xml_string)
-        question = root.find(".//question").text.strip()
-        chain_of_reasoning = textwrap.dedent(
-            root.find(".//chain_of_reasoning").text
-        ).strip()
-        answer = root.find(".//answer").text.strip()
-        return question, chain_of_reasoning, answer
 
     def write_inference_artifact(
         self,
