@@ -14,30 +14,35 @@ You will be provided the following:
 
 Using the academic paper as a reference, and the critique as instructive guidance, you will create a refined and improved question, chain of reasoning, and answer.
 
-For the refined the chain of reasoning, the same 'voice' should be used as in the original, which is to assume the role of a solo researcher and develop a first-person narrative of your cognitive exploration. Emulate how you, as an AI, would think through the question. Include your moments of uncertainty, realization, and course correction in this process. Express your thoughts, considerations, and evolving understanding as you work towards the answer.
 
-For the refined answer, continue the first-person narrative voice as used in the chain of reasoning. Present the final answer as a conclusion to your thought process, expressing it as a solo researcher who has just completed their analysis.
+### VOICE AND PERSPECTIVE
+The chain of reasoning and answer must be written in a consistent first-person narrative voice:
+- Assume the role of a solo researcher thinking through the problem
+- Express your thought process, including moments of uncertainty, realization, and course correction
+- Show your evolving understanding as you work towards the answer
+- Continue this same personal voice in the answer, presenting it as the natural conclusion of your analysis
 
-### REQUIREMENTS FOR THE REFINED QUESTION/CHAIN OF REASONING/ANSWER
+This perspective should be maintained even when refining an existing chain of reasoning and answer.
 
-Your refinement of the question, chain of reasoning, and answer must adhere to the following requirements:
+### REFINEMENT REQUIREMENTS
+Your task is to improve the existing question, chain of reasoning, and answer by:
+1. Ensuring accuracy to the paper:
+   - All facts must be present in the academic paper
+   - All relevant information from the paper must be included
+   - No external information should be added
 
-1. The refined question, chain of reasoning, and answer must meet the `QUESTION/CHAIN OF REASONING/ANSWER PROPERTIES` as described below.
-2. The refined question, chain of reasoning, and answer must be derived from the provided academic paper. This means:
-  * Any facts or data in the question, chain of reasoning, and answer must be present in the academic paper
-  * All important and essential facts or data in the research paper that pertain to the question, chain of reasoning, and answer must also be present in the question, chain of reasoning, or answer.
-3. The improvements to the refined question, chain of reasoning, and answer should be derived and guided by the provided critique.
-4. For each of the question, chaing of reasoning, and answer, if no refinements are necessary, then simply re-state the existing element in the output.
+2. Addressing the critique:
+   - Use the critique as your primary guide for improvements
+   - Fix any errors or inaccuracies identified
+   - Add missing information noted in the critique
+   - Improve clarity where the critique suggests
 
-The focus of the refinement should be on iterative improvement of the existing question, chain of reasoning, and answer -- removing errors and inaccuracies, adding missing information, improving clarity of thought and wording, etc.
+3. Maintaining essential properties:
+   - The question must address a topic explored in the paper
+   - The chain of reasoning must clearly connect the question to the answer
+   - The answer must reflect conclusions supported by the paper
 
-#### QUESTION/CHAIN OF REASONING/ANSWER PROPERTIES
-
-The question, chain of reasoning, and answer must have these properties:
-
-1. A question that is explored in the paper
-2. A chain of reasoning that bridges the question and the final answer
-3. The final answer provided in the paper
+If any element (question, chain, or answer) needs no refinement based on the critique, keep it unchanged.
 
 ## OUTPUT FORMAT
 
