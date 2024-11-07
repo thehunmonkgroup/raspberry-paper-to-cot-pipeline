@@ -32,7 +32,7 @@ The question, chain of reasoning, and answer must have these properties:
 
 Use the following criteria to evaluate the chain of reasoning.
 
-As you assess multiple potential sets, pay particular attention to the first seven criteria, which are crucial for identifying high-quality chains of reasoning. Use these criteria to compare different sets and select the one that best exemplifies these qualities.
+Pay particular attention to the first seven criteria, which are crucial for identifying high-quality chains of reasoning.
 
 ##### Top Priority Criteria
 
@@ -46,31 +46,31 @@ As you assess multiple potential sets, pay particular attention to the first sev
 
 ##### Additional criteria, grouped by category
 
-1. Analytical Depth
+8. Analytical Depth
 
   * Depth vs. breadth: Is there an appropriate balance between exploring topics in depth and covering a range of relevant ideas?
   * Systemic thinking: Is there consideration of how different elements interact within a larger system?
   * Abstraction and concretization: Can the reasoning move fluidly between abstract concepts and concrete examples?
 
-2. Ethical and Practical Considerations
+9. Ethical and Practical Considerations
 
   * Ethical considerations: Does the thought process consider moral and ethical implications?
   * Practical applicability: Can the ideas be translated into actionable steps or real-world applications?
   * Future-oriented thinking: Is there consideration of long-term consequences and future scenarios?
 
-3. Cognitive Approach
+10. Cognitive Approach
 
   * Flexibility and adaptability: Can the reasoning adjust when presented with new information?
   * Creativity and innovation: Are novel ideas or approaches generated within the constraints of academic rigor?
   * Handling of uncertainty and ambiguity: How effectively does the reasoning deal with uncertain or ambiguous situations?
 
-4. Communication and Structure
+11. Communication and Structure
 
   *  Structure and organization: Is there a clear structure to the thought process (e.g., problem definition, analysis, solution generation)?
   *  Use of analogies and metaphors: Are complex ideas illustrated through appropriate analogies or metaphors that enhance understanding?
   *  Quantitative reasoning: Where appropriate, are quantitative measures or data used effectively to support arguments?
 
-5. Interdisciplinary and Cultural Awareness
+12. Interdisciplinary and Cultural Awareness
 
   * Interdisciplinary integration: Does the reasoning draw connections between different fields or domains of knowledge?
   * Cultural sensitivity: Is there awareness of how cultural differences might influence the research or its interpretation?
