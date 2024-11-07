@@ -1,81 +1,89 @@
 ---
 description: Critiques the initial CoT extraction from a paper
 request_overrides:
-  system_message: "You adhere precisely to the provided instructions for the given task, you output only the final XML according to the provided template and template instructions"
+  system_message: "You are a precise academic critic. Output only valid XML following the provided template."
 ---
 
 ## TASK
 
-Your task is to examine the provided academic paper, then critique the provided question, chain of reasoning, and answer that have been derived from the academic paper.
+Your task is to critically evaluate three interconnected elements derived from an academic paper:
+
+- The proposed question
+- The chain of reasoning that bridges the question to its answer through logical steps
+- The final answer
 
 ### CRITIQUE REQUIREMENTS
 
-Your critique of the question, chain of reasoning, and answer must adhere to the following requirements:
+Evaluate these elements based on:
+- Accuracy of representation from the source paper
+- Adherence to the evaluation criteria below
+- Completeness of the logical progression from question through reasoning to answer
 
-1. The question, chain of reasoning, and answer must meet the `QUESTION/CHAIN OF REASONING/ANSWER PROPERTIES` as described below.
-2. The chain of reasoning must also possess as many of the `CHAIN OF REASONING CRITERIA` as described below, particularly the `Top Priority Criteria`
-3. The question, chain of reasoning, and answer must be derived from the provided academic paper. This means:
-  * Any facts or data in the question, chain of reasoning, and answer must be present in the academic paper
-  * All important and essential facts or data in the research paper that pertain to the question, chain of reasoning, and answer must also be present in the question, chain of reasoning, or answer.
+Your role is to be thorough and objective in identifying all weaknesses in the question, chain of reasoning, and answer. Your critique will be used to further improve these elements. Like a great academic editor, your job is to assist in crafting a rigorous and precise analysis.
 
-Your role is to be as critical as possible in your critique -- you must be ruthless in your assessment of the weaknesses and flaws in the question, chain of reasoning, and answer. Your critique will be used to further improve the question, chain of reasoning, and answer. Just like a great book editor, your job is assist in crafting a masterpiece, without compromise.
+### EVALUATION CRITERIA
 
-#### QUESTION/CHAIN OF REASONING/ANSWER PROPERTIES
+#### Top Priority Criteria
 
-The question, chain of reasoning, and answer must have these properties:
+1. Logical coherence: Each step should naturally follow from the previous one and lead to the next, forming a complete logical progression.
+2. Evidence-based reasoning: All claims must be supported by verifiable data, reproducible results, or well-documented theoretical foundations from the paper.
+3. Critical thinking: Demonstrate evaluation of assumptions, consideration of alternatives, and acknowledgment of potential counterarguments.
+4. Clarity and precision: Ideas must be expressed in specific, unambiguous terms with clear connections between concepts.
+5. Consideration of context: Show understanding of how the research connects to its field and how different contexts affect its conclusions.
+6. Intellectual humility: Explicitly acknowledge the boundaries of the research's applicability and areas of uncertainty.
+7. Integration of multiple perspectives: Synthesize different viewpoints to create a comprehensive understanding while maintaining focus.
 
-1. A question that is explored in the paper
-2. A chain of reasoning that bridges the question and the final answer
-3. The final answer provided in the paper
+#### Additional Considerations
 
-#### CHAIN OF REASONING CRITERIA
+Also consider these aspects in your evaluation:
+- Analytical depth and systemic thinking
+- Balance of abstract concepts with concrete examples
+- Ethical implications and practical applications
+- Innovation within academic rigor
+- Effective handling of uncertainty
+- Clear structure and organization
+- Integration of interdisciplinary perspectives
+- Cultural considerations and broader impacts
 
-Use the following criteria to evaluate the chain of reasoning.
+### CRITIQUE STRUCTURE
 
-Pay particular attention to the first seven criteria, which are crucial for identifying high-quality chains of reasoning.
+#### Priority Levels
 
-##### Top Priority Criteria
+Organize your critique by severity:
+1. Critical Issues
+   - Problems that invalidate the reasoning
+   - Major factual errors or misrepresentations
+   - Significant logical gaps
 
-1. Logical coherence: Does the argument follow a clear, logical progression without contradictions or unjustified leaps?
-2. Evidence-based reasoning: Are claims supported by solid evidence, whether empirical data, theoretical foundations, or well-established prior research?
-3. Critical thinking: Does the reasoning question assumptions, consider alternative explanations, and address potential weaknesses?
-4. Clarity and precision: Are ideas expressed clearly and unambiguously, using precise language and well-defined terms?
-5. Consideration of context: Is there an understanding of how the research fits into the broader academic landscape and how different contexts might affect conclusions?
-6. Intellectual humility: Does the reasoning acknowledge limitations, areas of uncertainty, and potential for future research?
-7. Integration of multiple perspectives: Does the argument synthesize diverse viewpoints and approaches to create a more comprehensive understanding?
+2. Important Issues
+   - Problems affecting clarity or completeness
+   - Missing context or supporting evidence
+   - Unclear connections in reasoning
 
-##### Additional criteria, grouped by category
+3. Minor Issues
+   - Suggestions for strengthening the argument
+   - Opportunities for additional clarity
+   - Potential enhancements to precision
 
-8. Analytical Depth
+#### Handling Insufficient Content
 
-  * Depth vs. breadth: Is there an appropriate balance between exploring topics in depth and covering a range of relevant ideas?
-  * Systemic thinking: Is there consideration of how different elements interact within a larger system?
-  * Abstraction and concretization: Can the reasoning move fluidly between abstract concepts and concrete examples?
+When the paper content is insufficient:
+- Identify where questions exceed the paper's scope
+- Highlight assumptions not supported by the paper
+- Specify where conclusions extend beyond evidence
+- Note what additional information would be needed
+- Distinguish between paper-supported and unsupported elements
 
-9. Ethical and Practical Considerations
+#### Academic Tone Guidelines
 
-  * Ethical considerations: Does the thought process consider moral and ethical implications?
-  * Practical applicability: Can the ideas be translated into actionable steps or real-world applications?
-  * Future-oriented thinking: Is there consideration of long-term consequences and future scenarios?
-
-10. Cognitive Approach
-
-  * Flexibility and adaptability: Can the reasoning adjust when presented with new information?
-  * Creativity and innovation: Are novel ideas or approaches generated within the constraints of academic rigor?
-  * Handling of uncertainty and ambiguity: How effectively does the reasoning deal with uncertain or ambiguous situations?
-
-11. Communication and Structure
-
-  *  Structure and organization: Is there a clear structure to the thought process (e.g., problem definition, analysis, solution generation)?
-  *  Use of analogies and metaphors: Are complex ideas illustrated through appropriate analogies or metaphors that enhance understanding?
-  *  Quantitative reasoning: Where appropriate, are quantitative measures or data used effectively to support arguments?
-
-12. Interdisciplinary and Cultural Awareness
-
-  * Interdisciplinary integration: Does the reasoning draw connections between different fields or domains of knowledge?
-  * Cultural sensitivity: Is there awareness of how cultural differences might influence the research or its interpretation?
-
-*NOTE: The importance of each criterion may vary depending on the nature and content of the specific academic paper being analyzed. Use your judgment to determine which criteria are most relevant for each particular case.*
+Maintain academic rigor in your critique through:
+- Use of precise, objective language
+- Evidence-based criticism with specific references
+- Focus on content and logical structure
+- Constructive feedback with improvement paths
+- Appropriate academic terminology
+- Acknowledgment of uncertainty where present
+- Avoidance of absolute statements or informal language
 
 ## OUTPUT FORMAT
 
