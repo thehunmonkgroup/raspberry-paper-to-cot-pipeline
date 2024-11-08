@@ -191,14 +191,14 @@ class CoTExtractor:
                 f"Completed initial extraction for paper {paper['paper_id']}"
             )
             critique, critique_response = self.process_critique(
-                paper, question, chain_of_reasoning, answer, pdf_text
+                question, chain_of_reasoning, answer, pdf_text
             )
             self.write_critique_artifact(paper, critique, critique_response)
             self.logger.info(
                 f"Completed critique for paper {paper['paper_id']}"
             )
             refined_q, refined_c, refined_a, refinement_response = self.process_refinement(
-                paper, question, chain_of_reasoning, answer, critique, pdf_text
+                question, chain_of_reasoning, answer, critique, pdf_text
             )
             self.write_refinement_artifact(
                 paper, refined_q, refined_c, refined_a, refinement_response
@@ -358,7 +358,11 @@ Raw Content:
                 {
                     "paper": pdf_text,
                 },
-                {"preset": self.extraction_preset},
+                {
+                    "request_overrides": {
+                        "preset": self.extraction_preset,
+                    },
+                },
             )
             question, chain_of_reasoning, answer = self.utils.extract_question_chain_of_reasoning_answer(
                 initial_response
@@ -410,7 +414,11 @@ Raw Content:
                     "chain_of_reasoning": chain_of_reasoning,
                     "answer": answer,
                 },
-                {"preset": self.critique_preset},
+                {
+                    "request_overrides": {
+                        "preset": self.critique_preset,
+                    },
+                },
             )
             xml_content = self.utils.extract_xml(critique_response)
             if not xml_content:
@@ -451,7 +459,11 @@ Raw Content:
                     "answer": answer,
                     "critique": critique,
                 },
-                {"preset": self.refinement_preset},
+                {
+                    "request_overrides": {
+                        "preset": self.refinement_preset,
+                    },
+                },
             )
             refined_q, refined_c, refined_a = self.utils.extract_question_chain_of_reasoning_answer(
                 refinement_response
