@@ -5,8 +5,18 @@ CWD = Path(os.getcwd())
 
 # LWE
 DEFAULT_LWE_PRESET = "claude-sonnet"
+DEFAULT_CRITIQUE_PRESET = "claude-sonnet"
+DEFAULT_REFINEMENT_PRESET = "claude-sonnet"
 DEFAULT_PAPER_PROFILER_TEMPLATE = "raspberry-paper-profiler.md"
 DEFAULT_COT_EXTRACTION_TEMPLATE = "raspberry-extract-cot.md"
+DEFAULT_COT_CRITIQUE_TEMPLATE = "raspberry-cot-critique.md"
+DEFAULT_COT_REFINEMENT_TEMPLATE = "raspberry-cot-refine.md"
+
+# Artifact naming patterns
+INITIAL_EXTRACTION_ARTIFACT_PATTERN = "{paper_id}-initial-extraction.txt"
+CRITIQUE_ARTIFACT_PATTERN = "{paper_id}-critique.txt"
+REFINEMENT_ARTIFACT_PATTERN = "{paper_id}-refinement.txt"
+TRAINING_ARTIFACT_PATTERN = "{paper_id}-training-data.jsonl"
 # TODO: This should use the package root, not CWD.
 LWE_CONFIG_DIR = CWD / "lwe" / "config"
 LWE_DATA_DIR = CWD / "lwe" / "storage"
