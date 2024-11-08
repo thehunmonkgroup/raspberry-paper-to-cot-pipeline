@@ -6,7 +6,7 @@ It downloads PDFs, extracts text, runs LWE templates, and processes the results.
 """
 
 import argparse
-from typing import Dict, Any, Tuple, Generator
+from typing import Dict, Any, Tuple, Generator, Optional
 import sys
 import xml.etree.ElementTree as ET
 from raspberry_paper_to_cot_pipeline import constants
@@ -58,11 +58,17 @@ def parse_arguments() -> argparse.Namespace:
         default=constants.DEFAULT_TRAINING_ARTIFACTS_DIR,
         help="Directory for training artifacts, default: %(default)s",
     )
-    parser.add_argument(
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument(
         "--limit",
         type=int,
         default=1,
         help="Number of papers to process, default: %(default)s",
+    )
+    group.add_argument(
+        "--paper-id",
+        type=str,
+        help="Process a specific paper by its ID",
     )
     parser.add_argument(
         "--suitability-score",
@@ -112,6 +118,7 @@ class CoTExtractor:
         inference_artifacts_directory: str,
         training_artifacts_directory: str,
         limit: int,
+        paper_id: Optional[str],
         suitability_score: int,
         pdf_cache_dir: str,
         initial_cot_extraction_template: str,
@@ -127,6 +134,7 @@ class CoTExtractor:
         :param inference_artifacts_directory: Directory for inference artifacts
         :param training_artifacts_directory: Directory for training artifacts
         :param limit: Number of papers to process
+        :param paper_id: Process a specific paper by its ID
         :param suitability_score: Minimum suitability score for papers to process
         :param pdf_cache_dir: PDF cache directory
         :param template: LWE paper profiler template name
@@ -139,6 +147,7 @@ class CoTExtractor:
         self.inference_artifacts_directory = inference_artifacts_directory
         self.training_artifacts_directory = training_artifacts_directory
         self.limit = limit
+        self.paper_id = paper_id
         self.suitability_score = suitability_score
         self.pdf_cache_dir = pdf_cache_dir
         self.initial_cot_extraction_template = initial_cot_extraction_template
@@ -156,12 +165,34 @@ class CoTExtractor:
         )
         self.utils.setup_lwe()
 
+    def fetch_specific_paper(self, paper_id: str) -> Generator[Dict[str, Any], None, None]:
+        """
+        Fetch a specific paper from the database.
+
+        :param paper_id: ID of the paper to fetch
+        :return: Generator yielding the paper data
+        :raises RuntimeError: If paper is not found
+        """
+        query = """
+        SELECT id, paper_id, paper_url
+        FROM papers
+        WHERE paper_id = ?
+        """
+        self.logger.debug("Fetching specific paper with ID: %s", paper_id)
+        papers = list(self.utils.fetch_papers_by_custom_query(query, (paper_id,)))
+        if not papers:
+            raise RuntimeError(f"Paper with ID {paper_id} not found in database")
+        yield from papers
+
     def fetch_papers(self) -> Generator[Dict[str, Any], None, None]:
         """
-        Fetch papers from the database based on suitability score.
+        Fetch papers from the database based on suitability score or specific paper ID.
 
         :return: Generator of paper data dictionaries containing id, paper_id, and paper_url
         """
+        if hasattr(self, 'paper_id') and self.paper_id:
+            return self.fetch_specific_paper(self.paper_id)
+
         query = f"""
         SELECT id, paper_id, paper_url
         FROM papers
@@ -513,6 +544,8 @@ Raw Content:
 def main():
     """Main entry point of the script."""
     args = parse_arguments()
+    if args.debug:
+        print(f"Arguments: {vars(args)}")
     extractor = CoTExtractor(
         extraction_preset=args.extraction_preset,
         critique_preset=args.critique_preset,
@@ -521,6 +554,7 @@ def main():
         inference_artifacts_directory=args.inference_artifacts_directory,
         training_artifacts_directory=args.training_artifacts_directory,
         limit=args.limit,
+        paper_id=args.paper_id,
         suitability_score=args.suitability_score,
         pdf_cache_dir=args.pdf_cache_dir,
         initial_cot_extraction_template=args.initial_cot_extraction_template,
