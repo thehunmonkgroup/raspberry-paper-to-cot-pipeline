@@ -10,16 +10,22 @@ and managing paper data in a SQLite database.
 
 from . import constants
 from . import utils
+from . import fetch_arxiv_paper_urls_by_category
 from . import fetch_paper_urls
 from . import clean_paper_urls
 from . import paper_profiler
 from . import paper_scorer
+from . import paper_extract_cot
+from . import paper_cot_pipeline
 
 __all__ = [
     "constants",
     "utils",
+    "fetch_arxiv_paper_urls_by_category",
     "fetch_paper_urls",
     "clean_paper_urls",
     "paper_profiler",
     "paper_scorer",
+    "paper_extract_cot",
+    "paper_cot_pipeline",
 ]
