@@ -25,7 +25,7 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument(
         "--extraction-preset",
         type=str,
-        default=constants.DEFAULT_LWE_PRESET,
+        default=constants.DEFAULT_EXTRACTION_PRESET,
         help="Model configuration used to perform the initial extraction, default: %(default)s",
     )
     parser.add_argument(
@@ -111,20 +111,20 @@ class CoTExtractor:
 
     def __init__(
         self,
-        extraction_preset: str,
-        critique_preset: str,
-        refinement_preset: str,
-        database: str,
-        inference_artifacts_directory: str,
-        training_artifacts_directory: str,
-        limit: int,
-        paper_id: Optional[str],
-        suitability_score: int,
-        pdf_cache_dir: str,
-        initial_cot_extraction_template: str,
-        critique_template: str,
-        refinement_template: str,
-        debug: bool,
+        limit: Optional[int],
+        debug: bool = False,
+        extraction_preset: str = constants.DEFAULT_EXTRACTION_PRESET,
+        critique_preset: str = constants.DEFAULT_CRITIQUE_PRESET,
+        refinement_preset: str = constants.DEFAULT_REFINEMENT_PRESET,
+        database: str = constants.DEFAULT_DB_NAME,
+        inference_artifacts_directory: str = constants.DEFAULT_INFERENCE_ARTIFACTS_DIR,
+        training_artifacts_directory: str = constants.DEFAULT_TRAINING_ARTIFACTS_DIR,
+        paper_id: Optional[str] = None,
+        suitability_score: int = constants.COT_EXTRACTION_DEFAULT_SUITABILITY_SCORE,
+        pdf_cache_dir: str = constants.DEFAULT_PDF_CACHE_DIR,
+        initial_cot_extraction_template: str = constants.DEFAULT_COT_EXTRACTION_TEMPLATE,
+        critique_template: str = constants.DEFAULT_COT_CRITIQUE_TEMPLATE,
+        refinement_template: str = constants.DEFAULT_COT_REFINEMENT_TEMPLATE,
     ):
         """
         Initialize the CoTExtractor with individual arguments.
@@ -542,25 +542,25 @@ Raw Content:
 
 
 def main():
-    """Main entry point of the script."""
+    """Main entry point for CLI usage."""
     args = parse_arguments()
     if args.debug:
         print(f"Arguments: {vars(args)}")
     extractor = CoTExtractor(
+        limit=args.limit,
+        debug=args.debug,
         extraction_preset=args.extraction_preset,
         critique_preset=args.critique_preset,
         refinement_preset=args.refinement_preset,
         database=args.database,
         inference_artifacts_directory=args.inference_artifacts_directory,
         training_artifacts_directory=args.training_artifacts_directory,
-        limit=args.limit,
         paper_id=args.paper_id,
         suitability_score=args.suitability_score,
         pdf_cache_dir=args.pdf_cache_dir,
         initial_cot_extraction_template=args.initial_cot_extraction_template,
         critique_template=args.critique_template,
         refinement_template=args.refinement_template,
-        debug=args.debug,
     )
     extractor.run()
 

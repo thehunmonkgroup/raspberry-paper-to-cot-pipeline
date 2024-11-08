@@ -5,6 +5,8 @@ CWD = Path(os.getcwd())
 
 # LWE
 DEFAULT_LWE_PRESET = "claude-sonnet"
+DEFAULT_PROFILING_PRESET = "claude-sonnet"
+DEFAULT_EXTRACTION_PRESET = "claude-sonnet"
 DEFAULT_CRITIQUE_PRESET = "claude-sonnet"
 DEFAULT_REFINEMENT_PRESET = "claude-sonnet"
 DEFAULT_PAPER_PROFILER_TEMPLATE = "raspberry-paper-profiler.md"

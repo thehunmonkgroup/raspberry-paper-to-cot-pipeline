@@ -38,7 +38,12 @@ class PaperScorer:
     A class to handle scoring of papers based on profiling criteria.
     """
 
-    def __init__(self, database: Optional[str], limit: Optional[int], debug: bool):
+    def __init__(
+        self,
+        limit: Optional[int],
+        debug: bool = False,
+        database: str = constants.DEFAULT_DB_NAME,
+    ):
         """
         Initialize the PaperScorer.
 
@@ -46,9 +51,9 @@ class PaperScorer:
         :param limit: Limit the number of papers to process (optional)
         :param debug: Enable debug logging
         """
-        self.database = database or constants.DEFAULT_DB_NAME
         self.limit = limit
         self.debug = debug
+        self.database = database
         self.logger = Utils.setup_logging(__name__, self.debug)
         self.utils = Utils(database=self.database, logger=self.logger)
 
@@ -136,9 +141,13 @@ class PaperScorer:
 
 
 def main():
-    """Main function to run the script."""
+    """Main entry point for CLI usage."""
     args = parse_arguments()
-    scorer = PaperScorer(database=args.database, limit=args.limit, debug=args.debug)
+    scorer = PaperScorer(
+        limit=args.limit,
+        debug=args.debug,
+        database=args.database,
+    )
     scorer.run()
 
 

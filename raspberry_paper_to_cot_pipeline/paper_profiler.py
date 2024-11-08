@@ -9,7 +9,7 @@ profiles the papers, and updates the results in the database.
 import argparse
 import copy
 import xml.etree.ElementTree as ET
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 import sys
 from raspberry_paper_to_cot_pipeline import constants
 from raspberry_paper_to_cot_pipeline.utils import Utils
@@ -27,7 +27,7 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument(
         "--profiling-preset",
         type=str,
-        default=constants.DEFAULT_LWE_PRESET,
+        default=constants.DEFAULT_PROFILING_PRESET,
         help="Model configuration used to perform the profiling, default: %(default)s",
     )
     parser.add_argument(
@@ -77,14 +77,14 @@ class PaperProfiler:
 
     def __init__(
         self,
-        profiling_preset: str,
-        database: str,
-        inference_artifacts_directory: str,
-        limit: int,
-        order_by: str,
-        pdf_cache_dir: str,
-        template: str,
-        debug: bool,
+        limit: Optional[int],
+        debug: bool = False,
+        profiling_preset: str = constants.DEFAULT_PROFILING_PRESET,
+        database: str = constants.DEFAULT_DB_NAME,
+        inference_artifacts_directory: str = constants.DEFAULT_INFERENCE_ARTIFACTS_DIR,
+        order_by: str = "RANDOM()",
+        pdf_cache_dir: str = constants.DEFAULT_PDF_CACHE_DIR,
+        template: str = constants.DEFAULT_PAPER_PROFILER_TEMPLATE,
     ):
         """
         Initialize the PaperProfiler with individual arguments.
@@ -228,17 +228,17 @@ Raw Inference Output:
 
 
 def main():
-    """Main entry point of the script."""
+    """Main entry point for CLI usage."""
     args = parse_arguments()
     profiler = PaperProfiler(
+        limit=args.limit,
+        debug=args.debug,
         profiling_preset=args.profiling_preset,
         database=args.database,
         inference_artifacts_directory=args.inference_artifacts_directory,
-        limit=args.limit,
         order_by=args.order_by,
         pdf_cache_dir=args.pdf_cache_dir,
         template=args.template,
-        debug=args.debug,
     )
     profiler.run()
 
