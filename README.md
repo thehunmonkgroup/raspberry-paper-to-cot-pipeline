@@ -20,13 +20,21 @@ The following diagram illustrates the pipeline workflow:
 
 1. **Fetch Papers**: Retrieve academic papers from arXiv.org
 2. **Clean Papers**: Verify paper accessibility and remove inaccessible papers
-3. **Profile Papers**: Analyze and profile the papers based on specific criteria
-   * Store criteria data in database
-   * Generate profiling inference artifact
+3. **Profile Papers**: Analyze and profile the papers based on specific criteria, store criteria data in database
+
+   Artifacts generated:
+   * Profiling inference artifact
 4. **Score Papers**: Assign suitability scores to the papers based on profiling criteria, store in database
-5. **Extract CoT**: Extract Chain of Thought sets from the papers.
-   * Generate CoT extraction inference artifact
-   * Generate training data artifact
+5. **Extract CoT**: Extract Chain of Thought sets from the papers through a three-stage process:
+   * Initial Extraction: Generate initial question, reasoning chain and answer
+   * Critique: Analyze and critique the initial extraction
+   * Refinement: Improve the CoT based on critique feedback
+
+   Artifacts generated:
+   * Initial extraction inference artifact
+   * Critique inference artifact
+   * Refinement inference artifact
+   * Training data artifact in JSONL format
 
 ## Gathering the Papers
 
@@ -69,20 +77,20 @@ scripts/fetch-papers.py
    ```sh
    /workflow run raspberry-paper-profiler limit=1000
    ```
-   Args: 
+   Args:
    * `order_by`: How to order the papers when retrieving from the database (default `RANDOM()`)
    * `limit`: The number of papers to profile in one run (default: `1`)
 8. Score the papers
    ```sh
    /workflow run raspberry-paper-scorer limit=1000
    ```
-   Args: 
+   Args:
    * `limit`: The number of papers to profile in one run (default: `1`)
 9. Extract CoT from the papers
    ```sh
    /workflow run raspberry-paper-to-cot-extraction limit=1000 suitability_score=10
    ```
-   Args: 
+   Args:
    * `limit`: The number of papers to profile in one run (default: `1`)
    * `suitability_score` is the minimum suitability score needed, papers with a lower score are ignored (range `3-10`, default: `8`)
 10. All artifacts are output to the `results` directory in the root of the repository
