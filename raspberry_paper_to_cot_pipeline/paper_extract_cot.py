@@ -6,7 +6,7 @@ It downloads PDFs, extracts text, runs LWE templates, and processes the results.
 """
 
 import argparse
-from typing import Dict, Any, Tuple
+from typing import Dict, Any, Tuple, Generator
 import sys
 import xml.etree.ElementTree as ET
 from raspberry_paper_to_cot_pipeline import constants
@@ -156,11 +156,11 @@ class CoTExtractor:
         )
         self.utils.setup_lwe()
 
-    def fetch_papers(self) -> Any:
+    def fetch_papers(self) -> Generator[Dict[str, Any], None, None]:
         """
         Fetch papers from the database based on suitability score.
 
-        :return: Generator of paper data
+        :return: Generator of paper data dictionaries containing id, paper_id, and paper_url
         """
         query = f"""
         SELECT id, paper_id, paper_url
