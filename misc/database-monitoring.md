@@ -18,3 +18,11 @@ watch "sqlite3 -table papers.db 'SELECT pc.category, COUNT(p.id) AS count FROM p
 
 sqlite3 -table papers.db 'SELECT pc.category, COUNT(p.id) AS count FROM papers p INNER JOIN paper_categories pc ON p.id = pc.paper_id WHERE p.processing_status = "verified" GROUP BY pc.category ORDER BY count DESC'
 ```
+
+# For paper status
+
+```sh
+watch "sqlite3 -table papers.db 'SELECT processing_status, COUNT(processing_status) AS count FROM papers GROUP BY processing_status'"
+
+sqlite3 -table papers.db 'SELECT processing_status, COUNT(processing_status) AS count FROM papers GROUP BY processing_status'
+```
