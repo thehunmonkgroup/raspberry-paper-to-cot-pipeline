@@ -1,0 +1,16 @@
+flowchart TD
+    A[Fetch Paper URLs] --> B[Database]
+    B --> D[Clean Papers]
+    D --> B
+    B --> E[Profile Papers]
+    E --> B
+    B --> F[Score Papers]
+    F --> B
+    B --> G[Extract CoT]
+    G --> B
+    B --> H[Validate CoT]
+    H --> B
+    E --> I[Profile Artifact]
+    G --> J[CoT Inference Artifacts]
+    G --> K[Training File]
+    H --> L[Training Artifact]

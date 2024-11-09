@@ -16,7 +16,7 @@ The idea is that these academic papers represent the best of how humans reason t
 
 The following diagram illustrates the pipeline workflow:
 
-![Pipeline Diagram](misc/pipeline-diagram.png)
+![Pipeline Diagram](misc/pipeline-diagram.svg)
 
 1. **Fetch Papers**: Retrieve academic papers from arXiv.org
 2. **Clean Papers**: Verify paper accessibility and remove inaccessible papers
