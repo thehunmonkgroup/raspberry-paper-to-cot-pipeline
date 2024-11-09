@@ -11,9 +11,7 @@ and can dynamically fetch the latest category taxonomy from the arXiv website.
 import argparse
 import sys
 from datetime import datetime
-from typing import List, Dict
-import requests
-from bs4 import BeautifulSoup
+from typing import List
 
 from raspberry_paper_to_cot_pipeline import constants
 from raspberry_paper_to_cot_pipeline.utils import Utils
@@ -97,49 +95,6 @@ class ArxivPaperUrlFetcherCLI:
         self.logger = Utils.setup_logging(__name__, self.debug)
         self.utils = Utils(database=self.database, logger=self.logger)
 
-    def validate_date(self, date_str: str, date_name: str) -> None:
-        """
-        Validate the format of a date string.
-
-        :param date_str: The date string to validate
-        :param date_name: The name of the date parameter (for error reporting)
-        :raises ValueError: If the date format is invalid
-        """
-        try:
-            datetime.strptime(date_str, "%Y-%m-%d")
-        except ValueError:
-            self.logger.error(f"Invalid date format for {date_name}. Use YYYY-MM-DD.")
-            raise ValueError(f"Invalid date format for {date_name}")
-
-    def fetch_arxiv_categories(self) -> Dict[str, str]:
-        """
-        Fetch arXiv categories from the official taxonomy page.
-
-        :return: Dictionary of category codes and names
-        :raises requests.RequestException: If there's an error fetching the categories
-        """
-        response = requests.get(constants.ARXIV_TAXONOMY_URL)
-        response.raise_for_status()
-        soup = BeautifulSoup(response.text, "html.parser")
-        categories = {}
-        taxonomy_list = soup.find("div", id="category_taxonomy_list")
-        if taxonomy_list:
-            for accordion_body in taxonomy_list.find_all(
-                "div", class_="accordion-body"
-            ):
-                for column in accordion_body.find_all(
-                    "div", class_="column is-one-fifth"
-                ):
-                    h4 = column.find("h4")
-                    if h4:
-                        category_code = h4.contents[0].strip()
-                        category_name = (
-                            h4.find("span").text.strip() if h4.find("span") else ""
-                        )
-                        # Remove parentheses from the category name
-                        category_name = category_name.strip("()")
-                        categories[category_code] = category_name
-        return categories
 
     def display_config(self) -> None:
         """Display the current configuration."""
@@ -147,7 +102,7 @@ class ArxivPaperUrlFetcherCLI:
         print(f"Begin date: {self.begin}")
         print(f"End date: {self.end}")
         print("Categories:")
-        arxiv_taxonomy_map = self.fetch_arxiv_categories()
+        arxiv_taxonomy_map = self.utils.fetch_arxiv_categories()
         for category in constants.ARXIV_DEFAULT_CATEGORIES:
             description = arxiv_taxonomy_map.get(category, "Unknown")
             print(f"* {category:<20} {description}")
@@ -155,7 +110,7 @@ class ArxivPaperUrlFetcherCLI:
     def display_categories(self) -> None:
         """Display all available arXiv categories with descriptions."""
         print("Available arXiv categories:")
-        arxiv_taxonomy_map = self.fetch_arxiv_categories()
+        arxiv_taxonomy_map = self.utils.fetch_arxiv_categories()
         for category, description in arxiv_taxonomy_map.items():
             print(f"* {category:<20} {description}")
 
@@ -163,11 +118,57 @@ class ArxivPaperUrlFetcherCLI:
         """
         Get the list of categories to process.
 
-        :return: List of category codes
+        :return: List of category codes - either user-provided categories if specified,
+                or default categories from constants.ARXIV_DEFAULT_CATEGORIES
         """
-        if self.category:
-            return [cat.strip() for cat in self.category.split(",")]
-        return constants.ARXIV_DEFAULT_CATEGORIES
+        self.logger.debug("Getting categories list")
+        categories = [cat.strip() for cat in self.category.split(",")] if self.category else constants.ARXIV_DEFAULT_CATEGORIES
+        self.logger.debug(f"Using categories: {categories}")
+
+        valid_categories = set(self.utils.fetch_arxiv_categories().keys())
+        invalid_categories = [cat for cat in categories if cat not in valid_categories]
+        if invalid_categories:
+            raise ValueError(f"Invalid category codes: {', '.join(invalid_categories)}")
+        return categories
+
+    def should_show_info(self) -> bool:
+        """
+        Check if we should display info and exit.
+
+        :return: True if info was displayed, False otherwise
+        """
+        if self.config:
+            self.display_config()
+            return True
+        elif self.list:
+            self.display_categories()
+            return True
+        return False
+
+    def validate_dates(self) -> None:
+        """
+        Validate both begin and end dates.
+
+        :raises ValueError: If dates are invalid or end date is not after begin date
+        """
+        self.utils.validate_date(self.begin, "--begin")
+        self.utils.validate_date(self.end, "--end")
+        begin_date = datetime.strptime(self.begin, "%Y-%m-%d")
+        end_date = datetime.strptime(self.end, "%Y-%m-%d")
+        if end_date <= begin_date:
+            raise ValueError("End date must be after begin date")
+
+    def process_categories(self) -> None:
+        """Process each category for paper fetching."""
+        categories = self.get_categories()
+        fetcher = ArxivPaperUrlFetcher(self.database, self.debug)
+        for category in categories:
+            self.logger.info(f"Fetching papers for category: {category}")
+            try:
+                fetcher.run(category, self.begin, self.end)
+            except KeyboardInterrupt:
+                self.logger.info("Keyboard interrupt received. Stopping the process.")
+                break
 
     def run(self) -> None:
         """
@@ -180,30 +181,10 @@ class ArxivPaperUrlFetcherCLI:
         :raises Exception: For any other unexpected errors
         """
         try:
-            self.fetch_arxiv_categories()
-
-            if self.config:
-                self.display_config()
+            if self.should_show_info():
                 return
-            elif self.list:
-                self.display_categories()
-                return
-
-            self.validate_date(self.begin, "--begin")
-            self.validate_date(self.end, "--end")
-
-            categories = self.get_categories()
-            fetcher = ArxivPaperUrlFetcher(self.database, self.debug)
-
-            for category in categories:
-                self.logger.info(f"Fetching papers for category: {category}")
-                try:
-                    fetcher.run(category, self.begin, self.end)
-                except KeyboardInterrupt:
-                    self.logger.info(
-                        "Keyboard interrupt received. Stopping the process."
-                    )
-                    break
+            self.validate_dates()
+            self.process_categories()
         except Exception as e:
             self.logger.error(f"An error occurred: {e}")
             sys.exit(1)

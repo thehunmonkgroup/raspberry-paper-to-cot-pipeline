@@ -4,12 +4,14 @@ import sqlite3
 import json
 import pymupdf4llm
 import re
+from datetime import datetime
 from contextlib import contextmanager
 from urllib.parse import urlparse
 from pathlib import Path
 import xml.etree.ElementTree as ET
 import textwrap
 from typing import Optional, List, Dict, Generator, Any, Tuple
+from bs4 import BeautifulSoup
 from tenacity import (
     retry,
     stop_after_attempt,
@@ -385,6 +387,56 @@ class Utils:
         artifact_file_path = self.training_artifacts_directory / filename
         artifact_file_path.write_text(json.dumps(content))
         self.logger.debug(f"Wrote training artifact to {artifact_file_path}")
+
+    def validate_date(self, date_str: str, date_name: str) -> None:
+        """
+        Validate the format of a date string.
+
+        :param date_str: The date string to validate
+        :param date_name: The name of the date parameter (for error reporting)
+        :raises ValueError: If the date format is invalid
+        :return: None on successful validation
+        """
+        self.logger.debug(f"Validating {date_name}: {date_str}")
+        try:
+            datetime.strptime(date_str, "%Y-%m-%d")
+        except ValueError:
+            self.logger.error(f"Invalid date format for {date_name}. Use YYYY-MM-DD.")
+            raise ValueError(f"Invalid date format for {date_name}")
+
+    def fetch_arxiv_categories(self) -> Dict[str, str]:
+        """
+        Fetch arXiv categories from the official taxonomy page.
+
+        :return: Dictionary of category codes and names, or empty dict if no categories found
+        :raises requests.RequestException: If there's an error fetching the categories
+        :raises BeautifulSoup.ParserError: If there's an error parsing the HTML
+        """
+        self.logger.debug("Fetching arXiv taxonomy")
+        try:
+            response = requests.get(constants.ARXIV_TAXONOMY_URL)
+            response.raise_for_status()
+            soup = BeautifulSoup(response.text, "html.parser")
+            categories = {}
+            taxonomy_list = soup.find("div", id="category_taxonomy_list")
+            if not taxonomy_list:
+                self.logger.warning("No taxonomy list found in arXiv page")
+                return {}
+
+            for accordion_body in taxonomy_list.find_all("div", class_="accordion-body"):
+                for column in accordion_body.find_all("div", class_="column is-one-fifth"):
+                    h4 = column.find("h4")
+                    if h4:
+                        category_code = h4.contents[0].strip()
+                        category_name = h4.find("span").text.strip() if h4.find("span") else ""
+                        category_name = category_name.strip("()")
+                        categories[category_code] = category_name
+
+            self.logger.debug(f"Found {len(categories)} categories")
+            return categories
+        except Exception as e:
+            self.logger.error(f"Error parsing arXiv taxonomy: {e}")
+            raise
 
     def fetch_papers_by_custom_query(
         self, query: str, params: tuple
