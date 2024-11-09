@@ -48,6 +48,15 @@ def parse_arguments() -> argparse.Namespace:
 class PaperCleaner:
     """
     A class to handle cleaning of paper URLs in the SQLite database.
+    
+    This class verifies the accessibility of paper URLs stored in the database
+    and updates their status accordingly. Papers with accessible URLs are marked
+    as 'verified', while those with inaccessible URLs are marked as 'missing'.
+    It supports batch processing with optional limits and can skip the verification
+    process if needed.
+
+    The class uses retry mechanisms for URL checking and maintains proper database
+    connections using context managers.
     """
 
     def __init__(self, database: Optional[str], skip_cleaning: bool, limit: Optional[int], debug: bool):
@@ -78,9 +87,11 @@ class PaperCleaner:
 
         :param url: The URL to check
         :return: True if accessible, False otherwise
-        :raises requests.RequestException: If the URL is not accessible
+        :raises requests.RequestException: If the URL cannot be accessed due to HTTP errors,
+                                         timeout, or other request-related issues
         """
-        response = requests.head(url, allow_redirects=True, timeout=15)
+        response = requests.head(url, allow_redirects=True, 
+                               timeout=constants.PAPER_URL_REQUEST_TIMEOUT_SECONDS)
         if response.status_code != 200:
             self.logger.warning(f"URL NOT accessible: {url}")
             raise requests.RequestException(f"URL not accessible: {url}")
@@ -96,8 +107,8 @@ class PaperCleaner:
         """
         try:
             return self.check_url_accessibility(url)
-        except requests.RequestException:
-            self.logger.warning(f"URL not accessible after retries: {url}")
+        except requests.RequestException as e:
+            self.logger.warning(f"URL not accessible after retries: {url}. Error: {str(e)}")
             return False
 
     def process_paper(self, paper_id: int, paper_url: str) -> None:
@@ -106,6 +117,7 @@ class PaperCleaner:
 
         :param paper_id: The ID of the paper to process
         :param paper_url: The URL of the paper to check
+        :raises sqlite3.Error: If there's an issue with database operations
         """
         self.logger.info(f"Processing paper ID {paper_id} with URL: {paper_url}")
         try:
@@ -119,27 +131,42 @@ class PaperCleaner:
                 self.logger.warning(
                     f"Paper ID {paper_id} ({paper_url}) is inaccessible. Marked as missing in the database."
                 )
+        except sqlite3.Error as e:
+            self.logger.error(f"Database error processing paper {paper_id}: {e}")
+            raise
         except Exception as e:
-            self.logger.error(f"Error processing paper {paper_id} ({paper_url}): {e}")
+            self.logger.error(f"Unexpected error processing paper {paper_id}: {e}")
+            raise
 
     def run(self) -> None:
-        """Run the paper cleaning process."""
+        """
+        Run the paper cleaning process.
+
+        This method orchestrates the entire cleaning process, either marking all papers
+        as verified if skip_cleaning is True, or checking each paper's URL accessibility
+        and updating their status accordingly.
+
+        :raises SystemExit: If an unrecoverable error occurs during processing
+        """
         self.logger.info(
-            f"Starting paper cleaning process. Database: {self.database}, Limit: {self.limit}, Skip cleaning: {self.skip_cleaning}"
+            f"Starting paper cleaning process. Database: {self.database}, "
+            f"Limit: {self.limit}, Skip cleaning: {self.skip_cleaning}"
         )
         try:
             if self.skip_cleaning:
+                self.logger.debug("Skip cleaning flag is set, marking all papers as verified")
                 self.mark_all_papers_as_verified()
             else:
+                self.logger.debug("Fetching papers with 'downloaded' status")
                 papers = self.utils.fetch_papers_by_processing_status(
                     status=constants.STATUS_DOWNLOADED, limit=self.limit
                 )
                 processed_count = 0
                 for paper in papers:
+                    self.logger.debug(f"Processing paper {paper['id']}")
                     self.process_paper(paper["id"], paper["paper_url"])
                     processed_count += 1
-                    if processed_count % 1000 == 0:
-                        self.logger.info(f"Processed {processed_count} papers so far.")
+                    self._log_progress(processed_count)
                 self.logger.info(
                     f"Paper cleaning process completed. Total papers processed: {processed_count}"
                 )
@@ -149,8 +176,21 @@ class PaperCleaner:
             )
             sys.exit(1)
 
+    def _log_progress(self, processed_count: int) -> None:
+        """
+        Log progress of paper processing at regular intervals.
+
+        :param processed_count: Number of papers processed so far
+        """
+        if processed_count % constants.PAPER_URL_PROGRESS_LOG_BATCH_SIZE == 0:
+            self.logger.info(f"Processed {processed_count} papers so far.")
+
     def mark_all_papers_as_verified(self) -> None:
-        """Mark all papers with STATUS_DOWNLOADED as STATUS_VERIFIED."""
+        """
+        Mark all papers with STATUS_DOWNLOADED as STATUS_VERIFIED.
+
+        :raises sqlite3.Error: If there's an issue with database operations
+        """
         try:
             with self.utils.get_db_connection(self.database) as conn:
                 cursor = conn.cursor()

@@ -167,5 +167,9 @@ STATUS_SCORED = "scored"
 STATUS_COT_EXTRACTED = "cot_extracted"
 STATUS_FAILED_COT_EXTRACTION = "failed_cot_extraction"
 
+# URL cleaning
+PAPER_URL_REQUEST_TIMEOUT_SECONDS = 15
+PAPER_URL_PROGRESS_LOG_BATCH_SIZE = 1000
+
 # Training
 TRAINING_SYSTEM_MESSAGE = "You are a thinking agent responsible for developing a detailed, step-by-step thought process in response to a request, problem, or conversation. Your task is to break down the situation into a structured reasoning process. If feedback is provided, integrate it into your thought process for refinement."
