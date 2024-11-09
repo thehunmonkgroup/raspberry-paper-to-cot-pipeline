@@ -165,7 +165,9 @@ class CoTExtractor:
         )
         self.utils.setup_lwe()
 
-    def fetch_specific_paper(self, paper_id: str) -> Generator[Dict[str, Any], None, None]:
+    def fetch_specific_paper(
+        self, paper_id: str
+    ) -> Generator[Dict[str, Any], None, None]:
         """
         Fetch a specific paper from the database.
 
@@ -190,7 +192,7 @@ class CoTExtractor:
 
         :return: Generator of paper data dictionaries containing id, paper_id, and paper_url
         """
-        if hasattr(self, 'paper_id') and self.paper_id:
+        if hasattr(self, "paper_id") and self.paper_id:
             return self.fetch_specific_paper(self.paper_id)
 
         query = f"""
@@ -212,8 +214,8 @@ class CoTExtractor:
         """
         try:
             pdf_text = self.utils.get_pdf_text(paper)
-            question, chain_of_reasoning, answer, initial_response = self.process_initial_cot_extraction(
-                pdf_text
+            question, chain_of_reasoning, answer, initial_response = (
+                self.process_initial_cot_extraction(pdf_text)
             )
             self.write_initial_cot_extraction_artifact(
                 paper, question, chain_of_reasoning, answer, initial_response
@@ -225,18 +227,16 @@ class CoTExtractor:
                 question, chain_of_reasoning, answer, pdf_text
             )
             self.write_critique_artifact(paper, critique, critique_response)
-            self.logger.info(
-                f"Completed critique for paper {paper['paper_id']}"
-            )
-            refined_q, refined_c, refined_a, refinement_response = self.process_refinement(
-                question, chain_of_reasoning, answer, critique, pdf_text
+            self.logger.info(f"Completed critique for paper {paper['paper_id']}")
+            refined_q, refined_c, refined_a, refinement_response = (
+                self.process_refinement(
+                    question, chain_of_reasoning, answer, critique, pdf_text
+                )
             )
             self.write_refinement_artifact(
                 paper, refined_q, refined_c, refined_a, refinement_response
             )
-            self.logger.info(
-                f"Completed refinement for paper {paper['paper_id']}"
-            )
+            self.logger.info(f"Completed refinement for paper {paper['paper_id']}")
             self.write_training_artifact(paper, refined_q, refined_c, refined_a)
             self.utils.update_paper_status(paper["id"], constants.STATUS_COT_EXTRACTED)
             self.logger.info(
@@ -267,7 +267,7 @@ class CoTExtractor:
         :param raw_content: Raw LWE response content
         """
         artifact_name = constants.INITIAL_EXTRACTION_ARTIFACT_PATTERN.format(
-            paper_id=paper['paper_id']
+            paper_id=paper["paper_id"]
         )
         content = f"""Paper URL: {paper['paper_url']}
 Extraction preset: {self.extraction_preset}
@@ -310,7 +310,7 @@ Raw Content:
         :param critique_response: Raw critique response
         """
         artifact_name = constants.CRITIQUE_ARTIFACT_PATTERN.format(
-            paper_id=paper['paper_id']
+            paper_id=paper["paper_id"]
         )
         content = f"""Paper URL: {paper['paper_url']}
 Critique preset: {self.critique_preset}
@@ -343,7 +343,7 @@ Raw Response:
         :param raw_content: Raw refinement content
         """
         artifact_name = constants.REFINEMENT_ARTIFACT_PATTERN.format(
-            paper_id=paper['paper_id']
+            paper_id=paper["paper_id"]
         )
         content = f"""Paper URL: {paper['paper_url']}
 Refinement preset: {self.refinement_preset}
@@ -373,8 +373,7 @@ Raw Content:
         self.utils.write_inference_artifact(artifact_name, content)
 
     def process_initial_cot_extraction(
-        self,
-        pdf_text: str
+        self, pdf_text: str
     ) -> Tuple[str, str, str, str]:
         """
         Process the initial CoT extraction for a paper.
@@ -395,8 +394,8 @@ Raw Content:
                     },
                 },
             )
-            question, chain_of_reasoning, answer = self.utils.extract_question_chain_of_reasoning_answer(
-                initial_response
+            question, chain_of_reasoning, answer = (
+                self.utils.extract_question_chain_of_reasoning_answer(initial_response)
             )
             return question, chain_of_reasoning, answer, initial_response
         except Exception as e:
@@ -496,8 +495,10 @@ Raw Content:
                     },
                 },
             )
-            refined_q, refined_c, refined_a = self.utils.extract_question_chain_of_reasoning_answer(
-                refinement_response
+            refined_q, refined_c, refined_a = (
+                self.utils.extract_question_chain_of_reasoning_answer(
+                    refinement_response
+                )
             )
             return refined_q, refined_c, refined_a, refinement_response
         except Exception as e:

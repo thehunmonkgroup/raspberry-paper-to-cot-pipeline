@@ -6,7 +6,6 @@ and updating or deleting entries accordingly.
 
 import argparse
 import sqlite3
-from typing import Optional
 from tenacity import (
     retry,
     stop_after_attempt,
@@ -59,7 +58,13 @@ class PaperCleaner:
     connections using context managers.
     """
 
-    def __init__(self, database: str = constants.DEFAULT_DB_NAME, skip_cleaning: bool = False, limit: int = None, debug: bool = False):
+    def __init__(
+        self,
+        database: str = constants.DEFAULT_DB_NAME,
+        skip_cleaning: bool = False,
+        limit: int = None,
+        debug: bool = False,
+    ):
         """
         Initialize the PaperCleaner.
 
@@ -90,8 +95,11 @@ class PaperCleaner:
         :raises requests.RequestException: If the URL cannot be accessed due to HTTP errors,
                                          timeout, or other request-related issues
         """
-        response = requests.head(url, allow_redirects=True,
-                               timeout=constants.PAPER_URL_REQUEST_TIMEOUT_SECONDS)
+        response = requests.head(
+            url,
+            allow_redirects=True,
+            timeout=constants.PAPER_URL_REQUEST_TIMEOUT_SECONDS,
+        )
         if response.status_code != 200:
             self.logger.warning(f"URL NOT accessible: {url}")
             raise requests.RequestException(f"URL not accessible: {url}")
@@ -108,7 +116,9 @@ class PaperCleaner:
         try:
             return self.check_url_accessibility(url)
         except requests.RequestException as e:
-            self.logger.warning(f"URL not accessible after retries: {url}. Error: {str(e)}")
+            self.logger.warning(
+                f"URL not accessible after retries: {url}. Error: {str(e)}"
+            )
             return False
 
     def process_paper(self, paper_id: int, paper_url: str) -> None:
@@ -154,7 +164,9 @@ class PaperCleaner:
         )
         try:
             if self.skip_cleaning:
-                self.logger.debug("Skip cleaning flag is set, marking all papers as verified")
+                self.logger.debug(
+                    "Skip cleaning flag is set, marking all papers as verified"
+                )
                 self.mark_all_papers_as_verified()
             else:
                 self.logger.debug("Fetching papers with 'downloaded' status")
@@ -195,7 +207,7 @@ class PaperCleaner:
             with self.utils.get_db_connection(self.database) as conn:
                 cursor = conn.cursor()
                 cursor.execute(
-                    f"""
+                    """
                     UPDATE papers
                     SET processing_status = ?
                     WHERE processing_status = ?
@@ -204,7 +216,9 @@ class PaperCleaner:
                 )
                 updated_count = cursor.rowcount
                 conn.commit()
-            self.logger.info(f"Marked {updated_count} papers as verified, skipping cleaning process.")
+            self.logger.info(
+                f"Marked {updated_count} papers as verified, skipping cleaning process."
+            )
         except sqlite3.Error as e:
             self.logger.error(f"Database error while marking papers as verified: {e}")
             raise
@@ -213,7 +227,12 @@ class PaperCleaner:
 def main():
     """Main function to run the script."""
     args = parse_arguments()
-    cleaner = PaperCleaner(database=args.database, skip_cleaning=args.skip_cleaning, limit=args.limit, debug=args.debug)
+    cleaner = PaperCleaner(
+        database=args.database,
+        skip_cleaning=args.skip_cleaning,
+        limit=args.limit,
+        debug=args.debug,
+    )
     cleaner.run()
 
 

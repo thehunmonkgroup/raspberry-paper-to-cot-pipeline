@@ -85,7 +85,10 @@ class PaperScorer:
         :raises KeyError: If required criteria fields are missing from paper data
         """
         try:
-            return any(int(paper[c]) == 0 for c in self.build_criteria_columns(required_only=True))
+            return any(
+                int(paper[c]) == 0
+                for c in self.build_criteria_columns(required_only=True)
+            )
         except KeyError as e:
             self.logger.error(f"Missing required criteria field in paper data: {e}")
             raise
@@ -146,7 +149,9 @@ class PaperScorer:
                 f"suitability score: {suitability_score}"
             )
         except (KeyError, sqlite3.Error) as e:
-            self.logger.error(f"Failed to process paper {paper.get('paper_id', 'unknown')}: {e}")
+            self.logger.error(
+                f"Failed to process paper {paper.get('paper_id', 'unknown')}: {e}"
+            )
             raise
 
     def run(self) -> None:

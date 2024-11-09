@@ -46,7 +46,9 @@ class ArxivPaperUrlFetcher:
         interrupt_received (bool): Flag to track interrupt signals
     """
 
-    def __init__(self, database: str = constants.DEFAULT_DB_NAME, debug: bool = False) -> None:
+    def __init__(
+        self, database: str = constants.DEFAULT_DB_NAME, debug: bool = False
+    ) -> None:
         self.interrupt_received = False
         self.database = database
         self.debug = debug
@@ -361,7 +363,9 @@ class ArxivPaperUrlFetcher:
 
                 conn.commit()
 
-            self.logger.info(f"Successfully processed {len(paper_data)} papers with category {category}")
+            self.logger.info(
+                f"Successfully processed {len(paper_data)} papers with category {category}"
+            )
         except sqlite3.Error as e:
             self.logger.error("Error writing to database: %s", str(e))
             sys.exit(1)
@@ -499,7 +503,7 @@ def signal_handler(signum: int, frame: Any) -> None:
         to allow for graceful shutdown.
     """
     print("\nInterrupt received. Exiting gracefully...")
-    if hasattr(signal_handler, 'active_fetcher'):
+    if hasattr(signal_handler, "active_fetcher"):
         signal_handler.active_fetcher.interrupt_received = True
 
 

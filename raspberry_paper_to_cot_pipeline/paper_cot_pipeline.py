@@ -72,13 +72,9 @@ def parse_arguments() -> argparse.Namespace:
         "--limit",
         type=int,
         default=1,
-        help="Number of papers to process in each stage, default: %(default)s"
+        help="Number of papers to process in each stage, default: %(default)s",
     )
-    parser.add_argument(
-        "--debug",
-        action="store_true",
-        help="Enable debug logging"
-    )
+    parser.add_argument("--debug", action="store_true", help="Enable debug logging")
     return parser.parse_args()
 
 

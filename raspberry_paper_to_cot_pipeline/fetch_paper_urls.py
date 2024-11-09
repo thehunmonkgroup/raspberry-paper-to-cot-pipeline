@@ -95,7 +95,6 @@ class ArxivPaperUrlFetcherCLI:
         self.logger = Utils.setup_logging(__name__, self.debug)
         self.utils = Utils(database=self.database, logger=self.logger)
 
-
     def display_config(self) -> None:
         """Display the current configuration."""
         print("Current configuration:")
@@ -122,7 +121,11 @@ class ArxivPaperUrlFetcherCLI:
                 or default categories from constants.ARXIV_DEFAULT_CATEGORIES
         """
         self.logger.debug("Getting categories list")
-        categories = [cat.strip() for cat in self.category.split(",")] if self.category else constants.ARXIV_DEFAULT_CATEGORIES
+        categories = (
+            [cat.strip() for cat in self.category.split(",")]
+            if self.category
+            else constants.ARXIV_DEFAULT_CATEGORIES
+        )
         self.logger.debug(f"Using categories: {categories}")
 
         valid_categories = set(self.utils.fetch_arxiv_categories().keys())

@@ -29,7 +29,7 @@ def get_db_connection(database_path: str) -> Generator[sqlite3.Connection, None,
     Context manager for database connections with WAL journaling and IMMEDIATE isolation.
 
     :param database_path: Path to the SQLite database
-    :yield: SQLite connection object configured with Write-Ahead Logging (WAL) 
+    :yield: SQLite connection object configured with Write-Ahead Logging (WAL)
            journal mode and IMMEDIATE isolation level for better concurrency
     :raises sqlite3.Error: If connection cannot be established
     """
@@ -239,7 +239,9 @@ class Utils:
         )
         return match.group(0) if match else None
 
-    def extract_question_chain_of_reasoning_answer(self, content: str) -> Tuple[str, str, str]:
+    def extract_question_chain_of_reasoning_answer(
+        self, content: str
+    ) -> Tuple[str, str, str]:
         """
         Parse the content to extract question, chain of reasoning, and answer.
 
@@ -252,14 +254,14 @@ class Utils:
         if not xml_string:
             raise ValueError("Could not extract XML content")
         root = ET.fromstring(xml_string)
-        
+
         question_elem = root.find(".//question")
         chain_elem = root.find(".//chain_of_reasoning")
         answer_elem = root.find(".//answer")
-        
+
         if None in (question_elem, chain_elem, answer_elem):
             raise AttributeError("Required XML elements missing")
-            
+
         question = question_elem.text.strip()
         chain_of_reasoning = textwrap.dedent(chain_elem.text).strip()
         answer = answer_elem.text.strip()
@@ -452,12 +454,18 @@ class Utils:
                 self.logger.warning("No taxonomy list found in arXiv page")
                 return {}
 
-            for accordion_body in taxonomy_list.find_all("div", class_="accordion-body"):
-                for column in accordion_body.find_all("div", class_="column is-one-fifth"):
+            for accordion_body in taxonomy_list.find_all(
+                "div", class_="accordion-body"
+            ):
+                for column in accordion_body.find_all(
+                    "div", class_="column is-one-fifth"
+                ):
                     h4 = column.find("h4")
                     if h4:
                         category_code = h4.contents[0].strip()
-                        category_name = h4.find("span").text.strip() if h4.find("span") else ""
+                        category_name = (
+                            h4.find("span").text.strip() if h4.find("span") else ""
+                        )
                         category_name = category_name.strip("()")
                         if category_code and category_name:
                             categories[category_code] = category_name
