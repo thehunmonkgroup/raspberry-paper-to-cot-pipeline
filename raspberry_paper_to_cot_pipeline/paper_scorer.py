@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
 """
 This script scores papers based on profiling criteria.
-It retrieves criteria from the database, calculates a suitability score, and updates the database.
+It retrieves criteria from the database, calculates a suitability score based on required
+and optional criteria, and updates the database with the final score.
+
+The suitability score is calculated as the sum of all criteria scores, but only if all
+required criteria are met (non-zero). If any required criteria are missing or zero,
+the final score will be 0.
 """
 
 import argparse
@@ -57,34 +62,53 @@ class PaperScorer:
         self.logger = Utils.setup_logging(__name__, self.debug)
         self.utils = Utils(database=self.database, logger=self.logger)
 
-    def build_criteria_columns(self) -> List[str]:
-        """Build a list of criteria column names."""
-        return [f"criteria_{c}" for c in constants.PROFILING_CRITERIA]
+    def build_criteria_columns(self, required_only: bool = False) -> List[str]:
+        """
+        Build a list of criteria column names.
 
-    def build_required_criteria_columns(self) -> List[str]:
-        """Build a list of required criteria column names."""
-        return [f"criteria_{c}" for c in constants.REQUIRED_PROFILING_CRITERIA]
+        :param required_only: If True, return only required criteria columns
+        :return: List of column names prefixed with 'criteria_'
+        """
+        criteria = (
+            constants.REQUIRED_PROFILING_CRITERIA
+            if required_only
+            else constants.PROFILING_CRITERIA
+        )
+        return [f"criteria_{c}" for c in criteria]
 
     def missing_required_criteria(self, paper: Dict[str, Any]) -> bool:
         """
-        Check if any required criteria are missing.
+        Check if any required criteria are missing or zero.
 
-        :param paper: Paper data
-        :return: True if any required criteria are missing, False otherwise
+        :param paper: Paper data dictionary containing criteria scores
+        :return: True if any required criteria are missing or zero, False otherwise
+        :raises KeyError: If required criteria fields are missing from paper data
         """
-        return any(int(paper[c]) == 0 for c in self.build_required_criteria_columns())
+        try:
+            return any(int(paper[c]) == 0 for c in self.build_criteria_columns(required_only=True))
+        except KeyError as e:
+            self.logger.error(f"Missing required criteria field in paper data: {e}")
+            raise
 
     def calculate_suitability_score(self, paper: Dict[str, Any]) -> int:
         """
         Calculate the suitability score based on criteria.
 
-        :param paper: Paper data
-        :return: Calculated suitability score
+        The score is the sum of all criteria values if all required criteria are non-zero.
+        Returns 0 if any required criteria are missing or zero.
+
+        :param paper: Paper data dictionary containing criteria scores
+        :return: Calculated suitability score (0 if required criteria not met)
+        :raises KeyError: If criteria fields are missing from paper data
         """
-        if self.missing_required_criteria(paper):
-            return 0
-        criteria = [int(paper[c]) for c in self.build_criteria_columns()]
-        return sum(criteria)
+        try:
+            if self.missing_required_criteria(paper):
+                return 0
+            criteria = [int(paper[c]) for c in self.build_criteria_columns()]
+            return sum(criteria)
+        except KeyError as e:
+            self.logger.error(f"Missing criteria field in paper data: {e}")
+            raise
 
     def fetch_papers_for_scoring(self) -> Generator[sqlite3.Row, None, None]:
         """
@@ -105,17 +129,25 @@ class PaperScorer:
         """
         Execute the main logic of the paper scoring process.
 
-        :param paper: Paper data
+        :param paper: Paper data as a sqlite3.Row containing criteria fields and paper metadata
+        :return: None
+        :raises KeyError: If required paper fields are missing
+        :raises sqlite3.Error: If database update fails
         """
-        suitability_score = self.calculate_suitability_score(paper)
-        data = {
-            "processing_status": constants.STATUS_SCORED,
-            "suitability_score": suitability_score,
-        }
-        self.utils.update_paper(paper["id"], data)
-        self.logger.info(
-            f"Scored paper {paper['paper_id']}, suitability score: {suitability_score}"
-        )
+        try:
+            suitability_score = self.calculate_suitability_score(paper)
+            data = {
+                "processing_status": constants.STATUS_SCORED,
+                "suitability_score": suitability_score,
+            }
+            self.utils.update_paper(paper["id"], data)
+            self.logger.info(
+                f"Paper {paper['paper_id']} scored and updated to status {constants.STATUS_SCORED}, "
+                f"suitability score: {suitability_score}"
+            )
+        except (KeyError, sqlite3.Error) as e:
+            self.logger.error(f"Failed to process paper {paper.get('paper_id', 'unknown')}: {e}")
+            raise
 
     def run(self) -> None:
         """Run the paper scoring process."""
