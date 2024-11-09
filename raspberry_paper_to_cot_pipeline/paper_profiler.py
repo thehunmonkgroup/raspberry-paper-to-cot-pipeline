@@ -147,7 +147,7 @@ class PaperProfiler:
             element = root.find(f".//{question}")
             if element is not None:
                 value = element.text.strip()
-                criteria[f"criteria_{question}"] = (
+                criteria[f"profiler_criteria_{question}"] = (
                     1 if value.lower() in ["yes", "y"] else 0
                 )
             else:
@@ -163,7 +163,7 @@ class PaperProfiler:
         """
         output = []
         for question in constants.PROFILING_CRITERIA:
-            answer = "Yes" if criteria[f"criteria_{question}"] == 1 else "No"
+            answer = "Yes" if criteria[f"profiler_criteria_{question}"] == 1 else "No"
             output.append(f"  {question}: {answer}")
         return "\n".join(output)
 

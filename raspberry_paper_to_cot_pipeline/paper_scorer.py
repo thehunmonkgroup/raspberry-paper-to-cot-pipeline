@@ -67,14 +67,14 @@ class PaperScorer:
         Build a list of criteria column names.
 
         :param required_only: If True, return only required criteria columns
-        :return: List of column names prefixed with 'criteria_'
+        :return: List of column names prefixed with 'profiler_criteria_'
         """
         criteria = (
             constants.REQUIRED_PROFILING_CRITERIA
             if required_only
             else constants.PROFILING_CRITERIA
         )
-        return [f"criteria_{c}" for c in criteria]
+        return [f"profiler_criteria_{c}" for c in criteria]
 
     def missing_required_criteria(self, paper: Dict[str, Any]) -> bool:
         """
