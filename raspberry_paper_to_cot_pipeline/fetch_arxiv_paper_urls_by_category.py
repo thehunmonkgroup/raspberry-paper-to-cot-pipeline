@@ -25,16 +25,30 @@ from tenacity import (
     wait_exponential,
     retry_if_exception_type,
 )
-from typing import List, Tuple
+from typing import List, Tuple, Dict, Optional, Any, Union, Literal
 from raspberry_paper_to_cot_pipeline import constants
 from raspberry_paper_to_cot_pipeline.utils import Utils
 
 
 class ArxivPaperUrlFetcher:
-    interrupt_received = False
+    """
+    A class to fetch and process arXiv paper URLs.
 
-    def __init__(self, database=None, debug=False):
-        self.database = database or constants.DEFAULT_DB_NAME
+    This class handles the retrieval of paper URLs from arXiv's API, processes them,
+    and stores them in a SQLite database. It supports pagination, error recovery,
+    and graceful interruption.
+
+    Attributes:
+        database (str): Path to the SQLite database file
+        debug (bool): Enable debug logging if True
+        logger (logging.Logger): Logger instance for this class
+        utils (Utils): Utility class instance for database operations
+        interrupt_received (bool): Flag to track interrupt signals
+    """
+
+    def __init__(self, database: str = constants.DEFAULT_DB_NAME, debug: bool = False) -> None:
+        self.interrupt_received = False
+        self.database = database
         self.debug = debug
         self.logger = Utils.setup_logging(__name__, self.debug)
         self.utils = Utils(database=self.database, logger=self.logger)
@@ -121,8 +135,19 @@ class ArxivPaperUrlFetcher:
         self.logger.info("Total papers fetched: %d, stored: %d", fetched, len(results))
         return results
 
-    def _construct_query_params(self, categories, start_index):
-        """Construct the query parameters for the arXiv API."""
+    def _construct_query_params(
+        self, categories: List[str], start_index: int
+    ) -> Dict[str, Any]:
+        """
+        Construct the query parameters for the arXiv API.
+
+        Args:
+            categories: List of arXiv categories to search
+            start_index: Starting index for the search
+
+        Returns:
+            Dictionary containing the query parameters for the arXiv API
+        """
         category_query = " OR ".join([f"cat:{cat}" for cat in categories])
         return {
             "search_query": f"({category_query})",
@@ -138,8 +163,20 @@ class ArxivPaperUrlFetcher:
         retry=(retry_if_exception_type(RequestException)),
         reraise=True,
     )
-    def _fetch_arxiv_data(self, params):
-        """Fetch data from arXiv API and return the XML root."""
+    def _fetch_arxiv_data(self, params: Dict[str, Any]) -> Optional[ET.Element]:
+        """
+        Fetch data from arXiv API and return the XML root.
+
+        Args:
+            params: Query parameters for the API request
+
+        Returns:
+            Parsed XML Element if successful, None if parsing fails
+
+        Raises:
+            RequestException: If the HTTP request fails or returns non-200 status
+            ParseError: If the XML response cannot be parsed
+        """
         base_url = "https://export.arxiv.org/api/query"
         self.logger.debug("Fetching papers from arXiv: %s: %s", base_url, params)
         response = requests.get(base_url, params=params)
@@ -155,8 +192,25 @@ class ArxivPaperUrlFetcher:
             )  # Log first 1000 characters
             return False
 
-    def _process_entry(self, entry, date_filter_begin, date_filter_end):
-        """Process a single entry from the arXiv API response."""
+    def _process_entry(
+        self, entry: ET.Element, date_filter_begin: str, date_filter_end: str
+    ) -> Optional[Union[Tuple[str, str], Literal["BREAK"]]]:
+        """
+        Process a single entry from the arXiv API response.
+
+        Args:
+            entry: XML element containing the paper entry
+            date_filter_begin: Start date for filtering papers (YYYY-MM-DD)
+            date_filter_end: End date for filtering papers (YYYY-MM-DD)
+
+        Returns:
+            Tuple of (paper_id, pdf_url) if valid,
+            "BREAK" if we should stop processing,
+            None if entry should be skipped
+
+        Raises:
+            ValueError: If date parsing fails
+        """
         updated_date = parse_date(
             entry.find("{http://www.w3.org/2005/Atom}updated").text
         ).date()
@@ -180,9 +234,28 @@ class ArxivPaperUrlFetcher:
             return None
 
     def _should_stop_fetching(
-        self, root, fetched, entries, results, date_filter_end, attempts
-    ):
-        """Determine if we should stop fetching more results."""
+        self,
+        root: Optional[ET.Element],
+        fetched: int,
+        entries: List[ET.Element],
+        results: List[Tuple[str, str]],
+        date_filter_end: str,
+        attempts: int,
+    ) -> bool:
+        """
+        Determine if we should stop fetching more results.
+
+        Args:
+            root: Parsed XML root element
+            fetched: Number of papers fetched so far
+            entries: List of paper entries from current response
+            results: List of processed results
+            date_filter_end: End date for paper filtering
+            attempts: Number of consecutive empty result attempts
+
+        Returns:
+            True if we should stop fetching, False otherwise
+        """
         if attempts >= constants.FETCH_MAX_EMPTY_RESULTS_ATTEMPTS:
             self.logger.warning(
                 f"Reached maximum number of attempts ({constants.FETCH_MAX_EMPTY_RESULTS_ATTEMPTS}) without fetching any results. Stopping search."
@@ -288,9 +361,7 @@ class ArxivPaperUrlFetcher:
 
                 conn.commit()
 
-            self.logger.info(
-                f"Successfully processed {len(paper_data)} papers with category {category}"
-            )
+            self.logger.info(f"Successfully processed {len(paper_data)} papers with category {category}")
         except sqlite3.Error as e:
             self.logger.error("Error writing to database: %s", str(e))
             sys.exit(1)
@@ -313,16 +384,29 @@ class ArxivPaperUrlFetcher:
             count = cursor.fetchone()[0]
             return count > 0
 
-    def run(self, category, date_filter_begin, date_filter_end, start_index=0):
+    def run(
+        self,
+        category: str,
+        date_filter_begin: str,
+        date_filter_end: str,
+        start_index: int = 0,
+    ) -> None:
         """
         Run the arXiv paper search and URL generation process.
 
         Args:
-            category (str): arXiv category to search.
-            date_filter_begin (str): Start date for the search in YYYY-MM-DD format.
-            date_filter_end (str): End date for the search in YYYY-MM-DD format.
-            start_index (int): Starting index for the search.
+            category: arXiv category to search
+            date_filter_begin: Start date for the search in YYYY-MM-DD format
+            date_filter_end: End date for the search in YYYY-MM-DD format
+            start_index: Starting index for the search
+
+        Raises:
+            RequestException: If network errors occur during paper fetching
+            sqlite3.Error: If database operations fail
+            ValueError: If date parsing fails
         """
+        # Register this instance for interrupt handling
+        signal_handler.active_fetcher = self
         self.logger.debug(
             "Starting arXiv paper search with category=%s, date_filter_begin=%s, date_filter_end=%s, start_index=%d",
             category,
@@ -402,12 +486,21 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def signal_handler(signum, frame):
+def signal_handler(signum: int, frame: Any) -> None:
     """
     Handle interrupt signal (Ctrl+C).
+
+    Args:
+        signum: Signal number
+        frame: Current stack frame (not used)
+
+    Note:
+        This handler sets the interrupt flag on the active fetcher instance
+        to allow for graceful shutdown.
     """
     print("\nInterrupt received. Exiting gracefully...")
-    ArxivPaperUrlFetcher.interrupt_received = True
+    if hasattr(signal_handler, 'active_fetcher'):
+        signal_handler.active_fetcher.interrupt_received = True
 
 
 def main():

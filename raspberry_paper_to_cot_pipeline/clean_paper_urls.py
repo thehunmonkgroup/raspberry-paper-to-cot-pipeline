@@ -48,7 +48,7 @@ def parse_arguments() -> argparse.Namespace:
 class PaperCleaner:
     """
     A class to handle cleaning of paper URLs in the SQLite database.
-    
+
     This class verifies the accessibility of paper URLs stored in the database
     and updates their status accordingly. Papers with accessible URLs are marked
     as 'verified', while those with inaccessible URLs are marked as 'missing'.
@@ -59,7 +59,7 @@ class PaperCleaner:
     connections using context managers.
     """
 
-    def __init__(self, database: Optional[str], skip_cleaning: bool, limit: Optional[int], debug: bool):
+    def __init__(self, database: str = constants.DEFAULT_DB_NAME, skip_cleaning: bool = False, limit: int = None, debug: bool = False):
         """
         Initialize the PaperCleaner.
 
@@ -68,7 +68,7 @@ class PaperCleaner:
         :param limit: Limit the number of papers to process (optional)
         :param debug: Enable debug logging
         """
-        self.database = database or constants.DEFAULT_DB_NAME
+        self.database = database
         self.skip_cleaning = skip_cleaning
         self.limit = limit
         self.debug = debug
@@ -90,7 +90,7 @@ class PaperCleaner:
         :raises requests.RequestException: If the URL cannot be accessed due to HTTP errors,
                                          timeout, or other request-related issues
         """
-        response = requests.head(url, allow_redirects=True, 
+        response = requests.head(url, allow_redirects=True,
                                timeout=constants.PAPER_URL_REQUEST_TIMEOUT_SECONDS)
         if response.status_code != 200:
             self.logger.warning(f"URL NOT accessible: {url}")
