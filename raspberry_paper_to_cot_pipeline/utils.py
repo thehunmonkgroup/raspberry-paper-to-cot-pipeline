@@ -26,10 +26,12 @@ from raspberry_paper_to_cot_pipeline import constants
 @contextmanager
 def get_db_connection(database_path: str) -> Generator[sqlite3.Connection, None, None]:
     """
-    Context manager for database connections.
+    Context manager for database connections with WAL journaling and IMMEDIATE isolation.
 
     :param database_path: Path to the SQLite database
-    :yield: SQLite connection object
+    :yield: SQLite connection object configured with Write-Ahead Logging (WAL) 
+           journal mode and IMMEDIATE isolation level for better concurrency
+    :raises sqlite3.Error: If connection cannot be established
     """
     conn = sqlite3.connect(database_path, timeout=30)
     conn.execute("PRAGMA journal_mode=WAL")
@@ -205,13 +207,23 @@ class Utils:
 
         :param pdf_path: Path to the PDF file
         :return: Extracted text
-        :raises RuntimeError: If text extraction fails
+        :raises FileNotFoundError: If PDF file doesn't exist
+        :raises pymupdf4llm.ConversionError: If PDF conversion fails
+        :raises RuntimeError: If an unexpected error occurs
         """
         self.logger.debug(f"Extracting text from {pdf_path}")
         try:
             return pymupdf4llm.to_markdown(pdf_path)
+        except FileNotFoundError as e:
+            message = f"PDF file not found at {pdf_path}: {str(e)}"
+            self.logger.error(message)
+            raise
+        except pymupdf4llm.ConversionError as e:
+            message = f"PDF conversion error for {pdf_path}: {str(e)}"
+            self.logger.error(message)
+            raise
         except Exception as e:
-            message = f"Error extracting {pdf_path} content with pymupdf4llm: {str(e)}"
+            message = f"Unexpected error extracting {pdf_path} content: {str(e)}"
             self.logger.error(message)
             raise RuntimeError(message)
 
@@ -229,20 +241,28 @@ class Utils:
 
     def extract_question_chain_of_reasoning_answer(self, content: str) -> Tuple[str, str, str]:
         """
-        Parse the content to extract question, chain of reasoning, and answer from the XML template.
+        Parse the content to extract question, chain of reasoning, and answer.
 
-        :param xml_string: The string to parse
+        :param content: The content string containing XML to parse
         :return: Tuple of (question, chain_of_reasoning, answer)
+        :raises ValueError: If XML content cannot be extracted
+        :raises AttributeError: If required XML elements are missing
         """
         xml_string = self.extract_xml(content)
         if not xml_string:
             raise ValueError("Could not extract XML content")
         root = ET.fromstring(xml_string)
-        question = root.find(".//question").text.strip()
-        chain_of_reasoning = textwrap.dedent(
-            root.find(".//chain_of_reasoning").text
-        ).strip()
-        answer = root.find(".//answer").text.strip()
+        
+        question_elem = root.find(".//question")
+        chain_elem = root.find(".//chain_of_reasoning")
+        answer_elem = root.find(".//answer")
+        
+        if None in (question_elem, chain_elem, answer_elem):
+            raise AttributeError("Required XML elements missing")
+            
+        question = question_elem.text.strip()
+        chain_of_reasoning = textwrap.dedent(chain_elem.text).strip()
+        answer = answer_elem.text.strip()
         return question, chain_of_reasoning, answer
 
     def create_database(self) -> None:
@@ -325,11 +345,20 @@ class Utils:
                     WHERE id = ?
                     """
                     update_values = tuple(data.values()) + (paper_id,)
+                    self.logger.debug(
+                        f"Executing update query for paper {paper_id}:\n"
+                        f"Query: {update_query}\n"
+                        f"Values: {update_values}"
+                    )
                     cursor.execute(update_query, update_values)
                     conn.commit()
-                    self.logger.debug(f"Updated paper {paper_id} with {data}")
+                    self.logger.debug(
+                        f"Successfully updated paper {paper_id} with {len(data)} fields: {list(data.keys())}"
+                    )
         except sqlite3.Error as e:
-            self.logger.error(f"Database error: {e}")
+            self.logger.error(
+                f"Database error updating paper {paper_id} with fields {list(data.keys())}: {e}"
+            )
             raise
 
     def update_paper_status(self, paper_id: str, status: str) -> None:
@@ -430,7 +459,8 @@ class Utils:
                         category_code = h4.contents[0].strip()
                         category_name = h4.find("span").text.strip() if h4.find("span") else ""
                         category_name = category_name.strip("()")
-                        categories[category_code] = category_name
+                        if category_code and category_name:
+                            categories[category_code] = category_name
 
             self.logger.debug(f"Found {len(categories)} categories")
             return categories
