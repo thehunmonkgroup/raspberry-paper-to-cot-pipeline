@@ -1,9 +1,15 @@
 #!/usr/bin/env python3
 
 """
-This script profiles papers based on a set of rubric questions.
-It fetches papers from a database, downloads PDFs, extracts text,
-profiles the papers, and updates the results in the database.
+This script profiles research papers based on a set of rubric questions to evaluate their
+suitability for Chain of Thought (CoT) extraction.
+
+The profiling process involves:
+1. Fetching unprocessed papers from a SQLite database
+2. Downloading and extracting text from PDF files
+3. Running LWE templates to evaluate papers against profiling criteria
+4. Parsing results and updating paper status in the database
+5. Generating inference artifacts for successful profiles
 """
 
 import argparse
@@ -189,9 +195,12 @@ Raw Inference Output:
 
     def process_paper(self, paper: Dict[str, Any]) -> None:
         """
-        Process a single paper.
+        Process a single paper through the profiling pipeline.
 
-        :param paper: Paper data
+        :param paper: Paper data dictionary containing id, paper_id, and paper_url
+        :raises ValueError: If XML content cannot be extracted from LWE response
+        :raises RuntimeError: If LWE template execution fails
+        :raises Exception: If paper processing fails for any other reason
         """
         try:
             text = self.utils.get_pdf_text(paper)
