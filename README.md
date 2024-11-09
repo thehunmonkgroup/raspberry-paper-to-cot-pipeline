@@ -12,20 +12,32 @@ A Chain of Thought set includes:
 
 The idea is that these academic papers represent the best of how humans reason through tasks, and these extracted Chain of Thought sets can then be used to train AI models to improve their complex reasoning ability.
 
+## Installation
+
+1. Install [LWE](https://llm-workflow-engine.readthedocs.io/en/latest/installation.html) and any needed [provider plugins](https://llm-workflow-engine.readthedocs.io/en/latest/plugins.html#provider-plugins)
+2. [Configure](https://llm-workflow-engine.readthedocs.io/en/latest/initial_setup.html) any needed API keys for the models used in the pipeline
+3. Clone this repository, change directory into the root
+4. Install the package:
+   ```sh
+   pip install -e .
+   ```
+
 ## Pipeline Workflow
+
+*NOTE: All scripts described below can be run with the `--help` argument for a full list of options*
 
 The following diagram illustrates the pipeline workflow:
 
 ![Pipeline Diagram](misc/pipeline-diagram.svg)
 
-1. **Fetch Papers**: Retrieve academic papers from arXiv.org
-2. **Clean Papers**: Verify paper accessibility and remove inaccessible papers
-3. **Profile Papers**: Analyze and profile the papers based on specific criteria, store criteria data in database
+1. **raspberry-fetch-paper-urls**: Retrieve academic papers from arXiv.org
+2. **raspberry-clean-paper-urls**: Verify paper accessibility and remove inaccessible papers
+3. **raspberry-paper-profiler**: Analyze and profile the papers based on specific criteria, store criteria data in database
 
    Artifacts generated:
    * Profiling inference artifact
-4. **Score Papers**: Assign suitability scores to the papers based on profiling criteria, store in database
-5. **Extract CoT**: Extract Chain of Thought sets from the papers through a three-stage process:
+4. **raspberry-paper-scorer**: Assign suitability scores to the papers based on profiling criteria, store in database
+5. **raspberry-paper-extract-cot**: Extract Chain of Thought sets from the papers through a three-stage process:
    * Initial Extraction: Generate initial question, reasoning chain and answer
    * Critique: Analyze and critique the initial extraction
    * Refinement: Improve the CoT based on critique feedback
@@ -35,8 +47,8 @@ The following diagram illustrates the pipeline workflow:
    * Critique inference artifact
    * Refinement inference artifact
    * Training data artifact in JSONL format
-6. **Validate CoT**: Validate final Chain of Thought sets from the papers based on specific criteria, store criteria in the database
-7. **Generate final training data**: Compile the final training data from the individual training artifacts, filtering out invalid Chain of Thought sets based on their validation score
+6. **raspberry-cot-validator**: Validate final Chain of Thought sets from the papers based on specific criteria, store criteria in the database
+7. **raspberry-generate-training-file**: Compile the final training data from the individual training artifacts, filtering out invalid Chain of Thought sets based on their validation score
 
    Artifacts generated:
    * Final training data in JSONL format
@@ -52,7 +64,7 @@ To ensure we build grounded Chain of Thought sets, the academic papers used are 
 To see the list of default categories used and the default filter dates:
 
 ```sh
-scripts/fetch-papers.py --config
+raspberry-fetch-paper-urls --config
 ```
 
 ### Fetching Papers
@@ -60,42 +72,33 @@ scripts/fetch-papers.py --config
 To start the paper extraction process:
 
 ```sh
-scripts/fetch-papers.py
+raspberry-fetch-paper-urls
 ```
+
+*NOTE: The default configuration downloads **a lot** of URLs! Run the script with `--help` for options to control the links that are retrieved.*
 
 ## Running the Pipeline
 
-1. Install [LWE](https://llm-workflow-engine.readthedocs.io/en/latest/installation.html) and any needed [provider plugins](https://llm-workflow-engine.readthedocs.io/en/latest/plugins.html#provider-plugins)
-2. [Configure](https://llm-workflow-engine.readthedocs.io/en/latest/initial_setup.html) any needed API keys for the models used in the pipeline
-3. Clone this repository, change directory into the root
-4. Fetch papers as described above
-5. Clean the papers
+1. Fetch papers as described above
+2. Clean the papers
    ```sh
-   python scripts/clean-paper-urls.py
+   raspberry-clean-paper-urls
    ```
-   `--limit`: The number of papers to clean in one run (optional)
-6. Start the CLI
+
+   Cleaning can take a long time if you've downloaded a lot of links. The cleaning process is not strictly necessary (its purpose is to verify that the PDF for a paper is actually available), if you'd like to skip it, run the script with the `--skip-cleaning` argument.
+3. Run the rest of the pipeline
    ```sh
-   ./cli.sh
+   raspberry-paper-cot-pipeline
    ```
-7. Profile the papers
+
+   This runs the rest of the pipeline scripts with default arguments. For more control, you can also run each script individually:
+
    ```sh
-   /workflow run raspberry-paper-profiler limit=1000
+   raspberry-paper-profiler
+   raspberry-paper-scorer
+   raspberry-paper-extract-cot
+   raspberry-cot-validator
+   raspberry-generate-training-file
    ```
-   Args:
-   * `order_by`: How to order the papers when retrieving from the database (default `RANDOM()`)
-   * `limit`: The number of papers to profile in one run (default: `1`)
-8. Score the papers
-   ```sh
-   /workflow run raspberry-paper-scorer limit=1000
-   ```
-   Args:
-   * `limit`: The number of papers to profile in one run (default: `1`)
-9. Extract CoT from the papers
-   ```sh
-   /workflow run raspberry-paper-to-cot-extraction limit=1000 suitability_score=10
-   ```
-   Args:
-   * `limit`: The number of papers to profile in one run (default: `1`)
-   * `suitability_score` is the minimum suitability score needed, papers with a lower score are ignored (range `3-10`, default: `8`)
-10. All artifacts are output to the `results` directory in the root of the repository
+
+All artifacts are output to the `results` directory in the root of the repository
