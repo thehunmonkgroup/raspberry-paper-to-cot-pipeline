@@ -35,10 +35,11 @@ The following diagram illustrates the pipeline workflow:
    * Critique inference artifact
    * Refinement inference artifact
    * Training data artifact in JSONL format
-6. **Validate CoT**: Validate Chain of Thought sets from the papers through a filtering rubric:
+6. **Validate CoT**: Validate final Chain of Thought sets from the papers based on specific criteria, store criteria in the database
+7. **Generate final training data**: Compile the final training data from the individual training artifacts, filtering out invalid Chain of Thought sets based on their validation score
 
    Artifacts generated:
-   * Validation artifact
+   * Final training data in JSONL format
 
 ## Gathering the Papers
 

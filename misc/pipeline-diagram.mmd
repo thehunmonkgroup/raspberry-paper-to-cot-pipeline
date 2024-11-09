@@ -1,16 +1,13 @@
 flowchart TD
     A[Fetch Paper URLs] --> B[Database]
-    B --> D[Clean Papers]
-    D --> B
-    B --> E[Profile Papers]
-    E --> B
-    B --> F[Score Papers]
-    F --> B
-    B --> G[Extract CoT]
-    G --> B
-    B --> H[Validate CoT]
-    H --> B
-    E --> I[Profile Artifact]
-    G --> J[CoT Artifacts]
-    G --> K[Training File]
-    H --> L[Validation Artifact]
+    B <--> D[Clean Papers]
+    B <--> E[Profile Papers]
+    B <--> F[Score Papers]
+    B <--> G[Extract CoT]
+    B <--> H[Validate CoT]
+    B --> I[Filter CoT]
+    E --> J[Profile Artifact]
+    G --> K[CoT Artifacts]
+    G --> L[Training File]
+    H --> M[Validation Artifact]
+    I --> N[Training File]
