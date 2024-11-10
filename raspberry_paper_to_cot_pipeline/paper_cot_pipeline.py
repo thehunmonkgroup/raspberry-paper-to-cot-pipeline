@@ -9,7 +9,7 @@ import argparse
 import sys
 
 from raspberry_paper_to_cot_pipeline.paper_profiler import PaperProfiler
-from raspberry_paper_to_cot_pipeline.paper_scorer import PaperScorer
+from raspberry_paper_to_cot_pipeline.paper_profile_scorer import PaperProfileScorer
 from raspberry_paper_to_cot_pipeline.paper_extract_cot import CoTExtractor
 from raspberry_paper_to_cot_pipeline.cot_verifier import CoTVerifier
 from raspberry_paper_to_cot_pipeline.utils import Utils
@@ -45,7 +45,7 @@ class PaperCoTPipeline:
 
             # Stage 2: Score papers
             self.logger.info("Starting paper scoring stage...")
-            scorer = PaperScorer(
+            scorer = PaperProfileScorer(
                 limit=None,
                 debug=self.debug,
             )

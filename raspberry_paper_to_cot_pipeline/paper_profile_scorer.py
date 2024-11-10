@@ -38,7 +38,7 @@ def parse_arguments() -> argparse.Namespace:
     return parser.parse_args()
 
 
-class PaperScorer:
+class PaperProfileScorer:
     """
     A class to handle scoring of papers based on profiling criteria.
     """
@@ -50,7 +50,7 @@ class PaperScorer:
         database: str = constants.DEFAULT_DB_NAME,
     ):
         """
-        Initialize the PaperScorer.
+        Initialize the PaperProfileScorer.
 
         :param database: Path to the SQLite database
         :param limit: Limit the number of papers to process (optional)
@@ -180,7 +180,7 @@ class PaperScorer:
 def main():
     """Main entry point for CLI usage."""
     args = parse_arguments()
-    scorer = PaperScorer(
+    scorer = PaperProfileScorer(
         limit=args.limit,
         debug=args.debug,
         database=args.database,
