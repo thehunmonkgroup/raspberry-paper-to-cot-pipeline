@@ -7,25 +7,27 @@ profiling → scoring → CoT extraction.
 
 import argparse
 import sys
-from typing import Optional
 
 from raspberry_paper_to_cot_pipeline.paper_profiler import PaperProfiler
 from raspberry_paper_to_cot_pipeline.paper_scorer import PaperScorer
 from raspberry_paper_to_cot_pipeline.paper_extract_cot import CoTExtractor
+from raspberry_paper_to_cot_pipeline.cot_verifier import CoTVerifier
 from raspberry_paper_to_cot_pipeline.utils import Utils
 
 
 class PaperCoTPipeline:
     """Orchestrates the full paper processing pipeline."""
 
-    def __init__(self, limit: Optional[int], debug: bool = False):
+    def __init__(self, selection_strategy: str = 'random', limit: int = 1, debug: bool = False):
         """
         Initialize the pipeline.
 
+        :param selection_strategy: Strategy for paper selection in profiling stage
         :param limit: Number of papers to process in each stage
         :param debug: Enable debug logging
         """
         self.limit = limit
+        self.selection_strategy = selection_strategy
         self.debug = debug
         self.logger = Utils.setup_logging(__name__, debug)
 
@@ -36,6 +38,7 @@ class PaperCoTPipeline:
             self.logger.info("Starting paper profiling stage...")
             profiler = PaperProfiler(
                 limit=self.limit,
+                selection_strategy=self.selection_strategy,
                 debug=self.debug,
             )
             profiler.run()
@@ -43,7 +46,7 @@ class PaperCoTPipeline:
             # Stage 2: Score papers
             self.logger.info("Starting paper scoring stage...")
             scorer = PaperScorer(
-                limit=self.limit,
+                limit=None,
                 debug=self.debug,
             )
             scorer.run()
@@ -51,10 +54,18 @@ class PaperCoTPipeline:
             # Stage 3: Extract CoT
             self.logger.info("Starting CoT extraction stage...")
             extractor = CoTExtractor(
-                limit=self.limit,
+                limit=None,
                 debug=self.debug,
             )
             extractor.run()
+
+            # Stage 4: Verify CoT
+            self.logger.info("Starting CoT verification stage...")
+            verifier = CoTVerifier(
+                limit=None,
+                debug=self.debug,
+            )
+            verifier.run()
 
             self.logger.info("Pipeline completed successfully")
 
@@ -69,6 +80,13 @@ def parse_arguments() -> argparse.Namespace:
         description="Run the complete paper processing pipeline."
     )
     parser.add_argument(
+        "--selection-strategy",
+        type=str,
+        choices=['random', 'category_balanced'],
+        default='random',
+        help="Strategy for paper selection in profiling stage: 'random' or 'category_balanced', default: %(default)s",
+    )
+    parser.add_argument(
         "--limit",
         type=int,
         default=1,
@@ -81,7 +99,11 @@ def parse_arguments() -> argparse.Namespace:
 def main():
     """Main entry point."""
     args = parse_arguments()
-    pipeline = PaperCoTPipeline(limit=args.limit, debug=args.debug)
+    pipeline = PaperCoTPipeline(
+        selection_strategy=args.selection_strategy,
+        limit=args.limit,
+        debug=args.debug
+    )
     pipeline.run()
 
 
