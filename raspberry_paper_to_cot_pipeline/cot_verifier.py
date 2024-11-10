@@ -17,7 +17,7 @@ The verification process involves:
 import argparse
 import copy
 import xml.etree.ElementTree as ET
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Tuple
 import sys
 from raspberry_paper_to_cot_pipeline import constants
 from raspberry_paper_to_cot_pipeline.utils import Utils
@@ -177,35 +177,112 @@ Raw Inference Output:
                 return False
         return True
 
+    def get_refinement_data(self, paper: Dict[str, Any]) -> Optional[Tuple[str, str, str]]:
+        """
+        Get question, chain of reasoning, and answer from refinement artifact.
+        
+        :param paper: Paper data dictionary
+        :return: Tuple of (question, chain_of_reasoning, answer) or None if retrieval fails
+        """
+        try:
+            artifact_name = constants.REFINEMENT_ARTIFACT_PATTERN.format(
+                paper_id=paper["paper_id"]
+            )
+            refinement_content = self.utils.read_inference_artifact(artifact_name)
+            return self.utils.extract_question_chain_of_reasoning_answer(
+                refinement_content
+            )
+        except (FileNotFoundError, ValueError) as e:
+            self.logger.error(f"Failed to get refinement data for paper {paper['paper_id']}: {str(e)}")
+            self.utils.update_paper_status(
+                paper["id"], constants.STATUS_FAILED_COT_VERIFICATION
+            )
+            return None
+
+    def run_verification(
+        self, 
+        paper_content: str,
+        question: str,
+        chain_of_reasoning: str,
+        answer: str
+    ) -> Tuple[Dict[str, int], str]:
+        """
+        Run verification template and process results.
+        
+        :param paper_content: Text content of the paper
+        :param question: Question to verify
+        :param chain_of_reasoning: Chain of reasoning to verify
+        :param answer: Answer to verify
+        :return: Tuple of (criteria dict, xml content)
+        :raises ValueError: If XML content cannot be extracted
+        """
+        lwe_response = self.utils.run_lwe_template(
+            self.template,
+            {
+                "paper": paper_content,
+                "question": question,
+                "chain_of_reasoning": chain_of_reasoning,
+                "answer": answer,
+            }
+        )
+        xml_content = self.utils.extract_xml(lwe_response)
+        if not xml_content:
+            raise ValueError("Could not extract XML content from LWE response")
+
+        criteria = self.parse_xml(xml_content)
+        return criteria, xml_content
+
+    def update_verification_results(
+        self,
+        paper_id: str,
+        criteria: Dict[str, int]
+    ) -> None:
+        """
+        Update paper with verification results.
+        
+        :param paper_id: ID of the paper
+        :param criteria: Dictionary of verification criteria results
+        """
+        data = copy.deepcopy(criteria)
+        data["processing_status"] = constants.STATUS_VERIFIED_COT
+        self.utils.update_paper(paper_id, data)
+
     def process_paper(self, paper: Dict[str, Any]) -> None:
         """
         Process a single paper through the verification pipeline.
 
         :param paper: Paper data dictionary containing id, paper_id, and paper_url
-        :raises ValueError: If XML content cannot be extracted from LWE response
-        :raises RuntimeError: If LWE template execution fails
-        :raises Exception: If paper processing fails for any other reason
         """
         try:
+            # Get paper content
             text = self.utils.get_pdf_text(paper)
-            lwe_response = self.utils.run_lwe_template(self.template, {"paper": text})
-            xml_content = self.utils.extract_xml(lwe_response)
-            if not xml_content:
-                raise ValueError("Could not extract XML content from LWE response")
-
-            criteria = self.parse_xml(xml_content)
-            self.write_verification_artifact(paper, criteria, xml_content)
-
-            data = copy.deepcopy(criteria)
-            data["processing_status"] = constants.STATUS_VERIFIED_COT
-
-            self.utils.update_paper(paper["id"], data)
-            self.logger.info(
-                f"Successfully verified paper {paper['paper_id']} - Status: {data['processing_status']}"
+            
+            # Get refinement data
+            refinement_data = self.get_refinement_data(paper)
+            if not refinement_data:
+                return
+            
+            question, chain_of_reasoning, answer = refinement_data
+            
+            # Run verification
+            criteria, xml_content = self.run_verification(
+                text, question, chain_of_reasoning, answer
             )
+            
+            # Write artifact and update database
+            self.write_verification_artifact(paper, criteria, xml_content)
+            self.update_verification_results(paper["id"], criteria)
+            
+            self.logger.info(
+                f"Successfully verified paper {paper['paper_id']} - Status: {constants.STATUS_VERIFIED_COT}"
+            )
+                
         except Exception as e:
             self.logger.error(f"Error processing paper {paper['paper_id']}: {str(e)}")
-            self.utils.update_paper_status(paper["id"], constants.STATUS_FAILED_COT_VERIFICATION)
+            self.utils.update_paper_status(
+                paper["id"], 
+                constants.STATUS_FAILED_COT_VERIFICATION
+            )
 
     def run(self) -> None:
         """Execute the main logic of the CoT verification process."""
