@@ -211,14 +211,14 @@ CREATE TABLE IF NOT EXISTS paper_categories (
 );
 """
 DEFAULT_FETCH_BY_STATUS_COLUMNS = ["id", "paper_id", "paper_url"]
-STATUS_DOWNLOADED = "downloaded"
-STATUS_VERIFIED = "verified"
-STATUS_MISSING = "missing"
-STATUS_PROFILED = "profiled"
-STATUS_SCORED = "scored"
+STATUS_PAPER_LINK_DOWNLOADED = "paper_link_downloaded"
+STATUS_PAPER_LINK_VERIFIED = "paper_link_verified"
+STATUS_PAPER_MISSING = "paper_missing"
+STATUS_PAPER_PROFILED = "paper_profiled"
+STATUS_PAPER_SCORED = "paper_scored"
 STATUS_COT_EXTRACTED = "cot_extracted"
-STATUS_FAILED_COT_EXTRACTION = "failed_cot_extraction"
 STATUS_COT_VERIFIED = "cot_verified"
+STATUS_FAILED_COT_EXTRACTION = "failed_cot_extraction"
 STATUS_FAILED_COT_VERIFICATION = "failed_cot_verification"
 
 # URL cleaning

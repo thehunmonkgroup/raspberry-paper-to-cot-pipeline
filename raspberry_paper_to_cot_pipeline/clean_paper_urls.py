@@ -132,12 +132,12 @@ class PaperCleaner:
         self.logger.info(f"Processing paper ID {paper_id} with URL: {paper_url}")
         try:
             if self.is_url_accessible(paper_url):
-                self.utils.update_paper_status(paper_id, constants.STATUS_VERIFIED)
+                self.utils.update_paper_status(paper_id, constants.STATUS_PAPER_LINK_VERIFIED)
                 self.logger.info(
                     f"Paper ID {paper_id} ({paper_url}) is accessible. Status updated to 'verified'."
                 )
             else:
-                self.utils.update_paper_status(paper_id, constants.STATUS_MISSING)
+                self.utils.update_paper_status(paper_id, constants.STATUS_PAPER_MISSING)
                 self.logger.warning(
                     f"Paper ID {paper_id} ({paper_url}) is inaccessible. Marked as missing in the database."
                 )
@@ -171,7 +171,7 @@ class PaperCleaner:
             else:
                 self.logger.debug("Fetching papers with 'downloaded' status")
                 papers = self.utils.fetch_papers_by_processing_status(
-                    status=constants.STATUS_DOWNLOADED, limit=self.limit
+                    status=constants.STATUS_PAPER_LINK_DOWNLOADED, limit=self.limit
                 )
                 processed_count = 0
                 for paper in papers:
@@ -199,7 +199,7 @@ class PaperCleaner:
 
     def mark_all_papers_as_verified(self) -> None:
         """
-        Mark all papers with STATUS_DOWNLOADED as STATUS_VERIFIED.
+        Mark all papers with STATUS_PAPER_LINK_DOWNLOADED as STATUS_PAPER_LINK_VERIFIED.
 
         :raises sqlite3.Error: If there's an issue with database operations
         """
@@ -212,7 +212,7 @@ class PaperCleaner:
                     SET processing_status = ?
                     WHERE processing_status = ?
                     """,
-                    (constants.STATUS_VERIFIED, constants.STATUS_DOWNLOADED),
+                    (constants.STATUS_PAPER_LINK_VERIFIED, constants.STATUS_PAPER_LINK_DOWNLOADED),
                 )
                 updated_count = cursor.rowcount
                 conn.commit()

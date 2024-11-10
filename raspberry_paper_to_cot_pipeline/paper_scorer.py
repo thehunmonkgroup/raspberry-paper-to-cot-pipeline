@@ -123,7 +123,7 @@ class PaperScorer:
             constants.DEFAULT_FETCH_BY_STATUS_COLUMNS + self.build_criteria_columns()
         )
         return self.utils.fetch_papers_by_processing_status(
-            status=constants.STATUS_PROFILED,
+            status=constants.STATUS_PAPER_PROFILED,
             select_columns=select_columns,
             limit=self.limit,
         )
@@ -140,12 +140,12 @@ class PaperScorer:
         try:
             suitability_score = self.calculate_suitability_score(paper)
             data = {
-                "processing_status": constants.STATUS_SCORED,
+                "processing_status": constants.STATUS_PAPER_SCORED,
                 "profiler_suitability_score": suitability_score,
             }
             self.utils.update_paper(paper["id"], data)
             self.logger.info(
-                f"Paper {paper['paper_id']} scored and updated to status {constants.STATUS_SCORED}, "
+                f"Paper {paper['paper_id']} scored and updated to status {constants.STATUS_PAPER_SCORED}, "
                 f"suitability score: {suitability_score}"
             )
         except (KeyError, sqlite3.Error) as e:

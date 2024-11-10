@@ -329,7 +329,7 @@ class Utils:
 
     def fetch_papers_by_processing_status_balanced_by_category(
         self,
-        status: str = constants.STATUS_VERIFIED,
+        status: str = constants.STATUS_PAPER_LINK_VERIFIED,
         limit: int = 1,
     ) -> Generator[sqlite3.Row, None, None]:
         """

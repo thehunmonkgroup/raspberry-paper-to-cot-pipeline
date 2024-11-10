@@ -197,7 +197,7 @@ class CoTExtractor:
             return self.fetch_specific_paper(self.paper_id)
         select_columns = constants.DEFAULT_FETCH_BY_STATUS_COLUMNS + ["profiler_suitability_score"]
         return self.utils.fetch_papers_by_processing_status(
-            constants.STATUS_SCORED, select_columns=select_columns, limit=self.limit
+            constants.STATUS_PAPER_SCORED, select_columns=select_columns, limit=self.limit
         )
 
     def process_paper(self, paper: Row) -> None:

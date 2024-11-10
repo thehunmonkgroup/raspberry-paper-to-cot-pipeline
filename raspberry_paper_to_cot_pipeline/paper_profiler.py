@@ -215,7 +215,7 @@ Raw Inference Output:
             criteria = self.parse_xml(xml_content)
             self.write_inference_artifact(paper, criteria, xml_content)
             data = copy.deepcopy(criteria)
-            data["processing_status"] = constants.STATUS_PROFILED
+            data["processing_status"] = constants.STATUS_PAPER_PROFILED
             self.utils.update_paper(paper["id"], data)
             self.logger.info(f"Successfully profiled paper {paper['paper_id']}")
         except Exception as e:
@@ -230,12 +230,12 @@ Raw Inference Output:
         """
         if self.selection_strategy == 'random':
             return self.utils.fetch_papers_by_processing_status(
-                status=constants.STATUS_VERIFIED,
+                status=constants.STATUS_PAPER_LINK_VERIFIED,
                 limit=self.limit
             )
         else:  # category_balanced
             return self.utils.fetch_papers_by_processing_status_balanced_by_category(
-                status=constants.STATUS_VERIFIED,
+                status=constants.STATUS_PAPER_LINK_VERIFIED,
                 limit=self.limit
             )
 
