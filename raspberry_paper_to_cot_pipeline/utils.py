@@ -327,6 +327,67 @@ class Utils:
             self.logger.error(f"Database error: {e}")
             raise
 
+    def fetch_papers_by_processing_status_balanced_by_category(
+        self,
+        status: str = constants.STATUS_VERIFIED,
+        limit: int = 1,
+    ) -> Generator[sqlite3.Row, None, None]:
+        """
+        Fetch papers from the database, by processing status, balancing them by category.
+
+        :param status: Processing status of the papers to fetch
+        :param limit: Maximum number of papers to fetch per category
+        :return: Generator of dictionaries containing paper information
+        :raises sqlite3.Error: If there's an issue with the database operations
+        """
+        query = f"""
+        WITH RECURSIVE
+        vars(papers_per_category) AS (
+          SELECT {limit}
+        ),
+        ranked_papers AS (
+          SELECT
+            pc.category,
+            p.id,
+            p.paper_id,
+            p.paper_url,
+            ROW_NUMBER() OVER (PARTITION BY pc.category ORDER BY RANDOM()) AS category_row_num,
+            ROW_NUMBER() OVER (ORDER BY RANDOM()) AS global_row_num
+          FROM paper_categories pc
+          JOIN papers p ON pc.paper_id = p.id
+          WHERE p.processing_status = '{status}'
+        ),
+        selected_papers AS (
+          SELECT category, id, paper_id, paper_url, category_row_num, global_row_num
+          FROM ranked_papers, vars
+          WHERE category_row_num <= vars.papers_per_category
+        ),
+        final_selection AS (
+          SELECT
+            category,
+            id,
+            paper_id,
+            paper_url,
+            category_row_num,
+            ROW_NUMBER() OVER (PARTITION BY paper_url ORDER BY global_row_num) AS url_row_num
+          FROM selected_papers
+        )
+        SELECT category, id, paper_id, paper_url
+        FROM final_selection
+        WHERE url_row_num = 1
+        ORDER BY category, category_row_num;
+        """
+        params: tuple = (status, limit)
+        try:
+            with get_db_connection(self.database) as conn:
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+                cursor.execute(query, params)
+                yield from cursor
+        except sqlite3.Error as e:
+            self.logger.error(f"Database error: {e}")
+            raise
+
     def update_paper(self, paper_id: str, data: Dict[str, Any]) -> None:
         """
         Update the data of a paper in the database.
