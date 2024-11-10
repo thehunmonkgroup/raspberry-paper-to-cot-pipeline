@@ -141,7 +141,7 @@ class PaperScorer:
             suitability_score = self.calculate_suitability_score(paper)
             data = {
                 "processing_status": constants.STATUS_SCORED,
-                "suitability_score": suitability_score,
+                "profiler_suitability_score": suitability_score,
             }
             self.utils.update_paper(paper["id"], data)
             self.logger.info(
