@@ -7,6 +7,7 @@ It downloads PDFs, extracts text, runs LWE templates, and processes the results.
 
 import argparse
 from typing import Dict, Any, Tuple, Generator, Optional
+from sqlite3 import Row
 import sys
 import xml.etree.ElementTree as ET
 from raspberry_paper_to_cot_pipeline import constants
@@ -199,13 +200,13 @@ class CoTExtractor:
             constants.STATUS_SCORED, select_columns=select_columns, limit=self.limit
         )
 
-    def process_paper(self, paper: Dict[str, Any]) -> None:
+    def process_paper(self, paper: Row) -> None:
         """
         Process a single paper for CoT extraction, critique, and refinement.
 
         :param paper: Paper data
         """
-        if "profiler_suitability_score" in paper and paper["profiler_suitability_score"] < self.suitability_score:
+        if "profiler_suitability_score" in paper.keys() and paper["profiler_suitability_score"] < self.suitability_score:
             self.logger.debug(
                 f"Skipping paper {paper['paper_id']} due to low suitability score"
             )
