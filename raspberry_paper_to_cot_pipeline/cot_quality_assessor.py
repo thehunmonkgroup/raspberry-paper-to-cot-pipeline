@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 
 """
-This script verifies the quality of Chain of Thought (CoT) extractions from research papers.
+This script assesses the quality of Chain of Thought (CoT) extractions from research papers.
 
 It processes papers that have completed CoT extraction and evaluates them against a set of
 criteria including source fidelity, reasoning integrity, training utility, and structural
 quality.
 
-The verification process involves:
+The assessment process involves:
 1. Loading papers with completed CoT extractions
-2. Running LWE templates to evaluate against verification criteria
+2. Running LWE templates to evaluate against the assessment criteria
 3. Parsing results and updating paper status in the database
-4. Generating verification artifacts for tracking
+4. Generating assessment artifacts for tracking
 """
 
 import argparse
@@ -30,13 +30,13 @@ def parse_arguments() -> argparse.Namespace:
     :return: Parsed arguments
     """
     parser = argparse.ArgumentParser(
-        description="Verify Chain of Thought extractions from papers."
+        description="Assess Chain of Thought extractions from papers."
     )
     parser.add_argument(
-        "--verification-preset",
+        "--assessor-preset",
         type=str,
-        default=constants.DEFAULT_VERIFICATION_PRESET,
-        help="Model configuration used for verification, default: %(default)s",
+        default=constants.DEFAULT_COT_QUALITY_ASSESSOR_PRESET,
+        help="Model configuration used for assessment, default: %(default)s",
     )
     parser.add_argument(
         "--database",
@@ -59,38 +59,38 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument(
         "--template",
         type=str,
-        default=constants.DEFAULT_COT_VERIFIER_TEMPLATE,
-        help="LWE verification template name, default: %(default)s",
+        default=constants.DEFAULT_COT_QUALITY_ASSESSOR_TEMPLATE,
+        help="LWE assessment template name, default: %(default)s",
     )
     parser.add_argument("--debug", action="store_true", help="Enable debug logging")
     return parser.parse_args()
 
 
-class CoTVerifier:
+class CoTQualityAssessor:
     """
-    A class to handle verification of Chain of Thought extractions.
+    A class to handle quality assessment of Chain of Thought extractions.
     """
 
     def __init__(
         self,
         limit: Optional[int],
         debug: bool = False,
-        verification_preset: str = constants.DEFAULT_VERIFICATION_PRESET,
+        assessor_preset: str = constants.DEFAULT_COT_QUALITY_ASSESSOR_PRESET,
         database: str = constants.DEFAULT_DB_NAME,
         inference_artifacts_directory: str = constants.DEFAULT_INFERENCE_ARTIFACTS_DIR,
-        template: str = constants.DEFAULT_COT_VERIFIER_TEMPLATE,
+        template: str = constants.DEFAULT_COT_QUALITY_ASSESSOR_TEMPLATE,
     ):
         """
-        Initialize the CoTVerifier with individual arguments.
+        Initialize the CoTQualityAssessor with individual arguments.
 
-        :param verification_preset: Model configuration used for verification
+        :param assessor_preset: Model configuration used for assessment
         :param database: Path to the SQLite database
         :param inference_artifacts_directory: Directory for inference artifacts
         :param limit: Number of papers to process
-        :param template: LWE verification template name
+        :param template: LWE assessment template name
         :param debug: Enable debug logging
         """
-        self.verification_preset = verification_preset
+        self.assessor_preset = assessor_preset
         self.database = database
         self.inference_artifacts_directory = inference_artifacts_directory
         self.limit = limit
@@ -100,14 +100,14 @@ class CoTVerifier:
         self.utils = Utils(
             database=self.database,
             inference_artifacts_directory=self.inference_artifacts_directory,
-            lwe_default_preset=self.verification_preset,
+            lwe_default_preset=self.assessor_preset,
             logger=self.logger,
         )
         self.utils.setup_lwe()
 
     def parse_xml(self, xml_string: str) -> Dict[str, int]:
         """
-        Parse the XML string to extract verification criteria values.
+        Parse the XML string to extract assessment criteria values.
 
         :param xml_string: XML string to parse
         :return: Dictionary of criteria and their values
@@ -115,11 +115,11 @@ class CoTVerifier:
         """
         root = ET.fromstring(xml_string)
         criteria = {}
-        for criterion in constants.VERIFICATION_CRITERIA:
+        for criterion in constants.COT_QUALITY_ASSESSMENT_CRITERIA:
             element = root.find(f".//{criterion}")
             if element is not None:
                 value = element.text.strip()
-                criteria[f"validator_criteria_{criterion}"] = (
+                criteria[f"cot_quality_assessment_criteria_{criterion}"] = (
                     1 if value.lower() in ["yes", "y"] else 0
                 )
             else:
@@ -128,32 +128,34 @@ class CoTVerifier:
 
     def get_pretty_printed_criteria(self, criteria: Dict[str, int]) -> str:
         """
-        Get a pretty-printed string of verification criteria and their values.
+        Get a pretty-printed string of assessment criteria and their values.
 
         :param criteria: Dictionary of criteria and their values
         :return: Pretty-printed string of criteria and values
         """
         output = []
-        for criterion in constants.VERIFICATION_CRITERIA:
-            answer = "Yes" if criteria[f"validator_criteria_{criterion}"] == 1 else "No"
+        for criterion in constants.COT_QUALITY_ASSESSMENT_CRITERIA:
+            answer = "Yes" if criteria[f"cot_quality_assessment_criteria_{criterion}"] == 1 else "No"
             output.append(f"  {criterion}: {answer}")
         return "\n".join(output)
 
-    def write_verification_artifact(
+    def write_assessment_artifact(
         self, paper: Dict[str, Any], criteria: Dict[str, int], xml_content: str
     ) -> None:
         """
-        Write verification results to an artifact file.
+        Write assessment results to an artifact file.
 
         :param paper: Paper data
         :param criteria: Dictionary of criteria and their values
         :param xml_content: Raw XML content
         """
-        artifact_name = f"{paper['paper_id']}-verification.txt"
+        artifact_name = constants.COT_QUALITY_ASSESSMENT_ARTIFACT_PATTERN.format(
+            paper_id=paper["paper_id"]
+        )
         content = f"""Paper URL: {paper['paper_url']}
-Verification preset: {self.verification_preset}
+CoT assessment preset: {self.assessment_preset}
 
-Verification results:
+CoT assessment results:
 
 {self.get_pretty_printed_criteria(criteria)}
 
@@ -167,13 +169,13 @@ Raw Inference Output:
 
     def check_required_criteria(self, criteria: Dict[str, int]) -> bool:
         """
-        Check if all required verification criteria are met.
+        Check if all required assessment criteria are met.
 
         :param criteria: Dictionary of criteria and their values
         :return: True if all required criteria are met, False otherwise
         """
-        for criterion in constants.REQUIRED_VERIFICATION_CRITERIA:
-            if criteria[f"validator_criteria_{criterion}"] != 1:
+        for criterion in constants.REQUIRED_COT_QUALITY_ASSESSMENT_CRITERIA:
+            if criteria[f"cot_quality_assessment_criteria_{criterion}"] != 1:
                 return False
         return True
 
@@ -185,7 +187,7 @@ Raw Inference Output:
         :return: Tuple of (question, chain_of_reasoning, answer) or None if retrieval fails
         """
         try:
-            artifact_name = constants.REFINEMENT_ARTIFACT_PATTERN.format(
+            artifact_name = constants.COT_REFINEMENT_ARTIFACT_PATTERN.format(
                 paper_id=paper["paper_id"]
             )
             refinement_content = self.utils.read_inference_artifact(artifact_name)
@@ -195,11 +197,11 @@ Raw Inference Output:
         except (FileNotFoundError, ValueError) as e:
             self.logger.error(f"Failed to get refinement data for paper {paper['paper_id']}: {str(e)}")
             self.utils.update_paper_status(
-                paper["id"], constants.STATUS_FAILED_COT_VERIFICATION
+                paper["id"], constants.STATUS_FAILED_COT_QUALITY_ASSESSMENT
             )
             return None
 
-    def run_verification(
+    def run_assessment(
         self,
         paper_content: str,
         question: str,
@@ -207,7 +209,7 @@ Raw Inference Output:
         answer: str
     ) -> Tuple[Dict[str, int], str]:
         """
-        Run verification template and process results.
+        Run assessment template and process results.
 
         :param paper_content: Text content of the paper
         :param question: Question to verify
@@ -232,60 +234,52 @@ Raw Inference Output:
         criteria = self.parse_xml(xml_content)
         return criteria, xml_content
 
-    def update_verification_results(
+    def update_assessment_results(
         self,
         paper_id: str,
         criteria: Dict[str, int]
     ) -> None:
         """
-        Update paper with verification results.
+        Update paper with assessment results.
 
         :param paper_id: ID of the paper
-        :param criteria: Dictionary of verification criteria results
+        :param criteria: Dictionary of assessment criteria results
         """
         data = copy.deepcopy(criteria)
-        data["processing_status"] = constants.STATUS_COT_VERIFIED
+        data["processing_status"] = constants.STATUS_COT_QUALITY_ASSESSED
         self.utils.update_paper(paper_id, data)
 
     def process_paper(self, paper: Dict[str, Any]) -> None:
         """
-        Process a single paper through the verification pipeline.
+        Process a single paper through the assessment pipeline.
 
         :param paper: Paper data dictionary containing id, paper_id, and paper_url
         """
         try:
-            # Get paper content
             text = self.utils.get_pdf_text(paper)
-
-            # Get refinement data
             refinement_data = self.get_refinement_data(paper)
             if not refinement_data:
                 return
 
             question, chain_of_reasoning, answer = refinement_data
-
-            # Run verification
-            criteria, xml_content = self.run_verification(
+            criteria, xml_content = self.run_assessment(
                 text, question, chain_of_reasoning, answer
             )
-
-            # Write artifact and update database
-            self.write_verification_artifact(paper, criteria, xml_content)
-            self.update_verification_results(paper["id"], criteria)
-
+            self.write_assessment_artifact(paper, criteria, xml_content)
+            self.update_assessment_results(paper["id"], criteria)
             self.logger.info(
-                f"Successfully verified paper {paper['paper_id']} - Status: {constants.STATUS_COT_VERIFIED}"
+                f"Successfully assessed paper {paper['paper_id']} - Status: {constants.STATUS_COT_QUALITY_ASSESSED}"
             )
 
         except Exception as e:
             self.logger.error(f"Error processing paper {paper['paper_id']}: {str(e)}")
             self.utils.update_paper_status(
                 paper["id"],
-                constants.STATUS_FAILED_COT_VERIFICATION
+                constants.STATUS_FAILED_COT_QUALITY_ASSESSMENT
             )
 
     def run(self) -> None:
-        """Execute the main logic of the CoT verification process."""
+        """Execute the main logic of the CoT quality assessment process."""
         try:
             papers = self.utils.fetch_papers_by_processing_status(
                 status=constants.STATUS_COT_EXTRACTED,
@@ -293,10 +287,10 @@ Raw Inference Output:
             )
             for paper in papers:
                 self.process_paper(paper)
-            self.logger.info("CoT verification process completed")
+            self.logger.info("CoT quality assessment process completed")
         except Exception as e:
             self.logger.error(
-                f"An error occurred during the CoT verification process: {e}"
+                f"An error occurred during the CoT quality assessment process: {e}"
             )
             sys.exit(1)
 
@@ -304,15 +298,15 @@ Raw Inference Output:
 def main():
     """Main entry point for CLI usage."""
     args = parse_arguments()
-    verifier = CoTVerifier(
+    assessor = CoTQualityAssessor(
         limit=args.limit,
         debug=args.debug,
-        verification_preset=args.verification_preset,
+        assessor_preset=args.assessor_preset,
         database=args.database,
         inference_artifacts_directory=args.inference_artifacts_directory,
         template=args.template,
     )
-    verifier.run()
+    assessor.run()
 
 
 if __name__ == "__main__":

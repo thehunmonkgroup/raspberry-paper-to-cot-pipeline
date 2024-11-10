@@ -15,9 +15,9 @@ from . import fetch_paper_urls
 from . import clean_paper_urls
 from . import paper_profiler
 from . import paper_profile_scorer
-from . import paper_extract_cot
-from . import cot_verifier
-from . import cot_verification_scorer
+from . import paper_cot_extractor
+from . import cot_quality_assessor
+from . import cot_quality_scorer
 from . import paper_cot_pipeline
 
 __all__ = [
@@ -28,8 +28,8 @@ __all__ = [
     "clean_paper_urls",
     "paper_profiler",
     "paper_profile_scorer",
-    "paper_extract_cot",
-    "cot_verifier",
-    "cot_verification_scorer",
+    "paper_cot_extractor",
+    "cot_quality_assessor",
+    "cot_quality_scorer",
     "paper_cot_pipeline",
 ]

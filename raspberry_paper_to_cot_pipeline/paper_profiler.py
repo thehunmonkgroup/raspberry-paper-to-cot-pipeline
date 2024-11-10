@@ -34,7 +34,7 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument(
         "--profiling-preset",
         type=str,
-        default=constants.DEFAULT_PROFILING_PRESET,
+        default=constants.DEFAULT_PAPER_PROFILER_PRESET,
         help="Model configuration used to perform the profiling, default: %(default)s",
     )
     parser.add_argument(
@@ -87,7 +87,7 @@ class PaperProfiler:
         self,
         limit: Optional[int],
         debug: bool = False,
-        profiling_preset: str = constants.DEFAULT_PROFILING_PRESET,
+        profiling_preset: str = constants.DEFAULT_PAPER_PROFILER_PRESET,
         database: str = constants.DEFAULT_DB_NAME,
         inference_artifacts_directory: str = constants.DEFAULT_INFERENCE_ARTIFACTS_DIR,
         selection_strategy: str = "random",
@@ -147,7 +147,7 @@ class PaperProfiler:
         """
         root = ET.fromstring(xml_string)
         criteria = {}
-        for question in constants.PROFILING_CRITERIA:
+        for question in constants.PAPER_PROFILING_CRITERIA:
             element = root.find(f".//{question}")
             if element is not None:
                 value = element.text.strip()
@@ -166,7 +166,7 @@ class PaperProfiler:
         :return: Pretty-printed string of questions and answers
         """
         output = []
-        for question in constants.PROFILING_CRITERIA:
+        for question in constants.PAPER_PROFILING_CRITERIA:
             answer = "Yes" if criteria[f"profiler_criteria_{question}"] == 1 else "No"
             output.append(f"  {question}: {answer}")
         return "\n".join(output)

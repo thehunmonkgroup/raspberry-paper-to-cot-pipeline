@@ -10,8 +10,8 @@ import sys
 
 from raspberry_paper_to_cot_pipeline.paper_profiler import PaperProfiler
 from raspberry_paper_to_cot_pipeline.paper_profile_scorer import PaperProfileScorer
-from raspberry_paper_to_cot_pipeline.paper_extract_cot import CoTExtractor
-from raspberry_paper_to_cot_pipeline.cot_verifier import CoTVerifier
+from raspberry_paper_to_cot_pipeline.paper_cot_extractor import CoTExtractor
+from raspberry_paper_to_cot_pipeline.cot_quality_assessor import CoTQualityAssessor
 from raspberry_paper_to_cot_pipeline.utils import Utils
 
 
@@ -59,13 +59,13 @@ class PaperCoTPipeline:
             )
             extractor.run()
 
-            # Stage 4: Verify CoT
-            self.logger.info("Starting CoT verification stage...")
-            verifier = CoTVerifier(
+            # Stage 4: CoT quality assessment
+            self.logger.info("Starting CoT quality assessment stage...")
+            assessor = CoTQualityAssessor(
                 limit=None,
                 debug=self.debug,
             )
-            verifier.run()
+            assessor.run()
 
             self.logger.info("Pipeline completed successfully")
 

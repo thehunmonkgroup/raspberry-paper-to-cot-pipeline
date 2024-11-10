@@ -5,21 +5,22 @@ CWD = Path(os.getcwd())
 
 # LWE
 DEFAULT_LWE_PRESET = "claude-sonnet"
-DEFAULT_PROFILING_PRESET = "claude-sonnet"
-DEFAULT_EXTRACTION_PRESET = "claude-sonnet"
-DEFAULT_CRITIQUE_PRESET = "claude-sonnet"
-DEFAULT_REFINEMENT_PRESET = "claude-sonnet"
-DEFAULT_VERIFICATION_PRESET = "claude-sonnet"
+DEFAULT_PAPER_PROFILER_PRESET = "claude-sonnet"
+DEFAULT_COT_EXTRACTION_PRESET = "claude-sonnet"
+DEFAULT_COT_CRITIQUE_PRESET = "claude-sonnet"
+DEFAULT_COT_REFINEMENT_PRESET = "claude-sonnet"
+DEFAULT_COT_QUALITY_ASSESSOR_PRESET = "claude-sonnet"
 DEFAULT_PAPER_PROFILER_TEMPLATE = "raspberry-paper-profiler.md"
-DEFAULT_COT_EXTRACTION_TEMPLATE = "raspberry-extract-cot.md"
+DEFAULT_COT_EXTRACTION_TEMPLATE = "raspberry-cot-extraction.md"
 DEFAULT_COT_CRITIQUE_TEMPLATE = "raspberry-cot-critique.md"
 DEFAULT_COT_REFINEMENT_TEMPLATE = "raspberry-cot-refine.md"
-DEFAULT_COT_VERIFIER_TEMPLATE = "raspberry-cot-verifier.md"
+DEFAULT_COT_QUALITY_ASSESSOR_TEMPLATE = "raspberry-cot-quality-assessor.md"
 
 # Artifact naming patterns
-INITIAL_EXTRACTION_ARTIFACT_PATTERN = "{paper_id}-initial-extraction.txt"
-CRITIQUE_ARTIFACT_PATTERN = "{paper_id}-critique.txt"
-REFINEMENT_ARTIFACT_PATTERN = "{paper_id}-refinement.txt"
+COT_INITIAL_EXTRACTION_ARTIFACT_PATTERN = "{paper_id}-cot-initial-extraction.txt"
+COT_CRITIQUE_ARTIFACT_PATTERN = "{paper_id}-cot-critique.txt"
+COT_REFINEMENT_ARTIFACT_PATTERN = "{paper_id}-cot-refinement.txt"
+COT_QUALITY_ASSESSMENT_ARTIFACT_PATTERN = "{paper_id}-cot-quality-assessment.txt"
 TRAINING_ARTIFACT_PATTERN = "{paper_id}-training-data.jsonl"
 # TODO: This should use the package root, not CWD.
 LWE_CONFIG_DIR = CWD / "lwe" / "config"
@@ -98,8 +99,8 @@ DEFAULT_INFERENCE_ARTIFACTS_DIR = CWD / "results" / "inference"
 DEFAULT_TRAINING_ARTIFACTS_DIR = CWD / "results" / "training"
 DEFAULT_PDF_CACHE_DIR = CWD / "pdf_cache"
 
-# Profiling.
-PROFILING_CRITERIA = [
+# Paper profiling.
+PAPER_PROFILING_CRITERIA = [
     "clear_question",
     "definitive_answer",
     "complex_reasoning",
@@ -111,14 +112,14 @@ PROFILING_CRITERIA = [
     "verifiable_steps",
     "overall_suitability",
 ]
-REQUIRED_PROFILING_CRITERIA = [
+REQUIRED_PAPER_PROFILING_CRITERIA = [
     "clear_question",
     "definitive_answer",
     "complex_reasoning",
 ]
 
-# Verification.
-VERIFICATION_CRITERIA = [
+# CoT quality assessment
+COT_QUALITY_ASSESSMENT_CRITERIA = [
     # source_fidelity criteria
     "contains_only_paper_content",
     "includes_all_critical_info",
@@ -141,7 +142,7 @@ VERIFICATION_CRITERIA = [
     "complete_flow"
 ]
 
-REQUIRED_VERIFICATION_CRITERIA = [
+REQUIRED_COT_QUALITY_ASSESSMENT_CRITERIA = [
     "contains_only_paper_content",
     "includes_all_critical_info",
     "accurate_representation",
@@ -183,23 +184,23 @@ CREATE TABLE IF NOT EXISTS papers (
     profiler_criteria_verifiable_steps INT DEFAULT 0,
     profiler_criteria_overall_suitability INT DEFAULT 0,
     profiler_suitability_score INT DEFAULT 0,
-    validator_criteria_contains_only_paper_content INT DEFAULT 0,
-    validator_criteria_includes_all_critical_info INT DEFAULT 0,
-    validator_criteria_accurate_representation INT DEFAULT 0,
-    validator_criteria_technical_accuracy INT DEFAULT 0,
-    validator_criteria_steps_supported_by_paper INT DEFAULT 0,
-    validator_criteria_no_logical_leaps INT DEFAULT 0,
-    validator_criteria_correct_sequence INT DEFAULT 0,
-    validator_criteria_conclusion_follows INT DEFAULT 0,
-    validator_criteria_question_answerable INT DEFAULT 0,
-    validator_criteria_multi_step_progression INT DEFAULT 0,
-    validator_criteria_answer_addresses_question INT DEFAULT 0,
-    validator_criteria_appropriate_complexity INT DEFAULT 0,
-    validator_criteria_consistent_voice INT DEFAULT 0,
-    validator_criteria_terms_explained INT DEFAULT 0,
-    validator_criteria_no_contradictions INT DEFAULT 0,
-    validator_criteria_complete_flow INT DEFAULT 0,
-    validator_suitability_score INT DEFAULT 0
+    cot_quality_assessment_criteria_contains_only_paper_content INT DEFAULT 0,
+    cot_quality_assessment_criteria_includes_all_critical_info INT DEFAULT 0,
+    cot_quality_assessment_criteria_accurate_representation INT DEFAULT 0,
+    cot_quality_assessment_criteria_technical_accuracy INT DEFAULT 0,
+    cot_quality_assessment_criteria_steps_supported_by_paper INT DEFAULT 0,
+    cot_quality_assessment_criteria_no_logical_leaps INT DEFAULT 0,
+    cot_quality_assessment_criteria_correct_sequence INT DEFAULT 0,
+    cot_quality_assessment_criteria_conclusion_follows INT DEFAULT 0,
+    cot_quality_assessment_criteria_question_answerable INT DEFAULT 0,
+    cot_quality_assessment_criteria_multi_step_progression INT DEFAULT 0,
+    cot_quality_assessment_criteria_answer_addresses_question INT DEFAULT 0,
+    cot_quality_assessment_criteria_appropriate_complexity INT DEFAULT 0,
+    cot_quality_assessment_criteria_consistent_voice INT DEFAULT 0,
+    cot_quality_assessment_criteria_terms_explained INT DEFAULT 0,
+    cot_quality_assessment_criteria_no_contradictions INT DEFAULT 0,
+    cot_quality_assessment_criteria_complete_flow INT DEFAULT 0,
+    cot_quality_assessment_suitability_score INT DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS paper_categories (
@@ -217,10 +218,10 @@ STATUS_PAPER_MISSING = "paper_missing"
 STATUS_PAPER_PROFILED = "paper_profiled"
 STATUS_PAPER_PROFILE_SCORED = "paper_profile_scored"
 STATUS_COT_EXTRACTED = "cot_extracted"
-STATUS_COT_VERIFIED = "cot_verified"
-STATUS_COT_VERIFICATION_SCORED = "cot_verification_scored"
+STATUS_COT_QUALITY_ASSESSED = "cot_quality_assessed"
+STATUS_COT_QUALITY_SCORED = "cot_quality_scored"
 STATUS_FAILED_COT_EXTRACTION = "failed_cot_extraction"
-STATUS_FAILED_COT_VERIFICATION = "failed_cot_verification"
+STATUS_FAILED_COT_QUALITY_ASSESSMENT = "failed_cot_quality_assessment"
 
 # URL cleaning
 PAPER_URL_REQUEST_TIMEOUT_SECONDS = 15

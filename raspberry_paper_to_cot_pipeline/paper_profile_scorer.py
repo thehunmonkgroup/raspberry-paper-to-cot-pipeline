@@ -70,9 +70,9 @@ class PaperProfileScorer:
         :return: List of column names prefixed with 'profiler_criteria_'
         """
         criteria = (
-            constants.REQUIRED_PROFILING_CRITERIA
+            constants.REQUIRED_PAPER_PROFILING_CRITERIA
             if required_only
-            else constants.PROFILING_CRITERIA
+            else constants.PAPER_PROFILING_CRITERIA
         )
         return [f"profiler_criteria_{c}" for c in criteria]
 

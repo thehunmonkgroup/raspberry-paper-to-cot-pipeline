@@ -26,19 +26,19 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument(
         "--extraction-preset",
         type=str,
-        default=constants.DEFAULT_EXTRACTION_PRESET,
+        default=constants.DEFAULT_COT_EXTRACTION_PRESET,
         help="Model configuration used to perform the initial extraction, default: %(default)s",
     )
     parser.add_argument(
         "--critique-preset",
         type=str,
-        default=constants.DEFAULT_CRITIQUE_PRESET,
+        default=constants.DEFAULT_COT_CRITIQUE_PRESET,
         help="Model configuration used to perform the critique, default: %(default)s",
     )
     parser.add_argument(
         "--refinement-preset",
         type=str,
-        default=constants.DEFAULT_REFINEMENT_PRESET,
+        default=constants.DEFAULT_COT_REFINEMENT_PRESET,
         help="Model configuration used to perform the refinement, default: %(default)s",
     )
     parser.add_argument(
@@ -114,9 +114,9 @@ class CoTExtractor:
         self,
         limit: Optional[int],
         debug: bool = False,
-        extraction_preset: str = constants.DEFAULT_EXTRACTION_PRESET,
-        critique_preset: str = constants.DEFAULT_CRITIQUE_PRESET,
-        refinement_preset: str = constants.DEFAULT_REFINEMENT_PRESET,
+        extraction_preset: str = constants.DEFAULT_COT_EXTRACTION_PRESET,
+        critique_preset: str = constants.DEFAULT_COT_CRITIQUE_PRESET,
+        refinement_preset: str = constants.DEFAULT_COT_REFINEMENT_PRESET,
         database: str = constants.DEFAULT_DB_NAME,
         inference_artifacts_directory: str = constants.DEFAULT_INFERENCE_ARTIFACTS_DIR,
         training_artifacts_directory: str = constants.DEFAULT_TRAINING_ARTIFACTS_DIR,
@@ -265,7 +265,7 @@ class CoTExtractor:
         :param answer: Extracted answer
         :param raw_content: Raw LWE response content
         """
-        artifact_name = constants.INITIAL_EXTRACTION_ARTIFACT_PATTERN.format(
+        artifact_name = constants.COT_INITIAL_EXTRACTION_ARTIFACT_PATTERN.format(
             paper_id=paper["paper_id"]
         )
         content = f"""Paper URL: {paper['paper_url']}
@@ -308,7 +308,7 @@ Raw Content:
         :param critique: Critique
         :param critique_response: Raw critique response
         """
-        artifact_name = constants.CRITIQUE_ARTIFACT_PATTERN.format(
+        artifact_name = constants.COT_CRITIQUE_ARTIFACT_PATTERN.format(
             paper_id=paper["paper_id"]
         )
         content = f"""Paper URL: {paper['paper_url']}
@@ -341,7 +341,7 @@ Raw Response:
         :param answer: Refined answer
         :param raw_content: Raw refinement content
         """
-        artifact_name = constants.REFINEMENT_ARTIFACT_PATTERN.format(
+        artifact_name = constants.COT_REFINEMENT_ARTIFACT_PATTERN.format(
             paper_id=paper["paper_id"]
         )
         content = f"""Paper URL: {paper['paper_url']}
