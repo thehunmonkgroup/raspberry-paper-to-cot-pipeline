@@ -9,10 +9,12 @@ DEFAULT_PROFILING_PRESET = "claude-sonnet"
 DEFAULT_EXTRACTION_PRESET = "claude-sonnet"
 DEFAULT_CRITIQUE_PRESET = "claude-sonnet"
 DEFAULT_REFINEMENT_PRESET = "claude-sonnet"
+DEFAULT_VERIFICATION_PRESET = "claude-sonnet"
 DEFAULT_PAPER_PROFILER_TEMPLATE = "raspberry-paper-profiler.md"
 DEFAULT_COT_EXTRACTION_TEMPLATE = "raspberry-extract-cot.md"
 DEFAULT_COT_CRITIQUE_TEMPLATE = "raspberry-cot-critique.md"
 DEFAULT_COT_REFINEMENT_TEMPLATE = "raspberry-cot-refine.md"
+DEFAULT_COT_VERIFIER_TEMPLATE = "raspberry-cot-verifier.md"
 
 # Artifact naming patterns
 INITIAL_EXTRACTION_ARTIFACT_PATTERN = "{paper_id}-initial-extraction.txt"
@@ -115,6 +117,39 @@ REQUIRED_PROFILING_CRITERIA = [
     "complex_reasoning",
 ]
 
+# Verification.
+VERIFICATION_CRITERIA = [
+    # source_fidelity criteria
+    "contains_only_paper_content",
+    "includes_all_critical_info",
+    "accurate_representation",
+    "technical_accuracy",
+    # reasoning_integrity criteria
+    "steps_supported_by_paper",
+    "no_logical_leaps",
+    "correct_sequence",
+    "conclusion_follows",
+    # training_utility criteria
+    "question_answerable",
+    "multi_step_progression",
+    "answer_addresses_question",
+    "appropriate_complexity",
+    # structural_quality criteria
+    "consistent_voice",
+    "terms_explained",
+    "no_contradictions",
+    "complete_flow"
+]
+
+REQUIRED_VERIFICATION_CRITERIA = [
+    "contains_only_paper_content",
+    "includes_all_critical_info",
+    "accurate_representation",
+    "steps_supported_by_paper",
+    "no_logical_leaps",
+    "answer_addresses_question"
+]
+
 # ArXiv.
 ARXIV_TAXONOMY_URL = "https://arxiv.org/category_taxonomy"
 ARXIV_EXPORT_BASE = "https://export.arxiv.org"
@@ -183,6 +218,8 @@ STATUS_PROFILED = "profiled"
 STATUS_SCORED = "scored"
 STATUS_COT_EXTRACTED = "cot_extracted"
 STATUS_FAILED_COT_EXTRACTION = "failed_cot_extraction"
+STATUS_VERIFIED_COT = "verified_cot"
+STATUS_FAILED_COT_VERIFICATION = "failed_cot_verification"
 
 # URL cleaning
 PAPER_URL_REQUEST_TIMEOUT_SECONDS = 15
