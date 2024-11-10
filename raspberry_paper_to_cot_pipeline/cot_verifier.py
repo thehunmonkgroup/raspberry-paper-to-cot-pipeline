@@ -180,7 +180,7 @@ Raw Inference Output:
     def get_refinement_data(self, paper: Dict[str, Any]) -> Optional[Tuple[str, str, str]]:
         """
         Get question, chain of reasoning, and answer from refinement artifact.
-        
+
         :param paper: Paper data dictionary
         :return: Tuple of (question, chain_of_reasoning, answer) or None if retrieval fails
         """
@@ -200,7 +200,7 @@ Raw Inference Output:
             return None
 
     def run_verification(
-        self, 
+        self,
         paper_content: str,
         question: str,
         chain_of_reasoning: str,
@@ -208,7 +208,7 @@ Raw Inference Output:
     ) -> Tuple[Dict[str, int], str]:
         """
         Run verification template and process results.
-        
+
         :param paper_content: Text content of the paper
         :param question: Question to verify
         :param chain_of_reasoning: Chain of reasoning to verify
@@ -239,7 +239,7 @@ Raw Inference Output:
     ) -> None:
         """
         Update paper with verification results.
-        
+
         :param paper_id: ID of the paper
         :param criteria: Dictionary of verification criteria results
         """
@@ -256,31 +256,31 @@ Raw Inference Output:
         try:
             # Get paper content
             text = self.utils.get_pdf_text(paper)
-            
+
             # Get refinement data
             refinement_data = self.get_refinement_data(paper)
             if not refinement_data:
                 return
-            
+
             question, chain_of_reasoning, answer = refinement_data
-            
+
             # Run verification
             criteria, xml_content = self.run_verification(
                 text, question, chain_of_reasoning, answer
             )
-            
+
             # Write artifact and update database
             self.write_verification_artifact(paper, criteria, xml_content)
             self.update_verification_results(paper["id"], criteria)
-            
+
             self.logger.info(
                 f"Successfully verified paper {paper['paper_id']} - Status: {constants.STATUS_VERIFIED_COT}"
             )
-                
+
         except Exception as e:
             self.logger.error(f"Error processing paper {paper['paper_id']}: {str(e)}")
             self.utils.update_paper_status(
-                paper["id"], 
+                paper["id"],
                 constants.STATUS_FAILED_COT_VERIFICATION
             )
 
