@@ -14,8 +14,9 @@ The profiling process involves:
 
 import argparse
 import copy
+import sqlite3
 import xml.etree.ElementTree as ET
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Generator
 import sys
 from raspberry_paper_to_cot_pipeline import constants
 from raspberry_paper_to_cot_pipeline.utils import Utils
@@ -55,10 +56,11 @@ def parse_arguments() -> argparse.Namespace:
         help="Number of papers to process, default: %(default)s",
     )
     parser.add_argument(
-        "--order_by",
+        "--selection-strategy",
         type=str,
-        default="RANDOM()",
-        help="Order of paper selection, default: %(default)s",
+        choices=['random', 'category_balanced'],
+        default='random',
+        help="Strategy for paper selection: 'random' or 'category_balanced', default: %(default)s",
     )
     parser.add_argument(
         "--pdf-cache-dir",
@@ -88,7 +90,7 @@ class PaperProfiler:
         profiling_preset: str = constants.DEFAULT_PROFILING_PRESET,
         database: str = constants.DEFAULT_DB_NAME,
         inference_artifacts_directory: str = constants.DEFAULT_INFERENCE_ARTIFACTS_DIR,
-        order_by: str = "RANDOM()",
+        selection_strategy: str = "random",
         pdf_cache_dir: str = constants.DEFAULT_PDF_CACHE_DIR,
         template: str = constants.DEFAULT_PAPER_PROFILER_TEMPLATE,
     ):
@@ -108,7 +110,9 @@ class PaperProfiler:
         self.database = database
         self.inference_artifacts_directory = inference_artifacts_directory
         self.limit = limit
-        self.order_by = order_by
+        self.selection_strategy = selection_strategy
+        if selection_strategy == 'category_balanced' and (not limit or limit < 1):
+            raise ValueError("category_balanced strategy requires a positive limit value")
         self.pdf_cache_dir = pdf_cache_dir
         self.template = template
         self.debug = debug
@@ -218,14 +222,27 @@ Raw Inference Output:
             self.logger.error(f"Error processing paper {paper['paper_id']}: {str(e)}")
             self.utils.update_paper_status(paper["id"], "failed_profiling")
 
+    def fetch_papers(self) -> Generator[sqlite3.Row, None, None]:
+        """
+        Fetch papers based on configured selection strategy.
+
+        :return: Generator of paper rows
+        """
+        if self.selection_strategy == 'random':
+            return self.utils.fetch_papers_by_processing_status(
+                status=constants.STATUS_VERIFIED,
+                limit=self.limit
+            )
+        else:  # category_balanced
+            return self.utils.fetch_papers_by_processing_status_balanced_by_category(
+                status=constants.STATUS_VERIFIED,
+                limit=self.limit
+            )
+
     def run(self) -> None:
         """Execute the main logic of the paper profiling process."""
         try:
-            papers = self.utils.fetch_papers_by_processing_status(
-                status=constants.STATUS_VERIFIED,
-                order_by=self.order_by,
-                limit=self.limit,
-            )
+            papers = self.fetch_papers()
             for paper in papers:
                 self.process_paper(paper)
             self.logger.info("Paper profiling process completed")
@@ -245,7 +262,7 @@ def main():
         profiling_preset=args.profiling_preset,
         database=args.database,
         inference_artifacts_directory=args.inference_artifacts_directory,
-        order_by=args.order_by,
+        selection_strategy=args.selection_strategy,
         pdf_cache_dir=args.pdf_cache_dir,
         template=args.template,
     )
