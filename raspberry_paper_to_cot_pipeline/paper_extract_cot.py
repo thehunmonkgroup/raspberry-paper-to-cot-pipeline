@@ -194,16 +194,9 @@ class CoTExtractor:
         """
         if hasattr(self, "paper_id") and self.paper_id:
             return self.fetch_specific_paper(self.paper_id)
-
-        query = f"""
-        SELECT id, paper_id, paper_url
-        FROM papers
-        WHERE processing_status = '{constants.STATUS_SCORED}' AND suitability_score >= ?
-        ORDER BY RANDOM()
-        LIMIT ?
-        """
-        return self.utils.fetch_papers_by_custom_query(
-            query, (self.suitability_score, self.limit)
+        select_columns = constants.DEFAULT_FETCH_BY_STATUS_COLUMNS + ["profiler_suitability_score"]
+        return self.utils.fetch_papers_by_processing_status(
+            constants.STATUS_SCORED, select_columns=select_columns, limit=self.limit
         )
 
     def process_paper(self, paper: Dict[str, Any]) -> None:
@@ -212,6 +205,11 @@ class CoTExtractor:
 
         :param paper: Paper data
         """
+        if "profiler_suitability_score" in paper and paper["profiler_suitability_score"] < self.suitability_score:
+            self.logger.debug(
+                f"Skipping paper {paper['paper_id']} due to low suitability score"
+            )
+            return
         try:
             pdf_text = self.utils.get_pdf_text(paper)
             question, chain_of_reasoning, answer, initial_response = (
