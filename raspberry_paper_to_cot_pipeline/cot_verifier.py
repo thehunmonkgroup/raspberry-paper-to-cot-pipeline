@@ -244,7 +244,7 @@ Raw Inference Output:
         :param criteria: Dictionary of verification criteria results
         """
         data = copy.deepcopy(criteria)
-        data["processing_status"] = constants.STATUS_VERIFIED_COT
+        data["processing_status"] = constants.STATUS_COT_VERIFIED
         self.utils.update_paper(paper_id, data)
 
     def process_paper(self, paper: Dict[str, Any]) -> None:
@@ -274,7 +274,7 @@ Raw Inference Output:
             self.update_verification_results(paper["id"], criteria)
 
             self.logger.info(
-                f"Successfully verified paper {paper['paper_id']} - Status: {constants.STATUS_VERIFIED_COT}"
+                f"Successfully verified paper {paper['paper_id']} - Status: {constants.STATUS_COT_VERIFIED}"
             )
 
         except Exception as e:

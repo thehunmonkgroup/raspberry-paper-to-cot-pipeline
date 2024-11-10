@@ -218,7 +218,7 @@ STATUS_PROFILED = "profiled"
 STATUS_SCORED = "scored"
 STATUS_COT_EXTRACTED = "cot_extracted"
 STATUS_FAILED_COT_EXTRACTION = "failed_cot_extraction"
-STATUS_VERIFIED_COT = "verified_cot"
+STATUS_COT_VERIFIED = "cot_verified"
 STATUS_FAILED_COT_VERIFICATION = "failed_cot_verification"
 
 # URL cleaning
