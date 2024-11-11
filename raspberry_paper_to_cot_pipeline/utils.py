@@ -498,7 +498,9 @@ class Utils:
             self.logger.error(f"Training artifact file {artifact_file_path} not found")
             raise
         except json.JSONDecodeError as e:
-            self.logger.error(f"Invalid JSON in training artifact {artifact_file_path}: {e}")
+            self.logger.error(
+                f"Invalid JSON in training artifact {artifact_file_path}: {e}"
+            )
             raise
 
     def validate_date(self, date_str: str, date_name: str) -> None:

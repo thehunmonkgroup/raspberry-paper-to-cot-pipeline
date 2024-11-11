@@ -11,7 +11,7 @@ import argparse
 import json
 import sqlite3
 from pathlib import Path
-from typing import Optional, List, Dict, Any, Generator, Tuple
+from typing import Optional, Dict, Any, Generator, Tuple
 import sys
 
 from raspberry_paper_to_cot_pipeline import constants
@@ -152,7 +152,9 @@ class TrainingDataGenerator:
         :return: Path object pointing to the initialized output file
         :raises OSError: If file creation or directory creation fails
         """
-        self.logger.debug(f"Initializing output file in {self.training_artifacts_directory}")
+        self.logger.debug(
+            f"Initializing output file in {self.training_artifacts_directory}"
+        )
         self.utils.ensure_directory_exists(self.training_artifacts_directory)
 
         output_path = self.training_artifacts_directory / self.training_file_name
@@ -163,7 +165,9 @@ class TrainingDataGenerator:
         output_path.touch()
         return output_path
 
-    def append_training_data(self, output_path: Path, data: Dict[str, Any], paper_id: str) -> None:
+    def append_training_data(
+        self, output_path: Path, data: Dict[str, Any], paper_id: str
+    ) -> None:
         """
         Append a single training data entry to the JSONL file.
 
@@ -172,9 +176,11 @@ class TrainingDataGenerator:
         :param paper_id: ID of the paper being processed
         :raises IOError: If writing to the file fails
         """
-        self.logger.debug(f"Appending training data entry for paper {paper_id} to {output_path}")
-        with open(output_path, 'a') as f:
-            f.write(json.dumps(data) + '\n')
+        self.logger.debug(
+            f"Appending training data entry for paper {paper_id} to {output_path}"
+        )
+        with open(output_path, "a") as f:
+            f.write(json.dumps(data) + "\n")
 
     def process_papers(self, output_path: Path) -> Tuple[int, int]:
         """
@@ -196,7 +202,10 @@ class TrainingDataGenerator:
             else:
                 skipped_count += 1
 
-            if processed_count % self.PROGRESS_REPORT_INTERVAL == 0 and processed_count > 0:
+            if (
+                processed_count % self.PROGRESS_REPORT_INTERVAL == 0
+                and processed_count > 0
+            ):
                 self.logger.info(
                     f"Processed {processed_count} papers, skipped {skipped_count}"
                 )
