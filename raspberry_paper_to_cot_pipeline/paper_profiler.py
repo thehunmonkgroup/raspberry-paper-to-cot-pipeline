@@ -199,7 +199,7 @@ Raw Inference Output:
 """
         self.utils.write_inference_artifact(artifact_name, content)
 
-    def process_paper(self, paper: Dict[str, Any]) -> None:
+    def process_paper(self, paper: sqlite3.Row) -> None:
         """
         Process a single paper through the profiling pipeline.
 

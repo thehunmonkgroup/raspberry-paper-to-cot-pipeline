@@ -6,8 +6,8 @@ It downloads PDFs, extracts text, runs LWE templates, and processes the results.
 """
 
 import argparse
-from typing import Dict, Any, Tuple, Generator, Optional
-from sqlite3 import Row
+from typing import Dict, Any, Tuple, Generator, Optional, Union
+import sqlite3
 import sys
 import xml.etree.ElementTree as ET
 from raspberry_paper_to_cot_pipeline import constants
@@ -168,7 +168,7 @@ class CoTExtractor:
 
     def fetch_specific_paper(
         self, paper_id: str
-    ) -> Generator[Dict[str, Any], None, None]:
+    ) -> Generator[Union[Dict[str, Any], sqlite3.Row], None, None]:
         """
         Fetch a specific paper from the database.
 
@@ -187,7 +187,7 @@ class CoTExtractor:
             raise RuntimeError(f"Paper with ID {paper_id} not found in database")
         yield from papers
 
-    def fetch_papers(self) -> Generator[Dict[str, Any], None, None]:
+    def fetch_papers(self) -> Generator[sqlite3.Row, None, None]:
         """
         Fetch papers from the database based on suitability score or specific paper ID.
 
@@ -204,7 +204,7 @@ class CoTExtractor:
             limit=self.limit,
         )
 
-    def process_paper(self, paper: Row) -> None:
+    def process_paper(self, paper: sqlite3.Row) -> None:
         """
         Process a single paper for CoT extraction, critique, and refinement.
 

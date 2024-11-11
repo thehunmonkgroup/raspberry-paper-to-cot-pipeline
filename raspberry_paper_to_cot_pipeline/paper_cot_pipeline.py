@@ -7,6 +7,7 @@ profiling → scoring → CoT extraction.
 
 import argparse
 import sys
+from typing import Literal
 
 from raspberry_paper_to_cot_pipeline.paper_profiler import PaperProfiler
 from raspberry_paper_to_cot_pipeline.paper_profile_scorer import PaperProfileScorer
@@ -21,8 +22,11 @@ class PaperCoTPipeline:
     """Orchestrates the full paper processing pipeline."""
 
     def __init__(
-        self, selection_strategy: str = "random", limit: int = 1, debug: bool = False
-    ):
+        self,
+        selection_strategy: Literal["random", "category_balanced"] = "random",
+        limit: int = 1,
+        debug: bool = False,
+    ) -> None:
         """
         Initialize the pipeline.
 

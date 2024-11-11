@@ -18,6 +18,7 @@ import argparse
 import copy
 import xml.etree.ElementTree as ET
 from typing import Dict, Any, Optional, Tuple
+import sqlite3
 import sys
 from raspberry_paper_to_cot_pipeline import constants
 from raspberry_paper_to_cot_pipeline.utils import Utils
@@ -251,7 +252,7 @@ Raw Inference Output:
         data["processing_status"] = constants.STATUS_COT_QUALITY_ASSESSED
         self.utils.update_paper(paper_id, data)
 
-    def process_paper(self, paper: Dict[str, Any]) -> None:
+    def process_paper(self, paper: sqlite3.Row) -> None:
         """
         Process a single paper through the assessment pipeline.
 

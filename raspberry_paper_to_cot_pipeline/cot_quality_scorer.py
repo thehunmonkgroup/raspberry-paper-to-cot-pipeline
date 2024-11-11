@@ -93,7 +93,7 @@ class CoTQualityScorer:
             self.logger.error(f"Missing required criteria field in paper data: {e}")
             raise
 
-    def calculate_suitability_score(self, paper: Dict[str, Any]) -> int:
+    def calculate_suitability_score(self, paper: sqlite3.Row) -> int:
         """
         Calculate the suitability score based on criteria.
 

@@ -139,7 +139,7 @@ class ArxivPaperUrlFetcher:
 
     def _construct_query_params(
         self, categories: List[str], start_index: int
-    ) -> Dict[str, Any]:
+    ) -> Dict[str, Union[str, int]]:
         """
         Construct the query parameters for the arXiv API.
 
@@ -288,7 +288,9 @@ class ArxivPaperUrlFetcher:
             self.logger.debug("No entries returned. Sleeping for 1 second...")
             return False
 
-    def generate_pdf_data(self, arxiv_paper_data):
+    def generate_pdf_data(
+        self, arxiv_paper_data: List[Tuple[str, str]]
+    ) -> List[Tuple[str, str]]:
         """
         Process the retrieved paper data.
 
