@@ -9,10 +9,12 @@ for specific scoring implementations.
 
 import sqlite3
 import sys
-from typing import Any, Dict, List, Optional, Generator
+from typing import List, Optional, Generator
 
 from raspberry_paper_to_cot_pipeline import constants
 from raspberry_paper_to_cot_pipeline.utils import Utils
+
+BATCH_LOG_SIZE = 1000
 
 
 class BaseScorer:
@@ -23,6 +25,9 @@ class BaseScorer:
     Handles database operations, criteria validation, and score calculations.
     Subclasses must override criteria_list, required_criteria_list, column_prefix,
     scored_status, initial_status, and score_field_name.
+
+    Note: This class expects debug logging to be configured via command-line arguments
+    in the implementing script.
 
     :ivar criteria_list: List of all scoring criteria names
     :type criteria_list: List[str]
@@ -113,7 +118,9 @@ class BaseScorer:
         :raises KeyError: If required criteria fields are missing
         """
         required_columns = self.build_criteria_columns(required_only=True)
-        return any(self._get_criteria_score(paper, col) == 0 for col in required_columns)
+        return any(
+            self._get_criteria_score(paper, col) == 0 for col in required_columns
+        )
 
     def calculate_suitability_score(self, paper: sqlite3.Row) -> int:
         """
@@ -133,8 +140,8 @@ class BaseScorer:
                 return 0
             criteria = [int(paper[c]) for c in self.build_criteria_columns()]
             return sum(criteria)
-        except KeyError as e:
-            self.logger.error(f"Missing criteria field in paper data: {e}")
+        except KeyError as key_error:
+            self.logger.error(f"Missing criteria field in paper data: {key_error}")
             raise
 
     def fetch_papers_for_scoring(self) -> Generator[sqlite3.Row, None, None]:
@@ -154,8 +161,8 @@ class BaseScorer:
                 select_columns=select_columns,
                 limit=self.limit,
             )
-        except sqlite3.Error as e:
-            self.logger.error(f"Database error fetching papers: {e}")
+        except sqlite3.Error as db_error:
+            self.logger.error(f"Database error fetching papers: {db_error}")
             raise
 
     def process_paper(self, paper: sqlite3.Row) -> None:
@@ -178,9 +185,9 @@ class BaseScorer:
                 f"Paper {paper['paper_id']} scored and updated to status {self.scored_status}, "
                 f"suitability score: {suitability_score}"
             )
-        except (KeyError, sqlite3.Error) as e:
+        except (KeyError, sqlite3.Error) as processing_error:
             self.logger.error(
-                f"Failed to process paper {paper.get('paper_id', 'unknown')}: {e}"
+                f"Failed to process paper {paper.get('paper_id', 'unknown')}: {processing_error}"
             )
             raise
 
@@ -202,11 +209,13 @@ class BaseScorer:
             for paper in papers:
                 self.process_paper(paper)
                 processed_count += 1
-                if processed_count % 1000 == 0:
+                if processed_count % BATCH_LOG_SIZE == 0:
                     self.logger.info(f"Processed {processed_count} papers so far.")
             self.logger.info(
                 f"Scoring process completed. Total papers scored: {processed_count}"
             )
-        except Exception as e:
-            self.logger.error(f"An error occurred during the scoring process: {e}")
+        except Exception as processing_error:
+            self.logger.error(
+                f"An error occurred during the scoring process: {processing_error}"
+            )
             sys.exit(1)
