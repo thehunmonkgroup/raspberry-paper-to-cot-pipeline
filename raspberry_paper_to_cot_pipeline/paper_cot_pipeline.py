@@ -12,6 +12,7 @@ from raspberry_paper_to_cot_pipeline.paper_profiler import PaperProfiler
 from raspberry_paper_to_cot_pipeline.paper_profile_scorer import PaperProfileScorer
 from raspberry_paper_to_cot_pipeline.paper_cot_extractor import CoTExtractor
 from raspberry_paper_to_cot_pipeline.cot_quality_assessor import CoTQualityAssessor
+from raspberry_paper_to_cot_pipeline.cot_quality_scorer import CoTQualityScorer
 from raspberry_paper_to_cot_pipeline.utils import Utils
 
 
@@ -68,6 +69,14 @@ class PaperCoTPipeline:
                 debug=self.debug,
             )
             assessor.run()
+
+            # Stage 5: CoT quality scoring
+            self.logger.info("Starting CoT quality scoring stage...")
+            scorer = CoTQualityScorer(
+                limit=None,
+                debug=self.debug,
+            )
+            scorer.run()
 
             self.logger.info("Pipeline completed successfully")
 
