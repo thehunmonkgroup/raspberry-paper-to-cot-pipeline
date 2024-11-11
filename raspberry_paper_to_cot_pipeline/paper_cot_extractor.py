@@ -204,11 +204,12 @@ class CoTExtractor:
             limit=self.limit,
         )
 
-    def process_paper(self, paper: sqlite3.Row) -> None:
+    def _check_suitability(self, paper: sqlite3.Row) -> bool:
         """
-        Process a single paper for CoT extraction, critique, and refinement.
+        Check if paper meets suitability requirements.
 
         :param paper: Paper data
+        :return: True if paper is suitable, False otherwise
         """
         if (
             "profiler_suitability_score" in paper.keys()
@@ -217,33 +218,106 @@ class CoTExtractor:
             self.logger.debug(
                 f"Skipping paper {paper['paper_id']} due to low suitability score"
             )
+            return False
+        return True
+
+    def _handle_extraction_stage(self, paper: sqlite3.Row, pdf_text: str) -> tuple:
+        """
+        Handle the initial extraction stage.
+
+        :param paper: Paper data
+        :param pdf_text: Text content of paper
+        :return: Tuple of extraction results
+        """
+        question, chain_of_reasoning, answer, initial_response = (
+            self.process_initial_cot_extraction(pdf_text)
+        )
+        self.write_initial_cot_extraction_artifact(
+            paper, question, chain_of_reasoning, answer, initial_response
+        )
+        self.logger.info(f"Completed initial extraction for paper {paper['paper_id']}")
+        return question, chain_of_reasoning, answer
+
+    def _handle_critique_stage(
+        self,
+        paper: sqlite3.Row,
+        question: str,
+        chain_of_reasoning: str,
+        answer: str,
+        pdf_text: str,
+    ) -> str:
+        """
+        Handle the critique stage.
+
+        :param paper: Paper data
+        :param question: Extracted question
+        :param chain_of_reasoning: Chain of reasoning
+        :param answer: Answer
+        :param pdf_text: Paper text content
+        :return: Generated critique
+        """
+        critique, critique_response = self.process_critique(
+            question, chain_of_reasoning, answer, pdf_text
+        )
+        self.write_critique_artifact(paper, critique, critique_response)
+        self.logger.info(f"Completed critique for paper {paper['paper_id']}")
+        return critique
+
+    def _handle_refinement_stage(
+        self,
+        paper: sqlite3.Row,
+        question: str,
+        chain_of_reasoning: str,
+        answer: str,
+        critique: str,
+        pdf_text: str,
+    ) -> None:
+        """
+        Handle the refinement stage.
+
+        :param paper: Paper data
+        :param question: Original question
+        :param chain_of_reasoning: Original chain of reasoning
+        :param answer: Original answer
+        :param critique: Generated critique
+        :param pdf_text: Paper text content
+        """
+        refined_q, refined_c, refined_a, refinement_response = self.process_refinement(
+            question, chain_of_reasoning, answer, critique, pdf_text
+        )
+        self.write_refinement_artifact(
+            paper, refined_q, refined_c, refined_a, refinement_response
+        )
+        self.logger.info(f"Completed refinement for paper {paper['paper_id']}")
+        self.write_training_artifact(paper, refined_q, refined_c, refined_a)
+
+    def process_paper(self, paper: sqlite3.Row) -> None:
+        """
+        Process a single paper for CoT extraction, critique, and refinement.
+
+        :param paper: Paper data
+        """
+        if not self._check_suitability(paper):
             return
+
         try:
             pdf_text = self.utils.get_pdf_text(paper)
-            question, chain_of_reasoning, answer, initial_response = (
-                self.process_initial_cot_extraction(pdf_text)
+
+            # Handle extraction stage
+            question, chain_of_reasoning, answer = self._handle_extraction_stage(
+                paper, pdf_text
             )
-            self.write_initial_cot_extraction_artifact(
-                paper, question, chain_of_reasoning, answer, initial_response
+
+            # Handle critique stage
+            critique = self._handle_critique_stage(
+                paper, question, chain_of_reasoning, answer, pdf_text
             )
-            self.logger.info(
-                f"Completed initial extraction for paper {paper['paper_id']}"
+
+            # Handle refinement stage
+            self._handle_refinement_stage(
+                paper, question, chain_of_reasoning, answer, critique, pdf_text
             )
-            critique, critique_response = self.process_critique(
-                question, chain_of_reasoning, answer, pdf_text
-            )
-            self.write_critique_artifact(paper, critique, critique_response)
-            self.logger.info(f"Completed critique for paper {paper['paper_id']}")
-            refined_q, refined_c, refined_a, refinement_response = (
-                self.process_refinement(
-                    question, chain_of_reasoning, answer, critique, pdf_text
-                )
-            )
-            self.write_refinement_artifact(
-                paper, refined_q, refined_c, refined_a, refinement_response
-            )
-            self.logger.info(f"Completed refinement for paper {paper['paper_id']}")
-            self.write_training_artifact(paper, refined_q, refined_c, refined_a)
+
             self.utils.update_paper_status(paper["id"], constants.STATUS_COT_EXTRACTED)
             self.logger.info(
                 f"Successfully completed all stages for paper {paper['paper_id']}"

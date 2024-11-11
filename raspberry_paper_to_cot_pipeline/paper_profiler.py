@@ -199,6 +199,36 @@ Raw Inference Output:
 """
         self.utils.write_inference_artifact(artifact_name, content)
 
+    def _extract_and_validate_content(self, paper: sqlite3.Row) -> tuple:
+        """
+        Extract and validate paper content.
+
+        :param paper: Paper data
+        :return: Tuple of (text content, LWE response, XML content)
+        :raises ValueError: If XML content cannot be extracted
+        """
+        text = self.utils.get_pdf_text(paper)
+        lwe_response = self.run_lwe_template(text)
+        xml_content = self.utils.extract_xml(lwe_response)
+        if not xml_content:
+            raise ValueError("Could not extract XML content from LWE response")
+        return text, lwe_response, xml_content
+
+    def _process_criteria_and_update(
+        self, paper: sqlite3.Row, xml_content: str
+    ) -> None:
+        """
+        Process criteria and update database.
+
+        :param paper: Paper data
+        :param xml_content: Extracted XML content
+        """
+        criteria = self.parse_xml(xml_content)
+        self.write_inference_artifact(paper, criteria, xml_content)
+        data = copy.deepcopy(criteria)
+        data["processing_status"] = constants.STATUS_PAPER_PROFILED
+        self.utils.update_paper(paper["id"], data)
+
     def process_paper(self, paper: sqlite3.Row) -> None:
         """
         Process a single paper through the profiling pipeline.
@@ -209,16 +239,8 @@ Raw Inference Output:
         :raises Exception: If paper processing fails for any other reason
         """
         try:
-            text = self.utils.get_pdf_text(paper)
-            lwe_response = self.run_lwe_template(text)
-            xml_content = self.utils.extract_xml(lwe_response)
-            if not xml_content:
-                raise ValueError("Could not extract XML content from LWE response")
-            criteria = self.parse_xml(xml_content)
-            self.write_inference_artifact(paper, criteria, xml_content)
-            data = copy.deepcopy(criteria)
-            data["processing_status"] = constants.STATUS_PAPER_PROFILED
-            self.utils.update_paper(paper["id"], data)
+            _, _, xml_content = self._extract_and_validate_content(paper)
+            self._process_criteria_and_update(paper, xml_content)
             self.logger.info(f"Successfully profiled paper {paper['paper_id']}")
         except Exception as e:
             self.logger.error(f"Error processing paper {paper['paper_id']}: {str(e)}")

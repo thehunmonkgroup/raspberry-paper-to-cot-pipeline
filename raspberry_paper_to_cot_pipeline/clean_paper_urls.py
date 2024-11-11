@@ -6,6 +6,8 @@ and updating or deleting entries accordingly.
 
 import argparse
 import sqlite3
+from pathlib import Path
+from typing import Union
 from tenacity import (
     retry,
     stop_after_attempt,
@@ -60,7 +62,7 @@ class PaperCleaner:
 
     def __init__(
         self,
-        database: str = constants.DEFAULT_DB_NAME,
+        database: Union[str, Path] = constants.DEFAULT_DB_NAME,
         skip_cleaning: bool = False,
         limit: int = None,
         debug: bool = False,
@@ -150,6 +152,32 @@ class PaperCleaner:
             self.logger.error(f"Unexpected error processing paper {paper_id}: {e}")
             raise
 
+    def _setup_cleaning_process(self) -> None:
+        """Log initial setup information for the cleaning process."""
+        self.logger.info(
+            f"Starting paper cleaning process. Database: {self.database}, "
+            f"Limit: {self.limit}, Skip cleaning: {self.skip_cleaning}"
+        )
+
+    def _process_papers(self) -> int:
+        """
+        Process all papers that need cleaning.
+
+        :return: Number of papers processed
+        """
+        papers = self.utils.fetch_papers_by_processing_status(
+            status=constants.STATUS_PAPER_LINK_DOWNLOADED, limit=self.limit
+        )
+        processed_count = 0
+        for paper in papers:
+            self.logger.debug(
+                f"Processing paper ID {paper['id']} with URL {paper['paper_url']} for CoT extraction"
+            )
+            self.process_paper(paper["id"], paper["paper_url"])
+            processed_count += 1
+            self._log_progress(processed_count)
+        return processed_count
+
     def run(self) -> None:
         """
         Run the paper cleaning process.
@@ -160,11 +188,9 @@ class PaperCleaner:
 
         :raises SystemExit: If an unrecoverable error occurs during processing
         """
-        self.logger.info(
-            f"Starting paper cleaning process. Database: {self.database}, "
-            f"Limit: {self.limit}, Skip cleaning: {self.skip_cleaning}"
-        )
         try:
+            self._setup_cleaning_process()
+
             if self.skip_cleaning:
                 self.logger.debug(
                     "Skip cleaning flag is set, marking all papers as verified"
@@ -174,17 +200,7 @@ class PaperCleaner:
                 self.logger.debug(
                     f"Fetching papers with '{constants.STATUS_PAPER_LINK_DOWNLOADED}' status using {self.selection_strategy} strategy (limit: {self.limit})"
                 )
-                papers = self.utils.fetch_papers_by_processing_status(
-                    status=constants.STATUS_PAPER_LINK_DOWNLOADED, limit=self.limit
-                )
-                processed_count = 0
-                for paper in papers:
-                    self.logger.debug(
-                        f"Processing paper ID {paper['id']} with URL {paper['paper_url']} for CoT extraction"
-                    )
-                    self.process_paper(paper["id"], paper["paper_url"])
-                    processed_count += 1
-                    self._log_progress(processed_count)
+                processed_count = self._process_papers()
                 self.logger.info(
                     f"Paper cleaning process completed. Total papers processed: {processed_count}"
                 )

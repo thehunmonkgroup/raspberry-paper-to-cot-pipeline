@@ -1,6 +1,8 @@
 import logging
 import os
 import requests
+from pathlib import Path
+from typing import Union
 import sqlite3
 import json
 import pymupdf4llm
@@ -25,7 +27,9 @@ from raspberry_paper_to_cot_pipeline import constants
 
 
 @contextmanager
-def get_db_connection(database_path: str) -> Generator[sqlite3.Connection, None, None]:
+def get_db_connection(
+    database_path: Union[str, Path]
+) -> Generator[sqlite3.Connection, None, None]:
     """
     Context manager for database connections with WAL journaling and IMMEDIATE isolation.
 
@@ -33,8 +37,12 @@ def get_db_connection(database_path: str) -> Generator[sqlite3.Connection, None,
     :yield: SQLite connection object configured with Write-Ahead Logging (WAL)
            journal mode and IMMEDIATE isolation level for better concurrency
     :raises sqlite3.Error: If connection cannot be established
+    :raises FileNotFoundError: If database directory doesn't exist
     """
-    conn = sqlite3.connect(database_path, timeout=30)
+    path = Path(database_path)
+    if not path.parent.exists():
+        raise FileNotFoundError(f"Database directory does not exist: {path.parent}")
+    conn = sqlite3.connect(str(path), timeout=30)
     conn.execute("PRAGMA journal_mode=WAL")
     conn.isolation_level = "IMMEDIATE"
     try:
@@ -138,7 +146,9 @@ class Utils:
 
         :param pdf_path: Path to the PDF file
         :param pdf_content: Content of the PDF file
+        :raises OSError: If directory creation fails
         """
+        pdf_path.parent.mkdir(parents=True, exist_ok=True)
         pdf_path.write_bytes(pdf_content)
         self.logger.debug(f"Saved PDF to {pdf_path}")
 
@@ -204,7 +214,7 @@ class Utils:
         """
         return f"{id}.pdf"
 
-    def extract_text(self, pdf_path: str) -> str:
+    def extract_text(self, pdf_path: Union[str, Path]) -> str:
         """
         Extract text from the PDF file.
 
@@ -214,9 +224,12 @@ class Utils:
         :raises pymupdf4llm.ConversionError: If PDF conversion fails
         :raises RuntimeError: If an unexpected error occurs
         """
-        self.logger.debug(f"Extracting text from {pdf_path}")
+        path = Path(pdf_path)
+        self.logger.debug(f"Extracting text from {path}")
+        if not path.exists():
+            raise FileNotFoundError(f"PDF file not found: {path}")
         try:
-            return pymupdf4llm.to_markdown(pdf_path)
+            return pymupdf4llm.to_markdown(str(path))
         except FileNotFoundError as e:
             message = f"PDF file not found at {pdf_path}: {str(e)}"
             self.logger.error(message)
