@@ -1,4 +1,5 @@
 import logging
+import os
 import requests
 import sqlite3
 import json
@@ -158,7 +159,7 @@ class Utils:
         response.raise_for_status()
         pdf_path = self.make_pdf_cache_path_from_paper_id(paper["paper_id"])
         self.write_pdf_to_cache(pdf_path, response.content)
-        self.logger.debug(f"Downloaded PDF from {paper['paper_url']} to {pdf_path}")
+        self.logger.debug(f"Successfully downloaded PDF from {paper['paper_url']} and saved to {pdf_path} ({os.path.getsize(pdf_path)} bytes)")
         return str(pdf_path)
 
     def get_pdf_text(self, paper: Dict[str, Any]) -> str:
@@ -450,7 +451,7 @@ class Utils:
         artifact_file_path = self.inference_artifacts_directory / filename
         try:
             content = artifact_file_path.read_text()
-            self.logger.debug(f"Read inference artifact from {artifact_file_path}")
+            self.logger.debug(f"Successfully read inference artifact from {artifact_file_path} ({len(content)} characters)")
             return content
         except FileNotFoundError:
             self.logger.error(f"Artifact file {artifact_file_path} not found")
