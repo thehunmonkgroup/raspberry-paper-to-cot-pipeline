@@ -18,7 +18,9 @@ from raspberry_paper_to_cot_pipeline.utils import Utils
 class PaperCoTPipeline:
     """Orchestrates the full paper processing pipeline."""
 
-    def __init__(self, selection_strategy: str = 'random', limit: int = 1, debug: bool = False):
+    def __init__(
+        self, selection_strategy: str = "random", limit: int = 1, debug: bool = False
+    ):
         """
         Initialize the pipeline.
 
@@ -82,8 +84,8 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument(
         "--selection-strategy",
         type=str,
-        choices=['random', 'category_balanced'],
-        default='random',
+        choices=["random", "category_balanced"],
+        default="random",
         help="Strategy for paper selection in profiling stage: 'random' or 'category_balanced', default: %(default)s",
     )
     parser.add_argument(
@@ -100,9 +102,7 @@ def main():
     """Main entry point."""
     args = parse_arguments()
     pipeline = PaperCoTPipeline(
-        selection_strategy=args.selection_strategy,
-        limit=args.limit,
-        debug=args.debug
+        selection_strategy=args.selection_strategy, limit=args.limit, debug=args.debug
     )
     pipeline.run()
 

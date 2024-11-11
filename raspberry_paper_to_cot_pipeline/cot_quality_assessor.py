@@ -135,7 +135,11 @@ class CoTQualityAssessor:
         """
         output = []
         for criterion in constants.COT_QUALITY_ASSESSMENT_CRITERIA:
-            answer = "Yes" if criteria[f"cot_quality_assessment_criteria_{criterion}"] == 1 else "No"
+            answer = (
+                "Yes"
+                if criteria[f"cot_quality_assessment_criteria_{criterion}"] == 1
+                else "No"
+            )
             output.append(f"  {criterion}: {answer}")
         return "\n".join(output)
 
@@ -179,7 +183,9 @@ Raw Inference Output:
                 return False
         return True
 
-    def get_refinement_data(self, paper: Dict[str, Any]) -> Optional[Tuple[str, str, str]]:
+    def get_refinement_data(
+        self, paper: Dict[str, Any]
+    ) -> Optional[Tuple[str, str, str]]:
         """
         Get question, chain of reasoning, and answer from refinement artifact.
 
@@ -195,18 +201,16 @@ Raw Inference Output:
                 refinement_content
             )
         except (FileNotFoundError, ValueError) as e:
-            self.logger.error(f"Failed to get refinement data for paper {paper['paper_id']}: {str(e)}")
+            self.logger.error(
+                f"Failed to get refinement data for paper {paper['paper_id']}: {str(e)}"
+            )
             self.utils.update_paper_status(
                 paper["id"], constants.STATUS_FAILED_COT_QUALITY_ASSESSMENT
             )
             return None
 
     def run_assessment(
-        self,
-        paper_content: str,
-        question: str,
-        chain_of_reasoning: str,
-        answer: str
+        self, paper_content: str, question: str, chain_of_reasoning: str, answer: str
     ) -> Tuple[Dict[str, int], str]:
         """
         Run assessment template and process results.
@@ -225,7 +229,7 @@ Raw Inference Output:
                 "question": question,
                 "chain_of_reasoning": chain_of_reasoning,
                 "answer": answer,
-            }
+            },
         )
         xml_content = self.utils.extract_xml(lwe_response)
         if not xml_content:
@@ -235,9 +239,7 @@ Raw Inference Output:
         return criteria, xml_content
 
     def update_assessment_results(
-        self,
-        paper_id: str,
-        criteria: Dict[str, int]
+        self, paper_id: str, criteria: Dict[str, int]
     ) -> None:
         """
         Update paper with assessment results.
@@ -274,8 +276,7 @@ Raw Inference Output:
         except Exception as e:
             self.logger.error(f"Error processing paper {paper['paper_id']}: {str(e)}")
             self.utils.update_paper_status(
-                paper["id"],
-                constants.STATUS_FAILED_COT_QUALITY_ASSESSMENT
+                paper["id"], constants.STATUS_FAILED_COT_QUALITY_ASSESSMENT
             )
 
     def run(self) -> None:

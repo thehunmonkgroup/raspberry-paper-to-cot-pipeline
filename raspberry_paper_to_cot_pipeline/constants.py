@@ -139,7 +139,7 @@ COT_QUALITY_ASSESSMENT_CRITERIA = [
     "consistent_voice",
     "terms_explained",
     "no_contradictions",
-    "complete_flow"
+    "complete_flow",
 ]
 
 REQUIRED_COT_QUALITY_ASSESSMENT_CRITERIA = [
@@ -148,7 +148,7 @@ REQUIRED_COT_QUALITY_ASSESSMENT_CRITERIA = [
     "accurate_representation",
     "steps_supported_by_paper",
     "no_logical_leaps",
-    "answer_addresses_question"
+    "answer_addresses_question",
 ]
 
 # ArXiv.

@@ -58,8 +58,8 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument(
         "--selection-strategy",
         type=str,
-        choices=['random', 'category_balanced'],
-        default='random',
+        choices=["random", "category_balanced"],
+        default="random",
         help="Strategy for paper selection: 'random' or 'category_balanced', default: %(default)s",
     )
     parser.add_argument(
@@ -111,8 +111,10 @@ class PaperProfiler:
         self.inference_artifacts_directory = inference_artifacts_directory
         self.limit = limit
         self.selection_strategy = selection_strategy
-        if selection_strategy == 'category_balanced' and (not limit or limit < 1):
-            raise ValueError("category_balanced strategy requires a positive limit value")
+        if selection_strategy == "category_balanced" and (not limit or limit < 1):
+            raise ValueError(
+                "category_balanced strategy requires a positive limit value"
+            )
         self.pdf_cache_dir = pdf_cache_dir
         self.template = template
         self.debug = debug
@@ -228,15 +230,13 @@ Raw Inference Output:
 
         :return: Generator of paper rows
         """
-        if self.selection_strategy == 'random':
+        if self.selection_strategy == "random":
             return self.utils.fetch_papers_by_processing_status(
-                status=constants.STATUS_PAPER_LINK_VERIFIED,
-                limit=self.limit
+                status=constants.STATUS_PAPER_LINK_VERIFIED, limit=self.limit
             )
         else:  # category_balanced
             return self.utils.fetch_papers_by_processing_status_balanced_by_category(
-                status=constants.STATUS_PAPER_LINK_VERIFIED,
-                limit=self.limit
+                status=constants.STATUS_PAPER_LINK_VERIFIED, limit=self.limit
             )
 
     def run(self) -> None:

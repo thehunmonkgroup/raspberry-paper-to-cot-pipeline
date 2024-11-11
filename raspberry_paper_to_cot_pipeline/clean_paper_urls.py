@@ -132,7 +132,9 @@ class PaperCleaner:
         self.logger.info(f"Processing paper ID {paper_id} with URL: {paper_url}")
         try:
             if self.is_url_accessible(paper_url):
-                self.utils.update_paper_status(paper_id, constants.STATUS_PAPER_LINK_VERIFIED)
+                self.utils.update_paper_status(
+                    paper_id, constants.STATUS_PAPER_LINK_VERIFIED
+                )
                 self.logger.info(
                     f"Paper ID {paper_id} ({paper_url}) is accessible. Status updated to 'verified'."
                 )
@@ -212,7 +214,10 @@ class PaperCleaner:
                     SET processing_status = ?
                     WHERE processing_status = ?
                     """,
-                    (constants.STATUS_PAPER_LINK_VERIFIED, constants.STATUS_PAPER_LINK_DOWNLOADED),
+                    (
+                        constants.STATUS_PAPER_LINK_VERIFIED,
+                        constants.STATUS_PAPER_LINK_DOWNLOADED,
+                    ),
                 )
                 updated_count = cursor.rowcount
                 conn.commit()

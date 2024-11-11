@@ -195,9 +195,13 @@ class CoTExtractor:
         """
         if hasattr(self, "paper_id") and self.paper_id:
             return self.fetch_specific_paper(self.paper_id)
-        select_columns = constants.DEFAULT_FETCH_BY_STATUS_COLUMNS + ["profiler_suitability_score"]
+        select_columns = constants.DEFAULT_FETCH_BY_STATUS_COLUMNS + [
+            "profiler_suitability_score"
+        ]
         return self.utils.fetch_papers_by_processing_status(
-            constants.STATUS_PAPER_PROFILE_SCORED, select_columns=select_columns, limit=self.limit
+            constants.STATUS_PAPER_PROFILE_SCORED,
+            select_columns=select_columns,
+            limit=self.limit,
         )
 
     def process_paper(self, paper: Row) -> None:
@@ -206,7 +210,10 @@ class CoTExtractor:
 
         :param paper: Paper data
         """
-        if "profiler_suitability_score" in paper.keys() and paper["profiler_suitability_score"] < self.suitability_score:
+        if (
+            "profiler_suitability_score" in paper.keys()
+            and paper["profiler_suitability_score"] < self.suitability_score
+        ):
             self.logger.debug(
                 f"Skipping paper {paper['paper_id']} due to low suitability score"
             )
