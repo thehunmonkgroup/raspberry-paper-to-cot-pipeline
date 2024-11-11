@@ -90,15 +90,20 @@ class BaseScorer:
         Retrieve papers for scoring from database.
 
         :return: Generator of paper data
+        :raises sqlite3.Error: If database operations fail
         """
         select_columns = (
             constants.DEFAULT_FETCH_BY_STATUS_COLUMNS + self.build_criteria_columns()
         )
-        return self.utils.fetch_papers_by_processing_status(
-            status=self.initial_status,
-            select_columns=select_columns,
-            limit=self.limit,
-        )
+        try:
+            yield from self.utils.fetch_papers_by_processing_status(
+                status=self.initial_status,
+                select_columns=select_columns,
+                limit=self.limit,
+            )
+        except sqlite3.Error as e:
+            self.logger.error(f"Database error fetching papers: {e}")
+            raise
 
     def process_paper(self, paper: sqlite3.Row) -> None:
         """
