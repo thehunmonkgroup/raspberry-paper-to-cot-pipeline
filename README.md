@@ -36,8 +36,8 @@ The following diagram illustrates the pipeline workflow:
 
    Artifacts generated:
    * Profiling inference artifact
-4. **raspberry-paper-scorer**: Assign suitability scores to the papers based on profiling criteria, store in database
-5. **raspberry-paper-extract-cot**: Extract Chain of Thought sets from the papers through a three-stage process:
+4. **raspberry-paper-profile-scorer**: Assign suitability scores to the papers based on profiling criteria, store in database
+5. **raspberry-paper-cot-extractor**: Extract Chain of Thought sets from the papers through a three-stage process:
    * Initial Extraction: Generate initial question, reasoning chain and answer
    * Critique: Analyze and critique the initial extraction
    * Refinement: Improve the CoT based on critique feedback
@@ -47,8 +47,9 @@ The following diagram illustrates the pipeline workflow:
    * Critique inference artifact
    * Refinement inference artifact
    * Training data artifact in JSONL format
-6. **raspberry-cot-validator**: Validate final Chain of Thought sets from the papers based on specific criteria, store criteria in the database
-7. **raspberry-generate-training-file**: Compile the final training data from the individual training artifacts, filtering out invalid Chain of Thought sets based on their validation score
+6. **raspberry-cot-quality-assessor**: Assess the quality of the refined Chain of Thought sets from the papers based on specific criteria, store criteria in the database
+6. **raspberry-cot-quality-scorer**: Assign suitability scores to the refined Chain of Thought sets based on quality assessment criteria, store in database
+7. **raspberry-generate-training-data**: Compile the final training data from the individual training artifacts, filtering out invalid Chain of Thought sets based on their quality assessment score
 
    Artifacts generated:
    * Final training data in JSONL format
@@ -95,10 +96,11 @@ raspberry-fetch-paper-urls
 
    ```sh
    raspberry-paper-profiler
-   raspberry-paper-scorer
-   raspberry-paper-extract-cot
-   raspberry-cot-validator
-   raspberry-generate-training-file
+   raspberry-paper-profile-scorer
+   raspberry-paper-cot-extractor
+   raspberry-cot-quality-assessor
+   raspberry-cot-quality-scorer
+   raspberry-generate-training-data
    ```
 
 All artifacts are output to the `results` directory in the root of the repository
