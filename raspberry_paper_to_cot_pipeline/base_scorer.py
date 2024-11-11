@@ -48,22 +48,27 @@ class BaseScorer:
         criteria = self.required_criteria_list if required_only else self.criteria_list
         return [f"{self.column_prefix}{c}" for c in criteria]
 
+    def _get_criteria_score(self, paper: Dict[str, Any], column: str) -> int:
+        """Get score for a single criterion."""
+        try:
+            return int(paper[column])
+        except KeyError:
+            self.logger.error(f"Missing criteria field: {column}")
+            raise
+        except ValueError:
+            self.logger.error(f"Invalid score value for {column}")
+            raise
+
     def missing_required_criteria(self, paper: Dict[str, Any]) -> bool:
         """
         Check if any required criteria are missing or zero.
 
         :param paper: Paper data dictionary containing criteria scores
         :return: True if any required criteria are missing or zero
-        :raises KeyError: If required criteria fields are missing from paper data
+        :raises KeyError: If required criteria fields are missing
         """
-        try:
-            return any(
-                int(paper[c]) == 0
-                for c in self.build_criteria_columns(required_only=True)
-            )
-        except KeyError as e:
-            self.logger.error(f"Missing required criteria field in paper data: {e}")
-            raise
+        required_columns = self.build_criteria_columns(required_only=True)
+        return any(self._get_criteria_score(paper, col) == 0 for col in required_columns)
 
     def calculate_suitability_score(self, paper: sqlite3.Row) -> int:
         """
