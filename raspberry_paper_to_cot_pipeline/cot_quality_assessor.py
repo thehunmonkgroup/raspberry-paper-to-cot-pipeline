@@ -153,7 +153,7 @@ class CoTQualityAssessor:
             paper_id=paper["paper_id"]
         )
         content = f"""Paper URL: {paper['paper_url']}
-CoT assessment preset: {self.assessment_preset}
+CoT assessment preset: {self.assessor_preset}
 
 CoT assessment results:
 
