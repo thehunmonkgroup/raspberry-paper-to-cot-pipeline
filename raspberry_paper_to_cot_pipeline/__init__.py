@@ -24,6 +24,7 @@ from . import paper_cot_pipeline
 __all__ = [
     "constants",
     "utils",
+    "base_scorer",
     "fetch_arxiv_paper_urls_by_category",
     "fetch_paper_urls",
     "clean_paper_urls",
