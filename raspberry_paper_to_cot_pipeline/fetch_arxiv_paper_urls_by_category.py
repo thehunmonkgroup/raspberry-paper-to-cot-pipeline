@@ -285,7 +285,9 @@ class ArxivPaperUrlFetcher:
             return last_updated_date > parse_date(date_filter_end).date()
         else:
             time.sleep(1)
-            self.logger.debug(f"No entries returned for current batch. Sleeping for 1 second before retry (attempt {attempts}/{constants.FETCH_MAX_EMPTY_RESULTS_ATTEMPTS})")
+            self.logger.debug(
+                f"No entries returned for current batch. Sleeping for 1 second before retry (attempt {attempts}/{constants.FETCH_MAX_EMPTY_RESULTS_ATTEMPTS})"
+            )
             return False
 
     def generate_pdf_data(

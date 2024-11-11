@@ -10,7 +10,6 @@ the final score will be 0.
 """
 
 import argparse
-import sys
 from typing import Optional
 
 from raspberry_paper_to_cot_pipeline import constants

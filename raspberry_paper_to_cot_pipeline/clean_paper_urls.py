@@ -171,13 +171,17 @@ class PaperCleaner:
                 )
                 self.mark_all_papers_as_verified()
             else:
-                self.logger.debug(f"Fetching papers with '{constants.STATUS_PAPER_LINK_DOWNLOADED}' status using {self.selection_strategy} strategy (limit: {self.limit})")
+                self.logger.debug(
+                    f"Fetching papers with '{constants.STATUS_PAPER_LINK_DOWNLOADED}' status using {self.selection_strategy} strategy (limit: {self.limit})"
+                )
                 papers = self.utils.fetch_papers_by_processing_status(
                     status=constants.STATUS_PAPER_LINK_DOWNLOADED, limit=self.limit
                 )
                 processed_count = 0
                 for paper in papers:
-                    self.logger.debug(f"Processing paper ID {paper['id']} with URL {paper['paper_url']} for CoT extraction")
+                    self.logger.debug(
+                        f"Processing paper ID {paper['id']} with URL {paper['paper_url']} for CoT extraction"
+                    )
                     self.process_paper(paper["id"], paper["paper_url"])
                     processed_count += 1
                     self._log_progress(processed_count)

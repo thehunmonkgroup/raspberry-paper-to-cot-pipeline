@@ -1,6 +1,5 @@
 """Base class for paper scoring implementations."""
 
-import logging
 import sqlite3
 import sys
 from typing import Any, Dict, List, Optional, Generator
@@ -11,7 +10,7 @@ from raspberry_paper_to_cot_pipeline.utils import Utils
 
 class BaseScorer:
     """Base class for paper scoring implementations."""
-    
+
     def __init__(
         self,
         limit: Optional[int],
@@ -30,7 +29,7 @@ class BaseScorer:
         self.database = database
         self.logger = Utils.setup_logging(__name__, self.debug)
         self.utils = Utils(database=self.database, logger=self.logger)
-        
+
         # These must be overridden by subclasses
         self.criteria_list: List[str] = []
         self.required_criteria_list: List[str] = []
@@ -129,7 +128,7 @@ class BaseScorer:
     def run(self) -> None:
         """
         Run the scoring process.
-        
+
         :raises SystemExit: If an unrecoverable error occurs
         """
         self.logger.info(
