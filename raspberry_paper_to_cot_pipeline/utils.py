@@ -10,7 +10,6 @@ import re
 from datetime import datetime
 from contextlib import contextmanager
 from urllib.parse import urlparse
-from pathlib import Path
 import xml.etree.ElementTree as ET
 import textwrap
 from typing import Optional, List, Dict, Generator, Any, Tuple
