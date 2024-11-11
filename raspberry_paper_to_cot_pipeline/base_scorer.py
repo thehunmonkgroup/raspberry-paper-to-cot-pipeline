@@ -1,4 +1,11 @@
-"""Base class for paper scoring implementations."""
+"""
+Base class for paper scoring implementations.
+
+This module provides a base class that implements common functionality for scoring
+research papers based on defined criteria. It handles database interactions,
+criteria validation, and score calculations while providing extension points
+for specific scoring implementations.
+"""
 
 import sqlite3
 import sys
@@ -9,7 +16,27 @@ from raspberry_paper_to_cot_pipeline.utils import Utils
 
 
 class BaseScorer:
-    """Base class for paper scoring implementations."""
+    """
+    Base class for paper scoring implementations.
+
+    Provides core functionality for scoring papers against defined criteria sets.
+    Handles database operations, criteria validation, and score calculations.
+    Subclasses must override criteria_list, required_criteria_list, column_prefix,
+    scored_status, initial_status, and score_field_name.
+
+    :ivar criteria_list: List of all scoring criteria names
+    :type criteria_list: List[str]
+    :ivar required_criteria_list: List of required criteria names
+    :type required_criteria_list: List[str]
+    :ivar column_prefix: Prefix for database column names
+    :type column_prefix: str
+    :ivar scored_status: Status to set after scoring
+    :type scored_status: str
+    :ivar initial_status: Status to look for when selecting papers
+    :type initial_status: str
+    :ivar score_field_name: Name of the field to store the final score
+    :type score_field_name: str
+    """
 
     def __init__(
         self,
@@ -21,8 +48,11 @@ class BaseScorer:
         Initialize the BaseScorer.
 
         :param limit: Maximum number of papers to process
+        :type limit: Optional[int]
         :param debug: Enable debug logging
+        :type debug: bool
         :param database: Path to the SQLite database
+        :type database: str
         """
         self.limit = limit
         self.debug = debug
@@ -43,13 +73,26 @@ class BaseScorer:
         Build list of criteria column names.
 
         :param required_only: If True, return only required criteria columns
+        :type required_only: bool
         :return: List of column names with prefix
+        :rtype: List[str]
         """
         criteria = self.required_criteria_list if required_only else self.criteria_list
         return [f"{self.column_prefix}{c}" for c in criteria]
 
-    def _get_criteria_score(self, paper: Dict[str, Any], column: str) -> int:
-        """Get score for a single criterion."""
+    def _get_criteria_score(self, paper: sqlite3.Row, column: str) -> int:
+        """
+        Get score for a single criterion.
+
+        :param paper: Paper data row
+        :type paper: sqlite3.Row
+        :param column: Column name to get score from
+        :type column: str
+        :return: Integer score value
+        :rtype: int
+        :raises KeyError: If criterion field is missing
+        :raises ValueError: If score value is invalid
+        """
         try:
             return int(paper[column])
         except KeyError:
@@ -59,12 +102,14 @@ class BaseScorer:
             self.logger.error(f"Invalid score value for {column}")
             raise
 
-    def missing_required_criteria(self, paper: Dict[str, Any]) -> bool:
+    def missing_required_criteria(self, paper: sqlite3.Row) -> bool:
         """
         Check if any required criteria are missing or zero.
 
-        :param paper: Paper data dictionary containing criteria scores
+        :param paper: Paper data row containing criteria scores
+        :type paper: sqlite3.Row
         :return: True if any required criteria are missing or zero
+        :rtype: bool
         :raises KeyError: If required criteria fields are missing
         """
         required_columns = self.build_criteria_columns(required_only=True)
@@ -78,7 +123,9 @@ class BaseScorer:
         Returns 0 if any required criteria are missing or zero.
 
         :param paper: Paper data dictionary containing criteria scores
+        :type paper: sqlite3.Row
         :return: Calculated suitability score (0 if required criteria not met)
+        :rtype: int
         :raises KeyError: If criteria fields are missing from paper data
         """
         try:
@@ -94,7 +141,8 @@ class BaseScorer:
         """
         Retrieve papers for scoring from database.
 
-        :return: Generator of paper data
+        :return: Generator yielding paper data rows
+        :rtype: Generator[sqlite3.Row, None, None]
         :raises sqlite3.Error: If database operations fail
         """
         select_columns = (
@@ -112,9 +160,10 @@ class BaseScorer:
 
     def process_paper(self, paper: sqlite3.Row) -> None:
         """
-        Process a single paper.
+        Process a single paper by calculating and storing its score.
 
         :param paper: Paper data as a sqlite3.Row containing criteria fields and metadata
+        :type paper: sqlite3.Row
         :raises KeyError: If required paper fields are missing
         :raises sqlite3.Error: If database update fails
         """
@@ -137,7 +186,10 @@ class BaseScorer:
 
     def run(self) -> None:
         """
-        Run the scoring process.
+        Run the scoring process for all eligible papers.
+
+        Processes papers in batches, calculating and storing scores for each.
+        Exits with status code 1 if an unrecoverable error occurs.
 
         :raises SystemExit: If an unrecoverable error occurs
         """
