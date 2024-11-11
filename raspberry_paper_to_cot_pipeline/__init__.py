@@ -18,6 +18,7 @@ from . import paper_profile_scorer
 from . import paper_cot_extractor
 from . import cot_quality_assessor
 from . import cot_quality_scorer
+from . import generate_training_data
 from . import paper_cot_pipeline
 
 __all__ = [
@@ -31,5 +32,6 @@ __all__ = [
     "paper_cot_extractor",
     "cot_quality_assessor",
     "cot_quality_scorer",
+    "generate_training_data",
     "paper_cot_pipeline",
 ]

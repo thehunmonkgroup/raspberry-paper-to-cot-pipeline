@@ -480,6 +480,27 @@ class Utils:
         artifact_file_path.write_text(json.dumps(content))
         self.logger.debug(f"Wrote training artifact to {artifact_file_path}")
 
+    def read_training_artifact(self, filename: str) -> Dict[str, Any]:
+        """
+        Read training artifact from a file.
+
+        :param filename: Name of the file to read
+        :return: Deserialized content of the training artifact
+        :raises FileNotFoundError: If the artifact file doesn't exist
+        :raises json.JSONDecodeError: If the file contains invalid JSON
+        """
+        artifact_file_path = self.training_artifacts_directory / filename
+        try:
+            content = artifact_file_path.read_text()
+            self.logger.debug(f"Read training artifact from {artifact_file_path}")
+            return json.loads(content)
+        except FileNotFoundError:
+            self.logger.error(f"Training artifact file {artifact_file_path} not found")
+            raise
+        except json.JSONDecodeError as e:
+            self.logger.error(f"Invalid JSON in training artifact {artifact_file_path}: {e}")
+            raise
+
     def validate_date(self, date_str: str, date_name: str) -> None:
         """
         Validate the format of a date string.

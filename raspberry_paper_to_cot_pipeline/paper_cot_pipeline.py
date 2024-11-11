@@ -13,6 +13,7 @@ from raspberry_paper_to_cot_pipeline.paper_profile_scorer import PaperProfileSco
 from raspberry_paper_to_cot_pipeline.paper_cot_extractor import CoTExtractor
 from raspberry_paper_to_cot_pipeline.cot_quality_assessor import CoTQualityAssessor
 from raspberry_paper_to_cot_pipeline.cot_quality_scorer import CoTQualityScorer
+from raspberry_paper_to_cot_pipeline.generate_training_data import TrainingDataGenerator
 from raspberry_paper_to_cot_pipeline.utils import Utils
 
 
@@ -77,6 +78,14 @@ class PaperCoTPipeline:
                 debug=self.debug,
             )
             scorer.run()
+
+            # Stage 6: Generate training data
+            self.logger.info("Starting training data generation stage...")
+            generator = TrainingDataGenerator(
+                limit=None,
+                debug=self.debug,
+            )
+            generator.run()
 
             self.logger.info("Pipeline completed successfully")
 

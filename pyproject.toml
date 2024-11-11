@@ -18,6 +18,7 @@ raspberry-paper-cot-extractor = "raspberry_paper_to_cot_pipeline.paper_cot_extra
 raspberry-cot-quality-assessor = "raspberry_paper_to_cot_pipeline.cot_quality_assessor:main"
 raspberry-cot-quality-scorer = "raspberry_paper_to_cot_pipeline.cot_quality_scorer:main"
 raspberry-paper-cot-pipeline = "raspberry_paper_to_cot_pipeline.paper_cot_pipeline:main"
+raspberry-generate-training-data = "raspberry_paper_to_cot_pipeline.generate_training_data:main"
 
 [tool.setuptools.packages.find]
 include = ["raspberry_paper_to_cot_pipeline*"]
