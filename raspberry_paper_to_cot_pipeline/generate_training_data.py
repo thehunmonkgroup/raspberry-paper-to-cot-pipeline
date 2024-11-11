@@ -65,6 +65,9 @@ class TrainingDataGenerator:
     A class to handle generation of consolidated training data from paper artifacts.
     """
 
+    # Number of papers to process before logging progress
+    PROGRESS_REPORT_INTERVAL = 100
+
     def __init__(
         self,
         database: str = constants.DEFAULT_DB_NAME,
@@ -143,15 +146,33 @@ class TrainingDataGenerator:
             return None
 
     def initialize_output_file(self) -> Path:
-        """Create and initialize the output file."""
+        """
+        Create and initialize the output file for writing training data.
+
+        :return: Path object pointing to the initialized output file
+        :raises OSError: If file creation or directory creation fails
+        """
+        self.logger.debug(f"Initializing output file in {self.training_artifacts_directory}")
         self.utils.ensure_directory_exists(self.training_artifacts_directory)
+
         output_path = self.training_artifacts_directory / self.training_file_name
+        self.logger.debug(f"Removing existing file if present: {output_path}")
         output_path.unlink(missing_ok=True)
+
+        self.logger.debug(f"Creating new empty file: {output_path}")
         output_path.touch()
         return output_path
 
-    def append_training_data(self, output_path: Path, data: Dict[str, Any]) -> None:
-        """Append single training data entry to JSONL file."""
+    def append_training_data(self, output_path: Path, data: Dict[str, Any], paper_id: str) -> None:
+        """
+        Append a single training data entry to the JSONL file.
+
+        :param output_path: Path to the output JSONL file
+        :param data: Dictionary containing the training data to append
+        :param paper_id: ID of the paper being processed
+        :raises IOError: If writing to the file fails
+        """
+        self.logger.debug(f"Appending training data entry for paper {paper_id} to {output_path}")
         with open(output_path, 'a') as f:
             f.write(json.dumps(data) + '\n')
 
@@ -159,8 +180,10 @@ class TrainingDataGenerator:
         """
         Process all papers and return counts.
 
-        :param output_path: Path to the output file
-        :return: Tuple of (processed_count, skipped_count)
+        :param output_path: Path to the output file where training data will be written
+        :return: Tuple of (processed_count, skipped_count) where:
+                - processed_count: Number of papers successfully processed and written
+                - skipped_count: Number of papers that didn't meet criteria or failed processing
         """
         processed_count = 0
         skipped_count = 0
@@ -168,12 +191,12 @@ class TrainingDataGenerator:
         for paper in self.fetch_qualified_papers():
             data = self.process_paper(paper)
             if data:
-                self.append_training_data(output_path, data)
+                self.append_training_data(output_path, data, paper["paper_id"])
                 processed_count += 1
             else:
                 skipped_count += 1
 
-            if processed_count % 100 == 0 and processed_count > 0:
+            if processed_count % self.PROGRESS_REPORT_INTERVAL == 0 and processed_count > 0:
                 self.logger.info(
                     f"Processed {processed_count} papers, skipped {skipped_count}"
                 )
