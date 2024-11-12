@@ -1,11 +1,17 @@
 #!/usr/bin/env python3
 
-"""
-Fetch arXiv papers based on date range and categories.
+"""Script for fetching arXiv papers based on date range and categories.
 
-This script provides functionality to fetch arXiv papers for specified categories
-within a given date range. It uses the arXiv API to retrieve paper information
-and can dynamically fetch the latest category taxonomy from the arXiv website.
+This module implements functionality to fetch and process arXiv papers for specified
+categories within a given date range. It provides a command-line interface for
+interacting with the arXiv API and managing paper metadata.
+
+Key features:
+    - Fetches papers using arXiv API with configurable parameters
+    - Supports custom date ranges and category filtering
+    - Dynamically retrieves latest arXiv category taxonomy
+    - Stores paper metadata in SQLite database
+    - Provides configuration display and category listing utilities
 """
 
 import argparse
@@ -21,7 +27,11 @@ from raspberry_paper_to_cot_pipeline.fetch_arxiv_paper_urls_by_category import (
 
 
 def parse_arguments() -> argparse.Namespace:
-    """Parse command-line arguments."""
+    """Parse command-line arguments.
+    
+    :return: Parsed command-line arguments
+    :rtype: argparse.Namespace
+    """
     parser = argparse.ArgumentParser(
         description="Pull arXiv papers based on date range and categories."
     )
@@ -58,10 +68,27 @@ def parse_arguments() -> argparse.Namespace:
 
 
 class ArxivPaperUrlFetcherCLI:
-    """
-    Command-line interface for fetching arXiv papers.
+    """Command-line interface for fetching arXiv papers.
+    
+    This class encapsulates the functionality to initiate and manage the paper
+    fetching process, including configuration management, category validation,
+    and process orchestration.
 
-    This class encapsulates the functionality to initiate the paper fetching process.
+    :param begin: Start date for paper filtering (YYYY-MM-DD)
+    :type begin: str
+    :param end: End date for paper filtering (YYYY-MM-DD)
+    :type end: str
+    :param category: Comma-separated list of categories
+    :type category: str
+    :param config: Flag to display current configuration
+    :type config: bool
+    :param list: Flag to display all available categories
+    :type list: bool
+    :param database: Path to SQLite database file
+    :type database: str
+    :param debug: Flag to enable debug mode
+    :type debug: bool
+    :raises ValueError: If provided dates or categories are invalid
     """
 
     def __init__(
@@ -96,7 +123,13 @@ class ArxivPaperUrlFetcherCLI:
         self.utils = Utils(database=self.database, logger=self.logger)
 
     def display_config(self) -> None:
-        """Display the current configuration."""
+        """Display the current configuration.
+    
+        Prints the current date range and category settings with descriptions.
+    
+        :return: None
+        :rtype: None
+        """
         print("Current configuration:")
         print(f"Begin date: {self.begin}")
         print(f"End date: {self.end}")
@@ -107,18 +140,27 @@ class ArxivPaperUrlFetcherCLI:
             print(f"* {category:<20} {description}")
 
     def display_categories(self) -> None:
-        """Display all available arXiv categories with descriptions."""
+        """Display all available arXiv categories with descriptions.
+    
+        Fetches and prints the complete list of arXiv categories with their descriptions.
+    
+        :return: None
+        :rtype: None
+        """
         print("Available arXiv categories:")
         arxiv_taxonomy_map = self.utils.fetch_arxiv_categories()
         for category, description in arxiv_taxonomy_map.items():
             print(f"* {category:<20} {description}")
 
     def get_categories(self) -> List[str]:
-        """
-        Get the list of categories to process.
+        """Get the list of categories to process.
 
-        :return: List of category codes - either user-provided categories if specified,
-                or default categories from constants.ARXIV_DEFAULT_CATEGORIES
+        Retrieves and validates the list of categories to be processed, either from
+        user input or default settings.
+
+        :return: List of valid arXiv category codes
+        :rtype: List[str]
+        :raises ValueError: If any specified category codes are invalid
         """
         self.logger.debug("Getting categories list")
         categories = (
@@ -135,10 +177,13 @@ class ArxivPaperUrlFetcherCLI:
         return categories
 
     def should_show_info(self) -> bool:
-        """
-        Check if we should display info and exit.
+        """Check if information display is requested.
 
-        :return: True if info was displayed, False otherwise
+        Determines if the script should display configuration or category
+        information and exit.
+
+        :return: True if information was displayed, False otherwise
+        :rtype: bool
         """
         if self.config:
             self.display_config()
@@ -149,20 +194,34 @@ class ArxivPaperUrlFetcherCLI:
         return False
 
     def validate_dates(self) -> None:
-        """
-        Validate both begin and end dates.
+        """Validate the begin and end dates.
 
+        Checks that both dates are valid and properly ordered.
+
+        :return: None
+        :rtype: None
         :raises ValueError: If dates are invalid or end date is not after begin date
         """
+        self.logger.debug(f"Validating dates: begin={self.begin}, end={self.end}")
         self.utils.validate_date(self.begin, "--begin")
         self.utils.validate_date(self.end, "--end")
         begin_date = datetime.strptime(self.begin, "%Y-%m-%d")
         end_date = datetime.strptime(self.end, "%Y-%m-%d")
+        self.logger.debug(f"Parsed dates: begin={begin_date}, end={end_date}")
         if end_date <= begin_date:
+            self.logger.error(f"Invalid date range: {begin_date} to {end_date}")
             raise ValueError("End date must be after begin date")
 
     def process_categories(self) -> None:
-        """Process each category for paper fetching."""
+        """Process each category for paper fetching.
+    
+        Iterates through categories and initiates paper fetching for each one.
+        Handles interruptions gracefully.
+    
+        :return: None
+        :rtype: None
+        :raises Exception: If paper fetching fails for any category
+        """
         categories = self.get_categories()
         fetcher = ArxivPaperUrlFetcher(self.database, self.debug)
         for category in categories:
@@ -181,6 +240,8 @@ class ArxivPaperUrlFetcherCLI:
         the provided command-line arguments. It handles configuration display, category
         listing, date validation, and paper fetching for each specified category.
 
+        :raises ValueError: If date validation fails
+        :raises KeyboardInterrupt: If process is interrupted by user
         :raises Exception: For any other unexpected errors
         """
         try:
@@ -188,13 +249,25 @@ class ArxivPaperUrlFetcherCLI:
                 return
             self.validate_dates()
             self.process_categories()
+        except ValueError as e:
+            self.logger.error(f"Validation error: {e}")
+            sys.exit(1)
+        except KeyboardInterrupt:
+            self.logger.error("Process interrupted by user")
+            sys.exit(1)
         except Exception as e:
-            self.logger.error(f"An error occurred: {e}")
+            self.logger.error(f"Unexpected error: {e}")
             sys.exit(1)
 
 
 def main():
-    """Main entry point of the script."""
+    """Main entry point of the script.
+    
+    Parses command line arguments and initiates the paper fetching process.
+    
+    :return: None
+    :rtype: None
+    """
     args = parse_arguments()
     cli = ArxivPaperUrlFetcherCLI(
         begin=args.begin,
