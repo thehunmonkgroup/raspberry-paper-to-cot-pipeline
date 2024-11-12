@@ -8,7 +8,7 @@ papers to generating final quality reports.
 
 The assessment criteria include:
     - Source fidelity
-    - Reasoning integrity 
+    - Reasoning integrity
     - Training utility
     - Structural quality
 

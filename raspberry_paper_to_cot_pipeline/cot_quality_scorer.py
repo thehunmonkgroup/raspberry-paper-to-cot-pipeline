@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-"""
-This script scores papers based on Chain of Thought (CoT) quality assessment criteria.
-It retrieves criteria from the database, calculates a suitability score based on required
-and optional criteria, and updates the database with the final score.
+"""Script for scoring papers based on Chain of Thought (CoT) quality assessment criteria.
 
-The suitability score is calculated as the sum of all criteria scores, but only if all
-required criteria are met (non-zero). If any required criteria are missing or zero,
-the final score will be 0.
+This module implements functionality to evaluate papers against defined quality criteria
+and calculate their suitability scores. It handles database operations for retrieving
+criteria and updating final scores.
+
+The suitability score calculation follows these rules:
+    - Sums all criteria scores if all required criteria are met (non-zero)
+    - Returns 0 if any required criteria are missing or zero
 """
 
 import argparse
@@ -17,7 +18,11 @@ from raspberry_paper_to_cot_pipeline.base_scorer import BaseScorer
 
 
 def parse_arguments() -> argparse.Namespace:
-    """Parse command-line arguments."""
+    """Parse command-line arguments.
+
+    :return: Parsed command-line arguments
+    :rtype: argparse.Namespace
+    """
     parser = argparse.ArgumentParser(
         description="Score papers based on CoT quality assessment criteria."
     )
@@ -37,8 +42,18 @@ def parse_arguments() -> argparse.Namespace:
 
 
 class CoTQualityScorer(BaseScorer):
-    """
-    A class to handle scoring of papers based on CoT quality assessment criteria.
+    """Class for scoring papers based on CoT quality assessment criteria.
+
+    This class extends BaseScorer to implement specific scoring logic for Chain of Thought
+    quality assessment. It manages the evaluation of papers against defined criteria and
+    calculates suitability scores based on both required and optional criteria.
+
+    :param limit: Maximum number of papers to process
+    :type limit: Optional[int]
+    :param debug: Enable debug logging
+    :type debug: bool
+    :param database: Path to the SQLite database
+    :type database: str
     """
 
     def __init__(
@@ -64,7 +79,13 @@ class CoTQualityScorer(BaseScorer):
 
 
 def main():
-    """Main entry point for CLI usage."""
+    """Main entry point for CLI usage.
+
+    Parses command line arguments and initiates the scoring process.
+
+    :return: None
+    :rtype: None
+    """
     args = parse_arguments()
     scorer = CoTQualityScorer(
         limit=args.limit,
