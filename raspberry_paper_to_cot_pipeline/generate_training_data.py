@@ -26,7 +26,7 @@ from raspberry_paper_to_cot_pipeline.utils import Utils
 
 def parse_arguments() -> argparse.Namespace:
     """Parse command-line arguments.
-    
+
     :return: Namespace containing the parsed command-line arguments
     :rtype: argparse.Namespace
     """

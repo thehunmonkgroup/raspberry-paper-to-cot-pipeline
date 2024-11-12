@@ -1,24 +1,35 @@
 #!/usr/bin/env python3
 
-"""
-This script extracts Chain of Thought (CoT) from research papers.
-It downloads PDFs, extracts text, runs LWE templates, and processes the results.
+"""Extract Chain of Thought (CoT) reasoning from research papers.
+
+This script handles the automated extraction of Chain of Thought reasoning from academic papers.
+It manages the full extraction pipeline including:
+- PDF download and text extraction
+- Initial CoT extraction using LLM templates
+- Critique generation and analysis
+- Refinement based on critique
+- Generation of training artifacts
+
+The process is configurable through command-line arguments and uses a SQLite database
+to track paper processing status.
 """
 
 import argparse
+import requests
 from typing import Dict, Any, Tuple, Generator, Optional, Union
 import sqlite3
 import sys
+import xml
 import xml.etree.ElementTree as ET
 from raspberry_paper_to_cot_pipeline import constants
 from raspberry_paper_to_cot_pipeline.utils import Utils
 
 
 def parse_arguments() -> argparse.Namespace:
-    """
-    Parse command-line arguments.
+    """Parse and validate command-line arguments for the CoT extraction process.
 
-    :return: Parsed arguments
+    :return: Namespace containing the parsed command-line arguments
+    :rtype: argparse.Namespace
     """
     parser = argparse.ArgumentParser(
         description="Extract Chain of Thought (CoT) from research papers."
@@ -106,8 +117,19 @@ def parse_arguments() -> argparse.Namespace:
 
 
 class CoTExtractor:
-    """
-    A class to handle Chain of Thought (CoT) extraction from research papers.
+    """Handle Chain of Thought (CoT) extraction from research papers.
+
+    This class manages the complete pipeline for extracting, critiquing, and refining
+    Chain of Thought reasoning from academic papers. It coordinates:
+    - Paper selection based on suitability scores
+    - PDF processing and text extraction
+    - Initial CoT extraction using LLM templates
+    - Critique generation and analysis
+    - Refinement of extracted reasoning
+    - Generation of training artifacts
+
+    The class uses configurable LLM presets and templates for each stage of processing.
+    Results and artifacts are stored in specified directories for both inference and training.
     """
 
     def __init__(
@@ -127,19 +149,36 @@ class CoTExtractor:
         critique_template: str = constants.DEFAULT_COT_CRITIQUE_TEMPLATE,
         refinement_template: str = constants.DEFAULT_COT_REFINEMENT_TEMPLATE,
     ):
-        """
-        Initialize the CoTExtractor with individual arguments.
+        """Initialize the CoTExtractor with processing configuration.
 
-        :param extraction_preset: Model configuration used to perform the extraction
+        :param extraction_preset: Model configuration for initial extraction
+        :type extraction_preset: str
+        :param critique_preset: Model configuration for critique generation
+        :type critique_preset: str
+        :param refinement_preset: Model configuration for refinement
+        :type refinement_preset: str
         :param database: Path to the SQLite database
+        :type database: str
         :param inference_artifacts_directory: Directory for inference artifacts
+        :type inference_artifacts_directory: str
         :param training_artifacts_directory: Directory for training artifacts
-        :param limit: Number of papers to process
-        :param paper_id: Process a specific paper by its ID
-        :param suitability_score: Minimum suitability score for papers to process
-        :param pdf_cache_dir: PDF cache directory
-        :param template: LWE paper profiler template name
+        :type training_artifacts_directory: str
+        :param limit: Number of papers to process, defaults to None
+        :type limit: Optional[int]
+        :param paper_id: Specific paper ID to process, defaults to None
+        :type paper_id: Optional[str]
+        :param suitability_score: Minimum required suitability score
+        :type suitability_score: int
+        :param pdf_cache_dir: Directory for caching PDFs
+        :type pdf_cache_dir: str
+        :param initial_cot_extraction_template: Template for initial extraction
+        :type initial_cot_extraction_template: str
+        :param critique_template: Template for critique generation
+        :type critique_template: str
+        :param refinement_template: Template for refinement
+        :type refinement_template: str
         :param debug: Enable debug logging
+        :type debug: bool
         """
         self.extraction_preset = extraction_preset
         self.critique_preset = critique_preset
@@ -182,7 +221,7 @@ class CoTExtractor:
         WHERE paper_id = ?
         """
         self.logger.debug("Fetching specific paper with ID: %s", paper_id)
-        papers = list(self.utils.fetch_papers_by_custom_query(query, (paper_id,)))
+        papers = self.utils.fetch_papers_by_custom_query(query, (paper_id,))
         if not papers:
             raise RuntimeError(f"Paper with ID {paper_id} not found in database")
         yield from papers
@@ -300,38 +339,84 @@ class CoTExtractor:
         if not self._check_suitability(paper):
             return
 
-        try:
-            pdf_text = self.utils.get_pdf_text(paper)
+        self.logger.debug(f"Starting processing of paper {paper['paper_id']}")
+        self.logger.debug(f"Paper details: {dict(paper)}")
 
-            # Handle extraction stage
+        try:
+            self.logger.debug(f"Fetching PDF text for paper {paper['paper_id']}")
+            pdf_text = self.utils.get_pdf_text(paper)
+            self.logger.debug(f"PDF text length: {len(pdf_text)} characters")
+
+            self.logger.debug(
+                f"Starting extraction stage for paper {paper['paper_id']}"
+            )
             question, chain_of_reasoning, answer = self._handle_extraction_stage(
                 paper, pdf_text
             )
+            self.logger.debug(
+                f"Extraction completed - Question length: {len(question)}, "
+                f"Reasoning length: {len(chain_of_reasoning)}, "
+                f"Answer length: {len(answer)}"
+            )
 
-            # Handle critique stage
+            self.logger.debug(f"Starting critique stage for paper {paper['paper_id']}")
             critique = self._handle_critique_stage(
                 paper, question, chain_of_reasoning, answer, pdf_text
             )
+            self.logger.debug(f"Critique completed - Length: {len(critique)}")
 
-            # Handle refinement stage
+            self.logger.debug(
+                f"Starting refinement stage for paper {paper['paper_id']}"
+            )
             self._handle_refinement_stage(
                 paper, question, chain_of_reasoning, answer, critique, pdf_text
             )
+            self.logger.debug(f"Refinement completed for paper {paper['paper_id']}")
 
             self.utils.update_paper_status(paper["id"], constants.STATUS_COT_EXTRACTED)
             self.logger.info(
                 f"Successfully completed all stages for paper {paper['paper_id']}"
             )
 
+        except requests.RequestException as e:
+            self.logger.error(
+                f"PDF download error for paper {paper['paper_id']}: {str(e)}"
+            )
+            self.utils.update_paper_status(
+                paper["id"], constants.STATUS_FAILED_COT_EXTRACTION
+            )
+        except sqlite3.Error as e:
+            self.logger.error(
+                f"Database error processing paper {paper['paper_id']}: {str(e)}"
+            )
+            self.utils.update_paper_status(
+                paper["id"], constants.STATUS_FAILED_COT_EXTRACTION
+            )
+        except xml.etree.ElementTree.ParseError as e:
+            self.logger.error(
+                f"XML parsing error for paper {paper['paper_id']}: {str(e)}"
+            )
+            self.utils.update_paper_status(
+                paper["id"], constants.STATUS_FAILED_COT_EXTRACTION
+            )
+        except ValueError as e:
+            self.logger.error(
+                f"Value error processing paper {paper['paper_id']}: {str(e)}"
+            )
+            self.utils.update_paper_status(
+                paper["id"], constants.STATUS_FAILED_COT_EXTRACTION
+            )
         except Exception as e:
-            self.logger.error(f"Error processing paper {paper['paper_id']}: {str(e)}")
+            self.logger.error(
+                f"Unexpected error processing paper {paper['paper_id']}: {str(e)}"
+            )
             self.utils.update_paper_status(
                 paper["id"], constants.STATUS_FAILED_COT_EXTRACTION
             )
 
     def write_initial_cot_extraction_artifact(
         self,
-        paper: Dict[str, Any],
+        paper: sqlite3.Row,
         question: str,
         chain_of_reasoning: str,
         answer: str,
@@ -378,7 +463,7 @@ Raw Content:
 
     def write_critique_artifact(
         self,
-        paper: Dict[str, Any],
+        paper: sqlite3.Row,
         critique: str,
         raw_content: str,
     ) -> None:
@@ -407,7 +492,7 @@ Raw Response:
 
     def write_refinement_artifact(
         self,
-        paper: Dict[str, Any],
+        paper: sqlite3.Row,
         question: str,
         chain_of_reasoning: str,
         answer: str,
@@ -462,7 +547,11 @@ Raw Content:
         :return: Tuple of (question, chain_of_reasoning, answer, initial_response)
         :raises RuntimeError: If extraction processing fails
         """
+        self.logger.debug("Starting initial CoT extraction")
         try:
+            self.logger.debug(
+                f"Running LWE template with preset: {self.extraction_preset}"
+            )
             initial_response = self.utils.run_lwe_template(
                 self.initial_cot_extraction_template,
                 {
@@ -474,12 +563,23 @@ Raw Content:
                     },
                 },
             )
+            self.logger.debug(f"LWE template response length: {len(initial_response)}")
+
+            self.logger.debug("Extracting components from response")
             question, chain_of_reasoning, answer = (
                 self.utils.extract_question_chain_of_reasoning_answer(initial_response)
             )
+            self.logger.debug("Successfully extracted all components")
             return question, chain_of_reasoning, answer, initial_response
+
+        except requests.RequestException as e:
+            self.logger.error(f"LWE API request failed: {str(e)}")
+            raise RuntimeError(f"LWE API request failed: {str(e)}")
+        except ValueError as e:
+            self.logger.error(f"Failed to parse LWE response: {str(e)}")
+            raise RuntimeError(f"Failed to parse LWE response: {str(e)}")
         except Exception as e:
-            self.logger.error(f"Error processing initial extraction: {str(e)}")
+            self.logger.error(f"Unexpected error in initial extraction: {str(e)}")
             raise RuntimeError(f"Initial extraction processing failed: {str(e)}")
 
     def extract_critique(self, xml_string: str) -> Tuple[str, str]:
@@ -515,7 +615,11 @@ Raw Content:
         :return: Tuple of (critique_content, raw_response)
         :raises RuntimeError: If critique processing fails
         """
+        self.logger.debug("Starting critique processing")
         try:
+            self.logger.debug(
+                f"Running critique template with preset: {self.critique_preset}"
+            )
             critique_response = self.utils.run_lwe_template(
                 self.critique_template,
                 {
@@ -530,14 +634,32 @@ Raw Content:
                     },
                 },
             )
+            self.logger.debug(f"Critique response length: {len(critique_response)}")
+
+            self.logger.debug("Extracting XML content from critique response")
             xml_content = self.utils.extract_xml(critique_response)
             if not xml_content:
                 raise ValueError("Could not extract XML content from critique")
+            self.logger.debug(f"Extracted XML content length: {len(xml_content)}")
 
+            self.logger.debug("Parsing critique from XML")
             critique = self.extract_critique(xml_content)
+            self.logger.debug(
+                f"Successfully extracted critique of length: {len(critique)}"
+            )
             return critique, critique_response
+
+        except requests.RequestException as e:
+            self.logger.error(f"LWE API request failed during critique: {str(e)}")
+            raise RuntimeError(f"Critique LWE API request failed: {str(e)}")
+        except xml.etree.ElementTree.ParseError as e:
+            self.logger.error(f"Failed to parse critique XML: {str(e)}")
+            raise RuntimeError(f"Failed to parse critique XML: {str(e)}")
+        except ValueError as e:
+            self.logger.error(f"Invalid critique response format: {str(e)}")
+            raise RuntimeError(f"Invalid critique format: {str(e)}")
         except Exception as e:
-            self.logger.error(f"Error processing critique: {str(e)}")
+            self.logger.error(f"Unexpected error in critique processing: {str(e)}")
             raise RuntimeError(f"Critique processing failed: {str(e)}")
 
     def process_refinement(
@@ -559,7 +681,11 @@ Raw Content:
         :return: Tuple of (refined_question, refined_chain, refined_answer, raw_response)
         :raises RuntimeError: If refinement processing fails
         """
+        self.logger.debug("Starting refinement processing")
         try:
+            self.logger.debug(
+                f"Running refinement template with preset: {self.refinement_preset}"
+            )
             refinement_response = self.utils.run_lwe_template(
                 self.refinement_template,
                 {
@@ -575,19 +701,33 @@ Raw Content:
                     },
                 },
             )
+            self.logger.debug(f"Refinement response length: {len(refinement_response)}")
+
+            self.logger.debug("Extracting refined components")
             refined_q, refined_c, refined_a = (
                 self.utils.extract_question_chain_of_reasoning_answer(
                     refinement_response
                 )
             )
+            self.logger.debug(
+                f"Refinement complete - Question length: {len(refined_q)}, "
+                f"Chain length: {len(refined_c)}, Answer length: {len(refined_a)}"
+            )
             return refined_q, refined_c, refined_a, refinement_response
+
+        except requests.RequestException as e:
+            self.logger.error(f"LWE API request failed during refinement: {str(e)}")
+            raise RuntimeError(f"Refinement LWE API request failed: {str(e)}")
+        except ValueError as e:
+            self.logger.error(f"Failed to parse refinement response: {str(e)}")
+            raise RuntimeError(f"Failed to parse refinement response: {str(e)}")
         except Exception as e:
-            self.logger.error(f"Error processing refinement: {str(e)}")
+            self.logger.error(f"Unexpected error in refinement processing: {str(e)}")
             raise RuntimeError(f"Refinement processing failed: {str(e)}")
 
     def write_training_artifact(
         self,
-        paper: Dict[str, Any],
+        paper: sqlite3.Row,
         question: str,
         chain_of_reasoning: str,
         answer: str,

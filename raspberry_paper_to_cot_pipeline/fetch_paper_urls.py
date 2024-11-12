@@ -28,7 +28,7 @@ from raspberry_paper_to_cot_pipeline.fetch_arxiv_paper_urls_by_category import (
 
 def parse_arguments() -> argparse.Namespace:
     """Parse command-line arguments.
-    
+
     :return: Parsed command-line arguments
     :rtype: argparse.Namespace
     """
@@ -69,7 +69,7 @@ def parse_arguments() -> argparse.Namespace:
 
 class ArxivPaperUrlFetcherCLI:
     """Command-line interface for fetching arXiv papers.
-    
+
     This class encapsulates the functionality to initiate and manage the paper
     fetching process, including configuration management, category validation,
     and process orchestration.
@@ -124,9 +124,9 @@ class ArxivPaperUrlFetcherCLI:
 
     def display_config(self) -> None:
         """Display the current configuration.
-    
+
         Prints the current date range and category settings with descriptions.
-    
+
         :return: None
         :rtype: None
         """
@@ -141,9 +141,9 @@ class ArxivPaperUrlFetcherCLI:
 
     def display_categories(self) -> None:
         """Display all available arXiv categories with descriptions.
-    
+
         Fetches and prints the complete list of arXiv categories with their descriptions.
-    
+
         :return: None
         :rtype: None
         """
@@ -214,10 +214,10 @@ class ArxivPaperUrlFetcherCLI:
 
     def process_categories(self) -> None:
         """Process each category for paper fetching.
-    
+
         Iterates through categories and initiates paper fetching for each one.
         Handles interruptions gracefully.
-    
+
         :return: None
         :rtype: None
         :raises Exception: If paper fetching fails for any category
@@ -262,9 +262,9 @@ class ArxivPaperUrlFetcherCLI:
 
 def main():
     """Main entry point of the script.
-    
+
     Parses command line arguments and initiates the paper fetching process.
-    
+
     :return: None
     :rtype: None
     """
