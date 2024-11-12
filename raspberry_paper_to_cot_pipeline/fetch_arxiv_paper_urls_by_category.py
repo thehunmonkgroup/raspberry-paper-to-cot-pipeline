@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
 
-"""
-This script fetches arXiv papers based on specified categories and date range.
-It uses the arXiv API to retrieve paper information, stores the results in a SQLite database,
-and handles pagination and error recovery.
+"""Script for fetching and processing arXiv papers by category and date range.
+
+This module implements functionality to retrieve papers from the arXiv API based on
+specified categories and date ranges. It handles pagination, error recovery, and
+database storage of paper information.
+
+Key features:
+    - Fetches papers using arXiv API with configurable parameters
+    - Stores paper metadata in SQLite database
+    - Handles rate limiting and API errors gracefully
+    - Supports interruption and recovery
 """
 
 import argparse
@@ -28,6 +35,11 @@ from tenacity import (
 from typing import List, Tuple, Dict, Optional, Any, Union, Literal
 from raspberry_paper_to_cot_pipeline import constants
 from raspberry_paper_to_cot_pipeline.utils import Utils
+
+# Retry constants
+MAX_RETRY_ATTEMPTS = 10
+MIN_RETRY_WAIT = 4
+MAX_RETRY_WAIT = 60
 
 
 class ArxivPaperUrlFetcher:
@@ -63,20 +75,23 @@ class ArxivPaperUrlFetcher:
         date_filter_end: str,
         start_index: int,
     ) -> List[Tuple[str, str]]:
-        """
-        Fetch papers from arXiv within the specified date range and categories.
+        """Fetch papers from arXiv within specified parameters.
 
-        Args:
-            categories (List[str]): List of arXiv categories to search.
-            date_filter_begin (str): Start date for paper filter (YYYY-MM-DD).
-            date_filter_end (str): End date for paper filter (YYYY-MM-DD).
-            start_index (int): Starting index for the search.
+        Retrieves papers from arXiv API matching the given categories and date range.
+        Handles pagination and implements error recovery mechanisms.
 
-        Returns:
-            List[Tuple[str, str]]: List of tuples containing arXiv paper IDs and PDF URLs for papers within the specified date range and categories.
-
-        Raises:
-            RequestException: If there's an error fetching data from the arXiv API.
+        :param categories: List of arXiv categories to search
+        :type categories: List[str]
+        :param date_filter_begin: Start date for paper filter (YYYY-MM-DD)
+        :type date_filter_begin: str
+        :param date_filter_end: End date for paper filter (YYYY-MM-DD)
+        :type date_filter_end: str
+        :param start_index: Starting index for the search
+        :type start_index: int
+        :return: List of tuples containing arXiv paper IDs and PDF URLs
+        :rtype: List[Tuple[str, str]]
+        :raises RequestException: If there's an error fetching data from the arXiv API
+        :raises ValueError: If date parsing fails
         """
         self.logger.info(
             "Searching for papers from %s to %s in categories: %s, starting from index %d",
@@ -150,6 +165,11 @@ class ArxivPaperUrlFetcher:
         Returns:
             Dictionary containing the query parameters for the arXiv API
         """
+        self.logger.debug(
+            "Constructing query parameters for categories: %s, start_index: %d",
+            categories,
+            start_index,
+        )
         category_query = " OR ".join([f"cat:{cat}" for cat in categories])
         return {
             "search_query": f"({category_query})",
@@ -160,8 +180,8 @@ class ArxivPaperUrlFetcher:
         }
 
     @retry(
-        stop=stop_after_attempt(10),
-        wait=wait_exponential(multiplier=1, min=4, max=60),
+        stop=stop_after_attempt(MAX_RETRY_ATTEMPTS),
+        wait=wait_exponential(multiplier=1, min=MIN_RETRY_WAIT, max=MAX_RETRY_WAIT),
         retry=(retry_if_exception_type(RequestException)),
         reraise=True,
     )
@@ -293,15 +313,16 @@ class ArxivPaperUrlFetcher:
     def generate_pdf_data(
         self, arxiv_paper_data: List[Tuple[str, str]]
     ) -> List[Tuple[str, str]]:
-        """
-        Process the retrieved paper data.
+        """Process the retrieved paper data and generate PDF URLs.
 
-        Args:
-            arxiv_paper_data (list): List of tuples containing arXiv paper IDs and PDF URLs.
+        Transforms arXiv API URLs into direct PDF download URLs.
 
-        Returns:
-            list: List of tuples containing paper IDs and processed PDF download URLs.
+        :param arxiv_paper_data: List of tuples containing arXiv paper IDs and PDF URLs
+        :type arxiv_paper_data: List[Tuple[str, str]]
+        :return: List of tuples containing paper IDs and processed PDF download URLs
+        :rtype: List[Tuple[str, str]]
         """
+        self.logger.debug("Processing %d paper URLs", len(arxiv_paper_data))
         processed_data = []
         for paper_id, url in arxiv_paper_data:
             path = urlparse(url).path
@@ -311,78 +332,98 @@ class ArxivPaperUrlFetcher:
             processed_data.append((paper_id, processed_url))
         return processed_data
 
-    def write_pdf_data_to_database(self, paper_data, category):
-        """
-        Write paper data and category to the SQLite database.
+    def write_pdf_data_to_database(
+        self, paper_data: List[Tuple[str, str]], category: str
+    ) -> None:
+        """Write paper data and category to the SQLite database.
 
-        Args:
-            paper_data (list): List of tuples containing paper IDs and URLs to write.
-            category (str): arXiv category of the papers.
+        Stores paper information and their associated categories in the database.
+        Uses transactions for atomic operations.
+
+        :param paper_data: List of tuples containing paper IDs and URLs to write
+        :type paper_data: List[Tuple[str, str]]
+        :param category: arXiv category of the papers
+        :type category: str
+        :raises sqlite3.Error: If database operations fail
+        :raises sqlite3.IntegrityError: If unique constraint violation occurs
+        :raises sqlite3.OperationalError: If database is locked or connection fails
         """
         try:
             with sqlite3.connect(self.database) as conn:
                 cursor = conn.cursor()
 
-                # Use a transaction for efficiency and atomicity
-                conn.execute("BEGIN TRANSACTION")
-
-                # Insert papers
-                cursor.executemany(
-                    """
-                    INSERT OR IGNORE INTO papers (paper_id, paper_url, processing_status)
-                    VALUES (?, ?, ?)
-                    """,
-                    [
-                        (paper_id, url, constants.STATUS_PAPER_LINK_DOWNLOADED)
-                        for paper_id, url in paper_data
-                    ],
+                self.logger.debug(
+                    "Starting database transaction for %d papers", len(paper_data)
                 )
 
-                # Get the paper_ids for the inserted/existing papers
-                paper_ids = [paper_id for paper_id, _ in paper_data]
-                cursor.execute(
-                    """
-                    SELECT id, paper_id FROM papers
-                    WHERE paper_id IN ({})
-                    """.format(
-                        ",".join(["?"] * len(paper_ids))
-                    ),
-                    paper_ids,
-                )
-                ids_map = {row[1]: row[0] for row in cursor.fetchall()}
+                try:
+                    conn.execute("BEGIN TRANSACTION")
+                    # Insert papers
+                    cursor.executemany(
+                        """
+                        INSERT OR IGNORE INTO papers (paper_id, paper_url, processing_status)
+                        VALUES (?, ?, ?)
+                        """,
+                        [
+                            (paper_id, url, constants.STATUS_PAPER_LINK_DOWNLOADED)
+                            for paper_id, url in paper_data
+                        ],
+                    )
 
-                # Insert categories
-                cursor.executemany(
-                    """
-                    INSERT OR IGNORE INTO paper_categories (paper_id, category)
-                    VALUES (?, ?)
-                    """,
-                    [
-                        (ids_map[paper_id], category)
-                        for paper_id in paper_ids
-                        if paper_id in ids_map
-                    ],
-                )
-                self.logger.info(f"Inserted {cursor.rowcount} new category entries")
+                    # Get the paper_ids for the inserted/existing papers
+                    paper_ids = [paper_id for paper_id, _ in paper_data]
+                    cursor.execute(
+                        """
+                        SELECT id, paper_id FROM papers
+                        WHERE paper_id IN ({})
+                        """.format(
+                            ",".join(["?"] * len(paper_ids))
+                        ),
+                        paper_ids,
+                    )
+                    ids_map = {row[1]: row[0] for row in cursor.fetchall()}
 
-                conn.commit()
+                    # Insert categories
+                    cursor.executemany(
+                        """
+                        INSERT OR IGNORE INTO paper_categories (paper_id, category)
+                        VALUES (?, ?)
+                        """,
+                        [
+                            (ids_map[paper_id], category)
+                            for paper_id in paper_ids
+                            if paper_id in ids_map
+                        ],
+                    )
 
-            self.logger.info(
-                f"Successfully processed {len(paper_data)} papers with category {category}"
-            )
+                    conn.commit()
+
+                    self.logger.info(
+                        "Successfully processed %d papers with category %s",
+                        len(paper_data),
+                        category,
+                    )
+                except sqlite3.IntegrityError as e:
+                    conn.rollback()
+                    self.logger.error("Database integrity error: %s", str(e))
+                    raise
+                except sqlite3.OperationalError as e:
+                    conn.rollback()
+                    self.logger.error("Database operational error: %s", str(e))
+                    raise
+
         except sqlite3.Error as e:
-            self.logger.error("Error writing to database: %s", str(e))
+            self.logger.error("Unexpected database error: %s", str(e))
             sys.exit(1)
 
-    def category_exists_in_database(self, category):
-        """
-        Check if the given category already exists in the database.
+    def category_exists_in_database(self, category: str) -> bool:
+        """Check if the given category already exists in the database.
 
-        Args:
-            category (str): arXiv category to check.
-
-        Returns:
-            bool: True if the category exists, False otherwise.
+        :param category: arXiv category to check
+        :type category: str
+        :return: True if the category exists, False otherwise
+        :rtype: bool
+        :raises sqlite3.Error: If database query fails
         """
         with sqlite3.connect(self.database) as conn:
             cursor = conn.cursor()
@@ -453,7 +494,7 @@ class ArxivPaperUrlFetcher:
             self.logger.debug("", exc_info=True)  # Log full traceback at debug level
 
 
-def parse_arguments():
+def parse_arguments() -> argparse.Namespace:
     """
     Parse command line arguments.
 
