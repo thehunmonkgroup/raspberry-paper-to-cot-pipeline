@@ -3,11 +3,18 @@
 
 This module implements functionality to evaluate papers against defined quality criteria
 and calculate their suitability scores. It handles database operations for retrieving
-criteria and updating final scores.
+criteria and updating final scores. Extends the BaseScorer class to provide specific
+scoring logic for Chain of Thought quality assessment.
 
 The suitability score calculation follows these rules:
     - Sums all criteria scores if all required criteria are met (non-zero)
     - Returns 0 if any required criteria are missing or zero
+
+The module provides both a command-line interface and programmatic usage through the
+CoTQualityScorer class.
+
+:raises sqlite3.Error: When database operations fail
+:raises ValueError: When invalid criteria values are encountered
 """
 
 import argparse
@@ -78,10 +85,11 @@ class CoTQualityScorer(BaseScorer):
         self.score_field_name = "cot_quality_assessment_suitability_score"
 
 
-def main():
+def main() -> None:
     """Main entry point for CLI usage.
 
-    Parses command line arguments and initiates the scoring process.
+    Parses command line arguments and initiates the scoring process for CoT quality assessment.
+    Creates a CoTQualityScorer instance and runs the scoring pipeline.
 
     :return: None
     :rtype: None
