@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 
-"""
-This script profiles research papers based on a set of rubric questions to evaluate their
-suitability for Chain of Thought (CoT) extraction.
+"""Script for profiling research papers for Chain of Thought (CoT) extraction suitability.
+
+This module implements a paper profiling system that evaluates research papers against
+predefined criteria to determine their suitability for Chain of Thought extraction.
+The system handles the complete profiling workflow including paper fetching, content
+extraction, evaluation, and results storage.
 
 The profiling process involves:
 1. Fetching unprocessed papers from a SQLite database
@@ -16,17 +19,17 @@ import argparse
 import copy
 import sqlite3
 import xml.etree.ElementTree as ET
-from typing import Dict, Any, Optional, Generator
+from typing import Dict, Any, Optional, Generator, Literal
 import sys
 from raspberry_paper_to_cot_pipeline import constants
 from raspberry_paper_to_cot_pipeline.utils import Utils
 
 
 def parse_arguments() -> argparse.Namespace:
-    """
-    Parse command-line arguments.
+    """Parse and validate command-line arguments for the paper profiler.
 
-    :return: Parsed arguments
+    :return: Namespace containing parsed command-line arguments
+    :rtype: argparse.Namespace
     """
     parser = argparse.ArgumentParser(
         description="Profile papers based on a set of rubric questions."
@@ -79,8 +82,11 @@ def parse_arguments() -> argparse.Namespace:
 
 
 class PaperProfiler:
-    """
-    A class to handle paper profiling based on rubric questions.
+    """Handle paper profiling based on predefined rubric questions.
+
+    This class manages the complete paper profiling workflow, including paper selection,
+    content extraction, criteria evaluation, and results storage. It supports different
+    paper selection strategies and configurable processing parameters.
     """
 
     def __init__(
@@ -90,21 +96,29 @@ class PaperProfiler:
         profiling_preset: str = constants.DEFAULT_PAPER_PROFILER_PRESET,
         database: str = constants.DEFAULT_DB_NAME,
         inference_artifacts_directory: str = constants.DEFAULT_INFERENCE_ARTIFACTS_DIR,
-        selection_strategy: str = "random",
+        selection_strategy: Literal["random", "category_balanced"] = "random",
         pdf_cache_dir: str = constants.DEFAULT_PDF_CACHE_DIR,
         template: str = constants.DEFAULT_PAPER_PROFILER_TEMPLATE,
     ):
-        """
-        Initialize the PaperProfiler with individual arguments.
+        """Initialize the PaperProfiler with configuration parameters.
 
-        :param profiling_preset: Model configuration used to perform the profiling
+        :param profiling_preset: Model configuration used for profiling
+        :type profiling_preset: str
         :param database: Path to the SQLite database
-        :param inference_artifacts_directory: Directory for inference artifacts
-        :param limit: Number of papers to process
-        :param order_by: Order of paper selection
-        :param pdf_cache_dir: PDF cache directory
+        :type database: str
+        :param inference_artifacts_directory: Directory for storing inference artifacts
+        :type inference_artifacts_directory: str
+        :param limit: Maximum number of papers to process
+        :type limit: Optional[int]
+        :param selection_strategy: Strategy for paper selection
+        :type selection_strategy: str
+        :param pdf_cache_dir: Directory for caching PDF files
+        :type pdf_cache_dir: str
         :param template: LWE paper profiler template name
+        :type template: str
         :param debug: Enable debug logging
+        :type debug: bool
+        :raises ValueError: If category_balanced strategy is used without valid limit
         """
         self.profiling_preset = profiling_preset
         self.database = database
@@ -129,25 +143,34 @@ class PaperProfiler:
         self.utils.setup_lwe()
 
     def run_lwe_template(self, paper_content: str) -> str:
-        """
-        Run the LWE template with the paper content.
+        """Execute the LWE template against paper content.
 
         :param paper_content: Extracted text content of the paper
-        :return: Response on success
+        :type paper_content: str
+        :return: Template execution response
+        :rtype: str
         :raises RuntimeError: If LWE template execution fails
         """
+        self.logger.debug(f"Running LWE template '{self.template}'")
         template_vars = {"paper": paper_content}
         return self.utils.run_lwe_template(self.template, template_vars)
 
     def parse_xml(self, xml_string: str) -> Dict[str, int]:
-        """
-        Parse the XML string to extract criteria values.
+        """Parse XML response to extract profiling criteria values.
 
-        :param xml_string: XML string to parse
-        :return: Dictionary of criteria and their values
-        :raises ValueError: If a required question is not found in the XML
+        :param xml_string: XML response string to parse
+        :type xml_string: str
+        :return: Dictionary mapping criteria names to their boolean values (0 or 1)
+        :rtype: Dict[str, int]
+        :raises ValueError: If a required question is missing from the XML or XML is invalid
         """
-        root = ET.fromstring(xml_string)
+        self.logger.debug("Starting XML parsing")
+        try:
+            root = ET.fromstring(xml_string)
+        except ET.ParseError as e:
+            self.logger.error(f"Failed to parse XML: {e}")
+            raise ValueError(f"Invalid XML format: {e}")
+
         criteria = {}
         for question in constants.PAPER_PROFILING_CRITERIA:
             element = root.find(f".//{question}")
@@ -158,32 +181,54 @@ class PaperProfiler:
                 )
             else:
                 raise ValueError(f"{question} not found in XML")
+
+        self.logger.debug("XML parsing completed successfully")
         return criteria
 
     def get_pretty_printed_rubric_questions(self, criteria: Dict[str, int]) -> str:
-        """
-        Get a pretty-printed string of rubric questions and answers.
+        """Format rubric questions and answers for human-readable output.
 
         :param criteria: Dictionary of criteria and their values
-        :return: Pretty-printed string of questions and answers
+        :type criteria: Dict[str, int]
+        :return: Formatted string of questions and Yes/No answers
+        :rtype: str
+        :raises KeyError: If a required criteria key is missing
         """
+        self.logger.debug("Formatting rubric questions and answers")
         output = []
-        for question in constants.PAPER_PROFILING_CRITERIA:
-            answer = "Yes" if criteria[f"profiler_criteria_{question}"] == 1 else "No"
-            output.append(f"  {question}: {answer}")
-        return "\n".join(output)
+        try:
+            for question in constants.PAPER_PROFILING_CRITERIA:
+                key = f"profiler_criteria_{question}"
+                if key not in criteria:
+                    self.logger.error(f"Missing criteria key: {key}")
+                    raise KeyError(f"Missing criteria key: {key}")
+                answer = "Yes" if criteria[key] == 1 else "No"
+                output.append(f"  {question}: {answer}")
+                self.logger.debug(f"Processed question: {question} = {answer}")
+
+            result = "\n".join(output)
+            self.logger.debug("Successfully formatted all questions")
+            return result
+        except Exception as e:
+            self.logger.error(f"Error formatting rubric questions: {e}")
+            raise
 
     def write_inference_artifact(
-        self, paper: Dict[str, Any], criteria: Dict[str, int], xml_content: str
+        self, paper: sqlite3.Row, criteria: Dict[str, int], xml_content: str
     ) -> None:
-        """
-        Write inference artifact to a file.
+        """Write profiling results and metadata to an inference artifact file.
 
-        :param paper: Paper data
-        :param criteria: Dictionary of criteria and their values
-        :param xml_content: Raw XML content
+        :param paper: Paper metadata and content
+        :type paper: sqlite3.Row
+        :param criteria: Dictionary of evaluated criteria values
+        :type criteria: Dict[str, int]
+        :param xml_content: Raw XML response content
+        :type xml_content: str
+        :raises KeyError: If required paper fields are missing
         """
+        self.logger.debug(f"Writing inference artifact for paper {paper['paper_id']}")
         artifact_name = f"{paper['paper_id']}-paper-profiling.txt"
+
         content = f"""Paper URL: {paper['paper_url']}
 Profiling preset: {self.profiling_preset}
 
@@ -198,14 +243,17 @@ Raw Inference Output:
 {xml_content}
 """
         self.utils.write_inference_artifact(artifact_name, content)
+        self.logger.debug(f"Successfully wrote inference artifact: {artifact_name}")
 
-    def _extract_and_validate_content(self, paper: sqlite3.Row) -> tuple:
-        """
-        Extract and validate paper content.
+    def _extract_and_validate_content(self, paper: sqlite3.Row) -> tuple[str, str, str]:
+        """Extract and validate paper content through the processing pipeline.
 
-        :param paper: Paper data
-        :return: Tuple of (text content, LWE response, XML content)
-        :raises ValueError: If XML content cannot be extracted
+        :param paper: Paper data from database
+        :type paper: sqlite3.Row
+        :return: Tuple containing (text content, LWE response, XML content)
+        :rtype: tuple[str, str, str]
+        :raises ValueError: If XML content cannot be extracted from response
+        :raises RuntimeError: If LWE template execution fails
         """
         text = self.utils.get_pdf_text(paper)
         lwe_response = self.run_lwe_template(text)
@@ -217,11 +265,12 @@ Raw Inference Output:
     def _process_criteria_and_update(
         self, paper: sqlite3.Row, xml_content: str
     ) -> None:
-        """
-        Process criteria and update database.
+        """Process evaluation criteria and update paper status in database.
 
-        :param paper: Paper data
-        :param xml_content: Extracted XML content
+        :param paper: Paper data from database
+        :type paper: sqlite3.Row
+        :param xml_content: Extracted XML response content
+        :type xml_content: str
         """
         criteria = self.parse_xml(xml_content)
         self.write_inference_artifact(paper, criteria, xml_content)
@@ -230,10 +279,10 @@ Raw Inference Output:
         self.utils.update_paper(paper["id"], data)
 
     def process_paper(self, paper: sqlite3.Row) -> None:
-        """
-        Process a single paper through the profiling pipeline.
+        """Process a single paper through the complete profiling pipeline.
 
-        :param paper: Paper data dictionary containing id, paper_id, and paper_url
+        :param paper: Paper data containing id, paper_id, and paper_url
+        :type paper: sqlite3.Row
         :raises ValueError: If XML content cannot be extracted from LWE response
         :raises RuntimeError: If LWE template execution fails
         :raises Exception: If paper processing fails for any other reason
@@ -247,10 +296,10 @@ Raw Inference Output:
             self.utils.update_paper_status(paper["id"], "failed_profiling")
 
     def fetch_papers(self) -> Generator[sqlite3.Row, None, None]:
-        """
-        Fetch papers based on configured selection strategy.
+        """Fetch unprocessed papers using configured selection strategy.
 
-        :return: Generator of paper rows
+        :return: Generator yielding paper records from database
+        :rtype: Generator[sqlite3.Row, None, None]
         """
         if self.selection_strategy == "random":
             return self.utils.fetch_papers_by_processing_status(
@@ -262,7 +311,10 @@ Raw Inference Output:
             )
 
     def run(self) -> None:
-        """Execute the main logic of the paper profiling process."""
+        """Execute the main paper profiling workflow.
+
+        :raises SystemExit: If a critical error occurs during processing
+        """
         try:
             papers = self.fetch_papers()
             for paper in papers:
@@ -276,7 +328,10 @@ Raw Inference Output:
 
 
 def main():
-    """Main entry point for CLI usage."""
+    """Main entry point for command-line interface.
+
+    :raises SystemExit: If processing encounters a critical error
+    """
     args = parse_arguments()
     profiler = PaperProfiler(
         limit=args.limit,
