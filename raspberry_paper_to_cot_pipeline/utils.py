@@ -265,8 +265,65 @@ class Utils:
         """
         return f"{id}.pdf"
 
+    def _get_text_cache_path(self, pdf_path: Union[str, Path]) -> Path:
+        """Get the cache file path for extracted text.
+
+        :param pdf_path: Path to the PDF file
+        :type pdf_path: Union[str, Path]
+        :return: Path where cached text should be stored
+        :rtype: Path
+        """
+        pdf_path = Path(pdf_path)
+        return pdf_path.with_suffix('.md')
+
+    def _read_cached_text(self, cache_path: Path) -> Optional[str]:
+        """Read cached text if it exists.
+
+        :param cache_path: Path to the cached text file
+        :type cache_path: Path
+        :return: Cached text if found, None otherwise
+        :rtype: Optional[str]
+        """
+        if cache_path.exists():
+            self.logger.debug(f"Found cached text at {cache_path}")
+            return cache_path.read_text()
+        return None
+
+    def _write_text_cache(self, cache_path: Path, text: str) -> None:
+        """Write extracted text to cache.
+
+        :param cache_path: Path where to write the cache
+        :type cache_path: Path
+        :param text: Extracted text to cache
+        :type text: str
+        """
+        cache_path.write_text(text)
+        self.logger.debug(f"Cached extracted text to {cache_path}")
+
+    def _perform_text_extraction(self, pdf_path: Path) -> str:
+        """Perform the actual text extraction from PDF.
+
+        :param pdf_path: Path to the PDF file
+        :type pdf_path: Path
+        :return: Extracted text
+        :rtype: str
+        :raises pymupdf4llm.ConversionError: If PDF conversion fails
+        :raises RuntimeError: If an unexpected error occurs
+        """
+        self.logger.debug(f"Extracting text from {pdf_path}")
+        try:
+            return pymupdf4llm.to_markdown(str(pdf_path))
+        except pymupdf4llm.ConversionError as e:
+            message = f"PDF conversion error for {pdf_path}: {str(e)}"
+            self.logger.error(message)
+            raise
+        except Exception as e:
+            message = f"Unexpected error extracting {pdf_path} content: {str(e)}"
+            self.logger.error(message)
+            raise RuntimeError(message)
+
     def extract_text(self, pdf_path: Union[str, Path]) -> str:
-        """Extract text from the PDF file.
+        """Extract text from the PDF file, using cache if available.
 
         :param pdf_path: Path to the PDF file
         :type pdf_path: Union[str, Path]
@@ -277,23 +334,19 @@ class Utils:
         :raises RuntimeError: If an unexpected error occurs
         """
         path = Path(pdf_path)
-        self.logger.debug(f"Extracting text from {path}")
         if not path.exists():
             raise FileNotFoundError(f"PDF file not found: {path}")
-        try:
-            return pymupdf4llm.to_markdown(str(path))
-        except FileNotFoundError as e:
-            message = f"PDF file not found at {pdf_path}: {str(e)}"
-            self.logger.error(message)
-            raise
-        except pymupdf4llm.ConversionError as e:
-            message = f"PDF conversion error for {pdf_path}: {str(e)}"
-            self.logger.error(message)
-            raise
-        except Exception as e:
-            message = f"Unexpected error extracting {pdf_path} content: {str(e)}"
-            self.logger.error(message)
-            raise RuntimeError(message)
+
+        cache_path = self._get_text_cache_path(path)
+        cached_text = self._read_cached_text(cache_path)
+
+        if cached_text is not None:
+            return cached_text
+
+        extracted_text = self._perform_text_extraction(path)
+        self._write_text_cache(cache_path, extracted_text)
+
+        return extracted_text
 
     def extract_xml(self, content: str) -> Optional[str]:
         """Extract XML content from the paper content.
