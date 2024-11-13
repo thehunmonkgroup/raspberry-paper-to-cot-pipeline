@@ -6,7 +6,14 @@ This module provides functionality to verify and clean paper URLs stored in the 
 It checks URL accessibility and updates paper status accordingly. Papers with accessible
 URLs are marked as 'verified', while those with inaccessible URLs are marked as 'missing'.
 
-The module supports batch processing, retry mechanisms, and configurable logging.
+The module supports:
+    - Batch processing of paper URLs
+    - Configurable retry mechanisms for URL checks
+    - Debug and standard logging modes
+    - Optional processing limits
+    - Skip-cleaning mode for bulk verification
+
+The module integrates with a SQLite database and uses the requests library for URL verification.
 """
 
 import argparse
@@ -32,10 +39,10 @@ RETRY_MAX = 5
 
 
 def parse_arguments() -> argparse.Namespace:
-    """
-    Parse command-line arguments.
+    """Parse command-line arguments for the URL cleaning script.
 
-    :return: Parsed command line arguments
+    :return: Parsed command line arguments containing database path, skip-cleaning flag,
+            processing limit, and debug mode settings
     :rtype: argparse.Namespace
     """
     parser = argparse.ArgumentParser(
@@ -117,15 +124,14 @@ class PaperCleaner:
         reraise=True,
     )
     def check_url_accessibility(self, url: str) -> bool:
-        """
-        Check if the given URL is accessible.
+        """Check if the given URL is accessible via HTTP HEAD request.
 
-        :param url: The URL to check
+        :param url: The URL to check for accessibility
         :type url: str
-        :return: True if accessible, False otherwise
+        :return: True if URL returns HTTP 200 status code, False otherwise
         :rtype: bool
         :raises requests.RequestException: If the URL cannot be accessed due to HTTP errors,
-            timeout, or other request-related issues
+            timeout, or other request-related issues after configured retry attempts
         """
         response = requests.head(
             url,
@@ -139,12 +145,11 @@ class PaperCleaner:
         return True
 
     def is_url_accessible(self, url: str) -> bool:
-        """
-        Wrapper method to handle retries for URL accessibility check.
+        """Handle retries and error handling for URL accessibility checks.
 
-        :param url: The URL to check
+        :param url: The URL to verify accessibility
         :type url: str
-        :return: True if accessible, False otherwise
+        :return: True if URL is accessible within retry limits, False otherwise
         :rtype: bool
         """
         try:
@@ -156,15 +161,17 @@ class PaperCleaner:
             return False
 
     def process_paper(self, paper_id: int, paper_url: str) -> None:
-        """
-        Process a single paper by checking its URL accessibility and updating the database.
+        """Process a single paper by verifying URL and updating database status.
 
-        :param paper_id: The ID of the paper to process
+        Checks URL accessibility and updates paper status to either 'verified' or 'missing'
+        in the database based on the result.
+
+        :param paper_id: Database ID of the paper to process
         :type paper_id: int
-        :param paper_url: The URL of the paper to check
+        :param paper_url: URL of the paper to verify
         :type paper_url: str
-        :raises sqlite3.Error: If there's an issue with database operations
-        :raises Exception: If an unexpected error occurs during processing
+        :raises sqlite3.Error: If database operations fail during status update
+        :raises Exception: If unexpected errors occur during URL verification or processing
         """
         self.logger.info(f"Processing paper ID {paper_id} with URL: {paper_url}")
         try:
@@ -209,38 +216,44 @@ class PaperCleaner:
         )
 
     def _process_papers(self) -> int:
-        """
-        Process all papers that need cleaning.
+        """Process all papers marked for URL verification.
 
-        Fetches papers with downloaded status and processes them in batches,
-        updating their status based on URL accessibility.
+        Retrieves papers with 'downloaded' status from database and processes them
+        sequentially, updating their status based on URL accessibility checks.
+        Progress is logged at regular intervals.
 
-        :return: Number of papers processed
+        :return: Total number of papers processed
         :rtype: int
-        :raises sqlite3.Error: If database operations fail
+        :raises sqlite3.Error: If database operations fail during fetch or update
         """
+        self.logger.debug("Beginning paper processing loop")
         papers = self.utils.fetch_papers_by_processing_status(
             status=constants.STATUS_PAPER_LINK_DOWNLOADED, limit=self.limit
         )
         processed_count = 0
         for paper in papers:
             self.logger.debug(
-                f"Processing paper ID {paper['id']} with URL {paper['paper_url']} for CoT extraction"
+                f"Processing paper ID {paper['id']}:\n"
+                f"  URL: {paper['paper_url']}\n"
+                f"  Current status: {constants.STATUS_PAPER_LINK_DOWNLOADED}\n"
+                f"  Processing count: {processed_count + 1}"
+                f"{f' of {self.limit}' if self.limit else ''}"
             )
             self.process_paper(paper["id"], paper["paper_url"])
             processed_count += 1
             self._log_progress(processed_count)
+            self.logger.debug(f"Successfully completed processing paper ID {paper['id']}")
         return processed_count
 
     def run(self) -> None:
-        """
-        Run the paper cleaning process.
+        """Execute the paper URL verification process.
 
-        This method orchestrates the entire cleaning process, either marking all papers
-        as verified if skip_cleaning is True, or checking each paper's URL accessibility
-        and updating their status accordingly.
+        Orchestrates the complete URL verification workflow:
+        1. Sets up logging and initial configuration
+        2. Either marks all papers as verified (if skip_cleaning is True)
+        3. Or processes each paper's URL individually, updating status accordingly
 
-        :raises SystemExit: If an unrecoverable error occurs during processing
+        :raises SystemExit: If unrecoverable errors occur during processing
         """
         try:
             self._setup_cleaning_process()
@@ -265,23 +278,22 @@ class PaperCleaner:
             sys.exit(1)
 
     def _log_progress(self, processed_count: int) -> None:
-        """
-        Log progress of paper processing at regular intervals.
+        """Log batch processing progress at configured intervals.
 
-        :param processed_count: Number of papers processed so far
+        :param processed_count: Current count of processed papers
         :type processed_count: int
         """
         if processed_count % constants.PAPER_URL_PROGRESS_LOG_BATCH_SIZE == 0:
             self.logger.info(f"Processed {processed_count} papers so far.")
 
     def mark_all_papers_as_verified(self) -> None:
-        """
-        Mark all papers with STATUS_PAPER_LINK_DOWNLOADED as STATUS_PAPER_LINK_VERIFIED.
+        """Bulk update all downloaded papers to verified status.
 
-        Updates the processing status of all papers from downloaded to verified state,
-        skipping the actual URL verification process.
+        Updates processing status from STATUS_PAPER_LINK_DOWNLOADED to
+        STATUS_PAPER_LINK_VERIFIED for all applicable papers in the database,
+        bypassing individual URL verification.
 
-        :raises sqlite3.Error: If there's an issue with database operations
+        :raises sqlite3.Error: If database update operations fail
         """
         self.logger.debug(
             f"Preparing to mark all papers with status '{constants.STATUS_PAPER_LINK_DOWNLOADED}' as '{constants.STATUS_PAPER_LINK_VERIFIED}'"
@@ -311,10 +323,10 @@ class PaperCleaner:
 
 
 def main():
-    """
-    Main function to run the script.
+    """Execute the paper URL cleaning script.
 
-    Parses command line arguments and initializes the PaperCleaner to process URLs.
+    Parses command line arguments and initializes PaperCleaner with the specified
+    configuration to process paper URLs.
     """
     args = parse_arguments()
     cleaner = PaperCleaner(
