@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
-"""
-This script scores papers based on profiling criteria.
-It retrieves criteria from the database, calculates a suitability score based on required
-and optional criteria, and updates the database with the final score.
+"""Script for scoring research papers based on profiling criteria.
 
-The suitability score is calculated as the sum of all criteria scores, but only if all
-required criteria are met (non-zero). If any required criteria are missing or zero,
-the final score will be 0.
+This module implements paper scoring functionality by evaluating papers against
+defined profiling criteria stored in a database. It calculates suitability scores
+by combining required and optional criteria evaluations.
+
+The scoring logic works as follows:
+- Retrieves scoring criteria from the database
+- Evaluates each paper against all criteria
+- Calculates final score as sum of all criteria IF all required criteria are met
+- Sets score to 0 if any required criteria score is 0
+- Updates database with final scores
 """
 
 import argparse
@@ -17,7 +21,11 @@ from raspberry_paper_to_cot_pipeline.base_scorer import BaseScorer
 
 
 def parse_arguments() -> argparse.Namespace:
-    """Parse command-line arguments."""
+    """Parse command-line arguments for the paper scoring script.
+
+    :return: Parsed command line arguments
+    :rtype: argparse.Namespace
+    """
     parser = argparse.ArgumentParser(
         description="Score papers based on profiling criteria."
     )
@@ -63,8 +71,9 @@ class PaperProfileScorer(BaseScorer):
         self.score_field_name = "profiler_suitability_score"
 
 
-def main():
-    """Main entry point for CLI usage."""
+def main() -> None:
+    """Execute the paper scoring process.
+    """
     args = parse_arguments()
     scorer = PaperProfileScorer(
         limit=args.limit,
