@@ -17,7 +17,7 @@ import argparse
 import json
 import sqlite3
 from pathlib import Path
-from typing import Optional, Dict, Any, Generator, Tuple
+from typing import Optional, Dict, Any, Generator, Tuple, Union
 import sys
 
 from raspberry_paper_to_cot_pipeline import constants
@@ -29,6 +29,7 @@ def parse_arguments() -> argparse.Namespace:
 
     :return: Namespace containing the parsed command-line arguments
     :rtype: argparse.Namespace
+    :raises ArgumentError: If invalid argument values are provided
     """
     parser = argparse.ArgumentParser(
         description="Generate consolidated training data from paper training artifacts."
@@ -107,7 +108,7 @@ class TrainingDataGenerator:
         database: str = constants.DEFAULT_DB_NAME,
         suitability_score: int = constants.COT_QUALITY_ASSESSMENT_DEFAULT_SUITABILITY_SCORE,
         training_file_name: str = constants.DEFAULT_CONSOLIDATED_TRAINING_FILENAME,
-        training_artifacts_directory: Path = constants.DEFAULT_TRAINING_ARTIFACTS_DIR,
+        training_artifacts_directory: Union[str, Path] = constants.DEFAULT_TRAINING_ARTIFACTS_DIR,
         limit: Optional[int] = None,
         debug: bool = False,
     ):
@@ -145,8 +146,9 @@ class TrainingDataGenerator:
         Retrieves papers from the database that have completed quality scoring,
         ordered by their processing date.
 
-        :return: Generator yielding qualified paper records
+        :return: Generator yielding qualified paper records with quality assessment scores
         :rtype: Generator[sqlite3.Row, None, None]
+        :raises sqlite3.Error: If database query fails
         """
         select_columns = constants.DEFAULT_FETCH_BY_STATUS_COLUMNS + [
             "cot_quality_assessment_suitability_score"
@@ -167,10 +169,12 @@ class TrainingDataGenerator:
         Checks if the paper meets the minimum suitability score and attempts to
         load its training artifact if qualified.
 
-        :param paper: Paper record from database
+        :param paper: Paper record from database containing ID and quality score
         :type paper: sqlite3.Row
         :return: Training data dictionary if paper qualifies and artifact exists, None otherwise
         :rtype: Optional[Dict[str, Any]]
+        :raises FileNotFoundError: If training artifact file is missing
+        :raises json.JSONDecodeError: If training artifact is not valid JSON
         """
         score = paper["cot_quality_assessment_suitability_score"]
         if score < self.suitability_score:
@@ -185,7 +189,7 @@ class TrainingDataGenerator:
             )
             return self.utils.read_training_artifact(filename)
         except FileNotFoundError:
-            self.logger.warning(
+            self.logger.error(
                 f"Training artifact not found for paper {paper['paper_id']}"
             )
             return None
@@ -204,6 +208,7 @@ class TrainingDataGenerator:
         :return: Path object pointing to the initialized output file
         :rtype: Path
         :raises OSError: If file creation or directory creation fails
+        :raises PermissionError: If lacking write permissions for target directory
         """
         self.logger.debug(
             f"Initializing output file in {self.training_artifacts_directory}"
@@ -233,6 +238,8 @@ class TrainingDataGenerator:
         :param paper_id: ID of the paper being processed
         :type paper_id: str
         :raises IOError: If writing to the file fails
+        :raises json.JSONEncodeError: If data cannot be serialized to JSON
+        :raises TypeError: If data contains non-serializable objects
         """
         self.logger.debug(
             f"Appending training data entry for paper {paper_id} to {output_path}"
@@ -251,6 +258,8 @@ class TrainingDataGenerator:
         :type output_path: Path
         :return: Tuple containing counts of processed and skipped papers
         :rtype: Tuple[int, int]
+        :raises sqlite3.Error: If database operations fail
+        :raises IOError: If file operations fail
         :raises Exception: If any unhandled error occurs during processing
         """
         processed_count = 0
@@ -262,7 +271,7 @@ class TrainingDataGenerator:
             if data:
                 self.append_training_data(output_path, data, paper["paper_id"])
                 processed_count += 1
-                self.logger.debug(f"Successfully processed paper {paper['paper_id']}")
+                self.logger.info(f"Successfully processed paper {paper['paper_id']}")
             else:
                 skipped_count += 1
                 self.logger.debug(f"Skipped paper {paper['paper_id']}")
@@ -318,6 +327,9 @@ def main():
     """Main entry point for CLI usage.
 
     Parses command line arguments and runs the training data generation process.
+    
+    :raises SystemExit: With code 1 if an unrecoverable error occurs
+    :raises ArgumentError: If invalid command line arguments are provided
     """
     args = parse_arguments()
     generator = TrainingDataGenerator(
