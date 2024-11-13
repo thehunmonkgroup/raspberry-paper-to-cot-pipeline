@@ -1,22 +1,23 @@
 #!/usr/bin/env python3
 
-"""Quality assessment module for Chain of Thought (CoT) extractions from research papers.
+"""
+Quality assessment module for Chain of Thought (CoT) extractions from research papers.
 
-This module provides functionality to evaluate the quality of Chain of Thought extractions
-against defined assessment criteria. It handles the entire assessment workflow from loading
-papers to generating final quality reports.
+This module evaluates Chain of Thought extractions from research papers against defined
+quality criteria. It manages the complete assessment workflow including paper loading,
+criteria evaluation, and report generation.
 
-The assessment criteria include:
-    - Source fidelity
-    - Reasoning integrity
-    - Training utility
-    - Structural quality
+The module implements a systematic assessment process that:
+1. Loads papers with completed CoT extractions from database
+2. Executes LWE templates for criteria evaluation
+3. Parses assessment results and updates paper status
+4. Generates detailed assessment artifacts for tracking
 
-Process Flow:
-    1. Load papers with completed CoT extractions from database
-    2. Execute LWE templates for criteria evaluation
-    3. Parse assessment results and update paper status
-    4. Generate detailed assessment artifacts for tracking
+Assessment criteria evaluated:
+- Source fidelity: Accuracy of extracted information
+- Reasoning integrity: Logical coherence of chain of thought
+- Training utility: Value for training purposes
+- Structural quality: Format and completeness of extraction
 
 :raises ValueError: If assessment criteria validation fails
 :raises sqlite3.Error: If database operations fail
@@ -34,18 +35,16 @@ from raspberry_paper_to_cot_pipeline.utils import Utils
 
 
 def parse_arguments() -> argparse.Namespace:
-    """Parse and validate command-line arguments for the CoT quality assessment process.
+    """
+    Parse and validate command-line arguments for the CoT quality assessment process.
 
-    Configures argument parser with the following options:
-        - assessor-preset: Model configuration for assessment
-        - database: SQLite database path
-        - inference-artifacts-directory: Output directory for artifacts
-        - limit: Number of papers to process
-        - template: LWE assessment template name
-        - debug: Enable debug logging
+    Configures and processes command line arguments for controlling the assessment
+    workflow. Sets up required paths, processing limits, and execution parameters.
 
-    :return: Namespace containing parsed command line arguments
+    :param: None
+    :return: Parsed command line arguments
     :rtype: argparse.Namespace
+    :raises: None
     """
     parser = argparse.ArgumentParser(
         description="Assess Chain of Thought extractions from papers."
@@ -110,23 +109,29 @@ class CoTQualityAssessor:
         database: str = constants.DEFAULT_DB_NAME,
         inference_artifacts_directory: str = constants.DEFAULT_INFERENCE_ARTIFACTS_DIR,
         template: str = constants.DEFAULT_COT_QUALITY_ASSESSOR_TEMPLATE,
-    ):
+    ) -> None:
         """
-        Initialize the CoTQualityAssessor with individual arguments.
+        Initialize the CoTQualityAssessor with configuration parameters.
 
-        :param assessor_preset: Model configuration used for assessment
-        :type assessor_preset: str
-        :param database: Path to the SQLite database
-        :type database: str
-        :param inference_artifacts_directory: Directory for inference artifacts
-        :type inference_artifacts_directory: str
-        :param limit: Number of papers to process
+        Sets up the assessor instance with provided configuration parameters and
+        initializes required utilities and logging.
+
+        :param limit: Maximum number of papers to process
         :type limit: Optional[int]
-        :param template: LWE assessment template name
-        :type template: str
         :param debug: Enable debug logging
         :type debug: bool
-        :raises ValueError: If any of the directory paths are invalid
+        :param assessor_preset: Model configuration for assessment
+        :type assessor_preset: str
+        :param database: Path to SQLite database
+        :type database: str
+        :param inference_artifacts_directory: Directory for storing assessment artifacts
+        :type inference_artifacts_directory: str
+        :param template: LWE assessment template name
+        :type template: str
+        :return: None
+        :rtype: None
+        :raises ValueError: If any directory paths are invalid
+        :raises RuntimeError: If logger setup fails
         """
         self.assessor_preset = assessor_preset
         self.database = database
@@ -173,12 +178,16 @@ class CoTQualityAssessor:
 
     def get_pretty_printed_criteria(self, criteria: Dict[str, int]) -> str:
         """
-        Get a pretty-printed string of assessment criteria and their values.
+        Format assessment criteria and values into a human-readable string.
 
-        :param criteria: Dictionary of criteria and their values
+        Converts the criteria dictionary into a formatted multi-line string where each
+        criterion is displayed with its corresponding Yes/No value.
+
+        :param criteria: Dictionary mapping criteria names to binary values (0 or 1)
         :type criteria: Dict[str, int]
-        :return: Multi-line string with each criterion and its Yes/No value
+        :return: Formatted string with one criterion per line
         :rtype: str
+        :raises KeyError: If a required criterion is missing from the dictionary
         """
         output = []
         for criterion in constants.COT_QUALITY_ASSESSMENT_CRITERIA:
@@ -191,14 +200,24 @@ class CoTQualityAssessor:
         return "\n".join(output)
 
     def write_assessment_artifact(
-        self, paper: Dict[str, Any], criteria: Dict[str, int], xml_content: str
+        self, paper: sqlite3.Row, criteria: Dict[str, int], xml_content: str
     ) -> None:
         """
-        Write assessment results to an artifact file.
+        Write assessment results and metadata to an artifact file.
 
-        :param paper: Paper data
-        :param criteria: Dictionary of criteria and their values
-        :param xml_content: Raw XML content
+        Creates a formatted artifact file containing paper metadata, assessment results,
+        and raw inference output for archival and debugging purposes.
+
+        :param paper: Database row containing paper metadata (paper_id, paper_url)
+        :type paper: sqlite3.Row
+        :param criteria: Dictionary of assessment criteria results
+        :type criteria: Dict[str, int]
+        :param xml_content: Raw XML output from the assessment
+        :type xml_content: str
+        :return: None
+        :rtype: None
+        :raises FileNotFoundError: If artifact directory is not accessible
+        :raises IOError: If writing to artifact file fails
         """
         artifact_name = constants.COT_QUALITY_ASSESSMENT_ARTIFACT_PATTERN.format(
             paper_id=paper["paper_id"]
@@ -220,10 +239,16 @@ Raw Inference Output:
 
     def check_required_criteria(self, criteria: Dict[str, int]) -> bool:
         """
-        Check if all required assessment criteria are met.
+        Verify that all required quality assessment criteria are satisfied.
 
-        :param criteria: Dictionary of criteria and their values
+        Checks each required criterion defined in REQUIRED_COT_QUALITY_ASSESSMENT_CRITERIA
+        against the provided criteria values to ensure they meet minimum quality standards.
+
+        :param criteria: Dictionary mapping criteria names to binary values (0 or 1)
+        :type criteria: Dict[str, int]
         :return: True if all required criteria are met, False otherwise
+        :rtype: bool
+        :raises KeyError: If a required criterion is missing from the dictionary
         """
         for criterion in constants.REQUIRED_COT_QUALITY_ASSESSMENT_CRITERIA:
             if criteria[f"cot_quality_assessment_criteria_{criterion}"] != 1:
@@ -231,13 +256,20 @@ Raw Inference Output:
         return True
 
     def get_refinement_data(
-        self, paper: Dict[str, Any]
+        self, paper: sqlite3.Row
     ) -> Optional[Tuple[str, str, str]]:
         """
-        Get question, chain of reasoning, and answer from refinement artifact.
+        Retrieve refined question, reasoning chain, and answer from paper artifact.
 
-        :param paper: Paper data dictionary
-        :return: Tuple of (question, chain_of_reasoning, answer) or None if retrieval fails
+        Attempts to load and parse the refinement artifact file for the given paper
+        to extract the core components needed for quality assessment.
+
+        :param paper: Database row containing paper metadata including paper_id
+        :type paper: sqlite3.Row
+        :return: Tuple containing (question, chain_of_reasoning, answer) if successful, None otherwise
+        :rtype: Optional[Tuple[str, str, str]]
+        :raises FileNotFoundError: If refinement artifact file doesn't exist
+        :raises ValueError: If artifact content cannot be parsed
         """
         try:
             artifact_name = constants.COT_REFINEMENT_ARTIFACT_PATTERN.format(
@@ -260,14 +292,23 @@ Raw Inference Output:
         self, paper_content: str, question: str, chain_of_reasoning: str, answer: str
     ) -> Tuple[Dict[str, int], str]:
         """
-        Run assessment template and process results.
+        Execute quality assessment template and process the results.
 
-        :param paper_content: Text content of the paper
-        :param question: Question to verify
-        :param chain_of_reasoning: Chain of reasoning to verify
-        :param answer: Answer to verify
-        :return: Tuple of (criteria dict, xml content)
-        :raises ValueError: If XML content cannot be extracted
+        Runs the LWE template with provided paper content and CoT components,
+        then processes the response to extract assessment criteria results.
+
+        :param paper_content: Full text content of the research paper
+        :type paper_content: str
+        :param question: Extracted research question
+        :type question: str
+        :param chain_of_reasoning: Extracted reasoning chain
+        :type chain_of_reasoning: str
+        :param answer: Extracted answer/conclusion
+        :type answer: str
+        :return: Tuple containing (criteria dictionary, raw XML response)
+        :rtype: Tuple[Dict[str, int], str]
+        :raises ValueError: If XML content cannot be extracted from response
+        :raises RuntimeError: If LWE template execution fails
         """
         lwe_response = self.utils.run_lwe_template(
             self.template,
@@ -289,10 +330,18 @@ Raw Inference Output:
         self, paper_id: str, criteria: Dict[str, int]
     ) -> None:
         """
-        Update paper with assessment results.
+        Update paper record with quality assessment results.
 
-        :param paper_id: ID of the paper
-        :param criteria: Dictionary of assessment criteria results
+        Stores the assessment criteria results and updates the paper's processing
+        status in the database.
+
+        :param paper_id: Database ID of the paper
+        :type paper_id: str
+        :param criteria: Dictionary mapping criteria names to assessment results
+        :type criteria: Dict[str, int]
+        :return: None
+        :rtype: None
+        :raises sqlite3.Error: If database update fails
         """
         data = copy.deepcopy(criteria)
         data["processing_status"] = constants.STATUS_COT_QUALITY_ASSESSED
@@ -300,9 +349,22 @@ Raw Inference Output:
 
     def process_paper(self, paper: sqlite3.Row) -> None:
         """
-        Process a single paper through the assessment pipeline.
+        Execute quality assessment workflow for a single paper.
 
-        :param paper: Paper data dictionary containing id, paper_id, and paper_url
+        Processes an individual paper through the complete assessment pipeline:
+        1. Extracts text content from PDF
+        2. Retrieves refinement data
+        3. Runs quality assessment
+        4. Generates assessment artifact
+        5. Updates paper status
+
+        :param paper: Database row containing paper metadata (id, paper_id, paper_url)
+        :type paper: sqlite3.Row
+        :return: None
+        :rtype: None
+        :raises ValueError: If paper content cannot be processed
+        :raises FileNotFoundError: If required artifacts are missing
+        :raises sqlite3.Error: If database updates fail
         """
         try:
             text = self.utils.get_pdf_text(paper)
@@ -354,8 +416,17 @@ Raw Inference Output:
             sys.exit(1)
 
 
-def main():
-    """Main entry point for CLI usage."""
+def main() -> None:
+    """
+    Main entry point for the CoT quality assessment CLI.
+
+    Parses command line arguments and initializes the assessment process.
+    Handles the complete workflow from paper loading through assessment.
+
+    :return: None
+    :rtype: None
+    :raises SystemExit: With code 1 if process fails critically
+    """
     args = parse_arguments()
     assessor = CoTQualityAssessor(
         limit=args.limit,
