@@ -29,13 +29,16 @@ from raspberry_paper_to_cot_pipeline import constants
 def get_db_connection(
     database_path: Union[str, Path]
 ) -> Generator[sqlite3.Connection, None, None]:
-    """
-    Context manager for database connections with WAL journaling and IMMEDIATE isolation.
+    """Context manager for database connections with WAL journaling and IMMEDIATE isolation.
 
-    :param database_path: Path to the SQLite database
-    :yield: SQLite connection object configured with Write-Ahead Logging (WAL)
-           journal mode and IMMEDIATE isolation level for better concurrency
-    :raises sqlite3.Error: If connection cannot be established
+    Provides a context-managed SQLite database connection with Write-Ahead Logging (WAL)
+    journal mode and IMMEDIATE isolation level for better concurrency handling.
+
+    :param database_path: Path to the SQLite database file
+    :type database_path: Union[str, Path]
+    :yield: SQLite connection object configured with WAL and IMMEDIATE isolation
+    :rtype: Generator[sqlite3.Connection, None, None]
+    :raises sqlite3.Error: If database connection cannot be established
     :raises FileNotFoundError: If database directory doesn't exist
     """
     path = Path(database_path)
@@ -66,15 +69,23 @@ class Utils:
         lwe_default_preset: Optional[str] = constants.DEFAULT_LWE_PRESET,
         logger: Optional[logging.Logger] = None,
     ):
-        """
-        Initialize the Utils class.
+        """Initialize the Utils class with configuration parameters.
 
-        :param database: Path to the SQLite database
-        :param inference_artifacts_directory: Directory for inference artifacts
-        :param training_artifacts_directory: Directory for training artifacts
-        :param pdf_cache_dir: Directory for caching PDFs
-        :param lwe_default_preset: Default preset for LWE
-        :param logger: Logger object
+        Sets up utility class with database connection, artifact directories,
+        and logging configuration.
+
+        :param database: Path to the SQLite database file
+        :type database: Optional[str]
+        :param inference_artifacts_directory: Directory for storing inference artifacts
+        :type inference_artifacts_directory: Optional[str]
+        :param training_artifacts_directory: Directory for storing training artifacts
+        :type training_artifacts_directory: Optional[str]
+        :param pdf_cache_dir: Directory for caching downloaded PDF files
+        :type pdf_cache_dir: Optional[str]
+        :param lwe_default_preset: Default preset configuration for LWE
+        :type lwe_default_preset: Optional[str]
+        :param logger: Custom logger instance
+        :type logger: Optional[logging.Logger]
         """
         self.database = database
         self.inference_artifacts_directory = Path(inference_artifacts_directory)
@@ -86,7 +97,17 @@ class Utils:
 
     @staticmethod
     def setup_logging(logger_name: str, debug: bool) -> logging.Logger:
-        """Set up logging configuration for a specific logger."""
+        """Set up logging configuration for a specific logger.
+
+        Configures a logger with appropriate handlers and formatting based on debug level.
+
+        :param logger_name: Name of the logger to configure
+        :type logger_name: str
+        :param debug: Whether to enable debug logging
+        :type debug: bool
+        :return: Configured logger instance
+        :rtype: logging.Logger
+        """
         logging.getLogger().addHandler(logging.NullHandler())
         logger = logging.getLogger(logger_name)
         logger.setLevel(logging.DEBUG if debug else logging.INFO)
@@ -101,7 +122,14 @@ class Utils:
         return logger
 
     def setup_lwe(self) -> ApiBackend:
-        """Set up LWE configuration and API backend."""
+        """Set up LWE configuration and API backend.
+
+        Initializes and configures the LWE backend with default settings.
+
+        :return: Configured LWE API backend instance
+        :rtype: ApiBackend
+        :raises RuntimeError: If configuration fails
+        """
         config = Config(
             config_dir=str(constants.LWE_CONFIG_DIR),
             data_dir=str(constants.LWE_DATA_DIR),
@@ -118,13 +146,16 @@ class Utils:
         template_vars: Dict[str, Any],
         overrides: Optional[Dict[str, Any]] = None,
     ) -> str:
-        """
-        Run the LWE template with the given variables.
+        """Run the LWE template with the given variables.
 
         :param template: Template name
+        :type template: str
         :param template_vars: Template variables
+        :type template_vars: Dict[str, Any]
         :param overrides: Optional overrides for the template
+        :type overrides: Optional[Dict[str, Any]]
         :return: Response on success
+        :rtype: str
         :raises RuntimeError: If LWE backend is not initialized or template execution fails
         """
         if self.lwe_backend is None:
@@ -140,12 +171,16 @@ class Utils:
         return response
 
     def write_pdf_to_cache(self, pdf_path: Path, pdf_content: bytes) -> None:
-        """
-        Write PDF content to cache.
+        """Write PDF content to cache.
 
-        :param pdf_path: Path to the PDF file
-        :param pdf_content: Content of the PDF file
-        :raises OSError: If directory creation fails
+        Saves PDF binary content to the specified cache location, creating
+        directories as needed.
+
+        :param pdf_path: Path where the PDF should be saved
+        :type pdf_path: Path
+        :param pdf_content: Binary content of the PDF file
+        :type pdf_content: bytes
+        :raises OSError: If directory creation or file writing fails
         """
         pdf_path.parent.mkdir(parents=True, exist_ok=True)
         pdf_path.write_bytes(pdf_content)
@@ -156,13 +191,17 @@ class Utils:
         wait=wait_exponential(multiplier=1, min=1, max=10),
         retry=retry_if_exception_type(requests.RequestException),
     )
-    def download_pdf(self, paper: Dict[str, Any]) -> str:
-        """
-        Download PDF from the given URL.
+    def download_pdf(self, paper: Union[Dict[str, Any], sqlite3.Row]) -> str:
+        """Download PDF from the given URL.
 
-        :param paper: Paper data
-        :return: Path to the downloaded PDF file
-        :raises requests.RequestException: If the download fails after retries
+        Downloads a paper's PDF and saves it to the cache directory. Implements
+        retry logic for resilient downloading.
+
+        :param paper: Paper record containing 'paper_url' and 'paper_id' fields
+        :type paper: Union[Dict[str, Any], sqlite3.Row]
+        :return: String path to the downloaded PDF file
+        :rtype: str
+        :raises requests.RequestException: If the download fails after all retries
         """
         response = requests.get(paper["paper_url"])
         response.raise_for_status()
@@ -173,12 +212,16 @@ class Utils:
         )
         return str(pdf_path)
 
-    def get_pdf_text(self, paper: Dict[str, Any]) -> str:
-        """
-        Get the text content of a PDF file.
+    def get_pdf_text(self, paper: Union[Dict[str, Any], sqlite3.Row]) -> str:
+        """Get the text content of a PDF file.
 
-        :param paper: Paper data
-        :return: Extracted text from the PDF
+        Retrieves PDF content either from cache or by downloading, then extracts text.
+
+        :param paper: Paper record containing 'paper_id' field
+        :type paper: Union[Dict[str, Any], sqlite3.Row]
+        :return: Extracted text content from the PDF
+        :rtype: str
+        :raises FileNotFoundError: If PDF file cannot be found or downloaded
         """
         pdf_path = self.make_pdf_cache_path_from_paper_id(paper["paper_id"])
         if not pdf_path.exists():
@@ -186,39 +229,49 @@ class Utils:
         return self.extract_text(str(pdf_path))
 
     def extract_paper_id(self, url: str) -> str:
-        """
-        Extract the paper ID from the full URL.
+        """Extract the paper ID from the full URL.
 
-        :param url: Full URL of the paper
-        :return: Extracted paper ID
+        Parses a paper's URL to extract its unique identifier.
+
+        :param url: Complete URL of the paper
+        :type url: str
+        :return: Paper's unique identifier
+        :rtype: str
         """
         return Path(urlparse(url).path).name
 
     def make_pdf_cache_path_from_paper_id(self, id: str) -> Path:
-        """
-        Make a cache path from the paper ID.
+        """Make a cache path from the paper ID.
 
-        :param id: ID of the paper
-        :return: Full path to the PDF in the cache
+        Constructs the full filesystem path for a paper's cached PDF file.
+
+        :param id: Unique identifier of the paper
+        :type id: str
+        :return: Full path where the PDF should be cached
+        :rtype: Path
         """
         self.ensure_directory_exists(self.pdf_cache_dir)
         return self.pdf_cache_dir / self.make_pdf_name_from_paper_id(id)
 
     def make_pdf_name_from_paper_id(self, id: str) -> str:
-        """
-        Make a PDF name from the paper ID.
+        """Make a PDF filename from the paper ID.
 
-        :param id: ID of the paper
-        :return: Name of the PDF file
+        Constructs the filename for a paper's PDF using its identifier.
+
+        :param id: Unique identifier of the paper
+        :type id: str
+        :return: Generated PDF filename
+        :rtype: str
         """
         return f"{id}.pdf"
 
     def extract_text(self, pdf_path: Union[str, Path]) -> str:
-        """
-        Extract text from the PDF file.
+        """Extract text from the PDF file.
 
         :param pdf_path: Path to the PDF file
+        :type pdf_path: Union[str, Path]
         :return: Extracted text
+        :rtype: str
         :raises FileNotFoundError: If PDF file doesn't exist
         :raises pymupdf4llm.ConversionError: If PDF conversion fails
         :raises RuntimeError: If an unexpected error occurs
@@ -243,11 +296,14 @@ class Utils:
             raise RuntimeError(message)
 
     def extract_xml(self, content: str) -> Optional[str]:
-        """
-        Extract XML content from the paper content.
+        """Extract XML content from the paper content.
 
-        :param content: Paper content
-        :return: Extracted XML content or None if not found
+        Searches for and extracts XML content enclosed in <results> tags.
+
+        :param content: Full text content to search for XML
+        :type content: str
+        :return: Extracted XML string if found, None otherwise
+        :rtype: Optional[str]
         """
         match = re.search(
             r"<results>(?:(?!</results>).)*</results>", content, re.DOTALL
@@ -257,11 +313,12 @@ class Utils:
     def extract_question_chain_of_reasoning_answer(
         self, content: str
     ) -> Tuple[str, str, str]:
-        """
-        Parse the content to extract question, chain of reasoning, and answer.
+        """Parse the content to extract question, chain of reasoning, and answer.
 
         :param content: The content string containing XML to parse
-        :return: Tuple of (question, chain_of_reasoning, answer)
+        :type content: str
+        :return: Tuple containing (question, chain_of_reasoning, answer)
+        :rtype: Tuple[str, str, str]
         :raises ValueError: If XML content cannot be extracted
         :raises AttributeError: If required XML elements are missing
         """
@@ -283,10 +340,9 @@ class Utils:
         return question, chain_of_reasoning, answer
 
     def create_database(self) -> None:
-        """
-        Conditionally creates an SQLite database with the required tables and columns.
+        """Conditionally creates an SQLite database with the required tables and columns.
 
-        :raises sqlite3.Error: If there's an issue with the SQLite operations.
+        :raises sqlite3.Error: If there's an issue with the SQLite operations
         """
         db_path = Path(self.database)
         self.logger.info(f"Creating/connecting to database: {db_path}")
@@ -449,18 +505,26 @@ class Utils:
         self.update_paper(paper_id, {"processing_status": status})
 
     def ensure_directory_exists(self, directory: Path) -> None:
-        """
-        Ensure that the directory exists.
+        """Ensure that the directory exists.
 
-        :param directory: Path to the directory
+        Creates the directory and any necessary parent directories if they don't exist.
+
+        :param directory: Path to the directory to create
+        :type directory: Path
+        :raises OSError: If directory creation fails
         """
         directory.mkdir(parents=True, exist_ok=True)
 
     def read_inference_artifact(self, filename: str) -> str:
-        """
-        Read inference artifact from a file.
+        """Read inference artifact from a file.
 
-        :param filename: Name of the file to read
+        Loads and returns the content of an inference artifact file.
+
+        :param filename: Name of the inference artifact file
+        :type filename: str
+        :return: Content of the inference artifact
+        :rtype: str
+        :raises FileNotFoundError: If the artifact file doesn't exist
         """
         artifact_file_path = self.inference_artifacts_directory / filename
         try:
@@ -474,11 +538,15 @@ class Utils:
             raise
 
     def write_inference_artifact(self, filename: str, content: str) -> None:
-        """
-        Write inference artifact to a file.
+        """Write inference artifact to a file.
+
+        Saves inference artifact content to a file in the inference artifacts directory.
 
         :param filename: Name of the file to write
-        :param content: Content of the inference artifact
+        :type filename: str
+        :param content: Content to write to the file
+        :type content: str
+        :raises OSError: If directory creation or file writing fails
         """
         self.ensure_directory_exists(self.inference_artifacts_directory)
         artifact_file_path = self.inference_artifacts_directory / filename
@@ -486,11 +554,16 @@ class Utils:
         self.logger.debug(f"Wrote inference artifact to {artifact_file_path}")
 
     def write_training_artifact(self, filename: str, content: str) -> None:
-        """
-        Write training artifact to a file.
+        """Write training artifact to a file.
+
+        Saves training artifact content as JSON to a file in the training artifacts directory.
 
         :param filename: Name of the file to write
-        :param content: Content of the training artifact
+        :type filename: str
+        :param content: Content to serialize and write to the file
+        :type content: str
+        :raises OSError: If directory creation or file writing fails
+        :raises json.JSONEncodeError: If content cannot be serialized to JSON
         """
         self.ensure_directory_exists(self.training_artifacts_directory)
         artifact_file_path = self.training_artifacts_directory / filename
@@ -498,11 +571,12 @@ class Utils:
         self.logger.debug(f"Wrote training artifact to {artifact_file_path}")
 
     def read_training_artifact(self, filename: str) -> Dict[str, Any]:
-        """
-        Read training artifact from a file.
+        """Read training artifact from a file.
 
         :param filename: Name of the file to read
+        :type filename: str
         :return: Deserialized content of the training artifact
+        :rtype: Dict[str, Any]
         :raises FileNotFoundError: If the artifact file doesn't exist
         :raises json.JSONDecodeError: If the file contains invalid JSON
         """
@@ -521,13 +595,13 @@ class Utils:
             raise
 
     def validate_date(self, date_str: str, date_name: str) -> None:
-        """
-        Validate the format of a date string.
+        """Validate the format of a date string.
 
         :param date_str: The date string to validate
+        :type date_str: str
         :param date_name: The name of the date parameter (for error reporting)
+        :type date_name: str
         :raises ValueError: If the date format is invalid
-        :return: None on successful validation
         """
         self.logger.debug(f"Validating {date_name}: {date_str}")
         try:
@@ -537,10 +611,10 @@ class Utils:
             raise ValueError(f"Invalid date format for {date_name}")
 
     def fetch_arxiv_categories(self) -> Dict[str, str]:
-        """
-        Fetch arXiv categories from the official taxonomy page.
+        """Fetch arXiv categories from the official taxonomy page.
 
         :return: Dictionary of category codes and names, or empty dict if no categories found
+        :rtype: Dict[str, str]
         :raises requests.RequestException: If there's an error fetching the categories
         :raises BeautifulSoup.ParserError: If there's an error parsing the HTML
         """
@@ -580,12 +654,14 @@ class Utils:
     def fetch_papers_by_custom_query(
         self, query: str, params: tuple
     ) -> Generator[sqlite3.Row, None, None]:
-        """
-        Fetch papers from the database using a custom query.
+        """Fetch papers from the database using a custom query.
 
         :param query: Custom SQL query to execute
+        :type query: str
         :param params: Tuple of parameters for the query
+        :type params: tuple
         :return: Generator of dictionaries containing paper information
+        :rtype: Generator[sqlite3.Row, None, None]
         :raises sqlite3.Error: If there's an issue with the database operations
         """
         try:
