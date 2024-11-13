@@ -217,7 +217,7 @@ class BaseScorer:
                 self.score_field_name: suitability_score,
             }
             self.utils.update_paper(paper["id"], data)
-            self.logger.info(
+            self.logger.debug(
                 f"Paper {paper['paper_id']} scored and updated to status {self.scored_status}, "
                 f"suitability score: {suitability_score}"
             )

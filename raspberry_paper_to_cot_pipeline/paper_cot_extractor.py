@@ -388,30 +388,29 @@ class CoTExtractor:
             pdf_text = self.utils.get_pdf_text(paper)
             self.logger.debug(f"PDF text length: {len(pdf_text)} characters")
 
-            self.logger.debug(
-                f"Starting extraction stage for paper {paper['paper_id']}"
-            )
+            self.logger.info(f"Processing paper {paper['paper_id']}: Extraction stage")
             question, chain_of_reasoning, answer = self._handle_extraction_stage(
                 paper, pdf_text
             )
+            self.logger.info(f"Completed extraction stage for paper {paper['paper_id']}")
             self.logger.debug(
-                f"Extraction completed - Question length: {len(question)}, "
+                f"Extraction details - Question length: {len(question)}, "
                 f"Reasoning length: {len(chain_of_reasoning)}, "
                 f"Answer length: {len(answer)}"
             )
 
-            self.logger.debug(f"Starting critique stage for paper {paper['paper_id']}")
+            self.logger.info(f"Processing paper {paper['paper_id']}: Critique stage")
             critique = self._handle_critique_stage(
                 paper, question, chain_of_reasoning, answer, pdf_text
             )
+            self.logger.info(f"Completed critique stage for paper {paper['paper_id']}")
             self.logger.debug(f"Critique completed - Length: {len(critique)}")
 
-            self.logger.debug(
-                f"Starting refinement stage for paper {paper['paper_id']}"
-            )
+            self.logger.info(f"Processing paper {paper['paper_id']}: Refinement stage")
             self._handle_refinement_stage(
                 paper, question, chain_of_reasoning, answer, critique, pdf_text
             )
+            self.logger.info(f"Completed refinement stage for paper {paper['paper_id']}")
             self.logger.debug(f"Refinement completed for paper {paper['paper_id']}")
 
             self.utils.update_paper_status(paper["id"], constants.STATUS_COT_EXTRACTED)

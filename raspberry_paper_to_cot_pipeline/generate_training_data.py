@@ -280,9 +280,9 @@ class TrainingDataGenerator:
                 processed_count % self.PROGRESS_REPORT_INTERVAL == 0
                 and processed_count > 0
             ):
-                self.logger.info(
-                    f"Processed {processed_count} papers, skipped {skipped_count}"
-                )
+                total = processed_count + skipped_count
+                percentage = (processed_count / total * 100) if total > 0 else 0
+                self.logger.info(f"Generated {processed_count} training examples ({percentage:.1f}% of total processed)")
 
         return processed_count, skipped_count
 

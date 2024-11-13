@@ -142,6 +142,8 @@ class ArxivPaperUrlFetcher:
                             results.append(result)
 
                         params["start"] += len(entries)
+                        self.logger.info(f"Completed fetching papers for category {categories[0]}: {len(results)} papers retrieved")
+                        self.logger.info(f"Total papers fetched for category {categories[0]}: {len(results)}")
                     else:
                         attempts += 1
 
