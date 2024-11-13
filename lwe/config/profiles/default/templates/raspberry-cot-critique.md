@@ -13,17 +13,19 @@ Your task is to critically evaluate three interconnected elements derived from a
 - The final answer
 
 ### CRITIQUE REQUIREMENTS
+---
 
 Evaluate these elements based on:
-- Accuracy of representation from the source paper
+- Accuracy of representation from the academic paper
 - Adherence to the evaluation criteria below
 - Completeness of the logical progression from question through reasoning to answer
 
 Your role is to be thorough and objective in identifying all weaknesses in the question, chain of reasoning, and answer. Your critique will be used to further improve these elements. Like a great academic editor, your job is to assist in crafting a rigorous and precise analysis.
 
 ### EVALUATION CRITERIA
+---
 
-#### Top Priority Criteria
+#### ✦ Top Priority Criteria
 
 1. Logical coherence: Each step should naturally follow from the previous one and lead to the next, forming a complete logical progression.
 2. Evidence-based reasoning: All claims must be supported by verifiable data, reproducible results, or well-documented theoretical foundations from the paper.

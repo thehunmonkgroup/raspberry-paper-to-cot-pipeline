@@ -14,16 +14,19 @@ Your task is to perform the final quality assessment of a question, chain of rea
 This is the final quality gate in the pipeline, and your evaluation must be rigorous and precise. The set must be evaluated against the original academic paper to ensure complete fidelity and accuracy.
 
 ### EVALUATION APPROACH
+---
 
 Your evaluation should:
-1. First analyze the question/CoT/answer set against the source paper in detail
+1. First analyze the question/chain/answer set against the academic paper in detail
 2. Then provide binary (Yes/No) assessments across multiple specific criteria
 3. Focus particularly on:
    - Presence of any content not found in the paper
    - Missing critical information from the paper
    - Accuracy of representation of the paper's content
-   - Logical integrity of the reasoning chain
+   - Logical integrity of the chain of reasoning
    - Structural quality and consistency
+
+**Important:** Each criterion must be evaluated independently and supported by specific evidence from the academic paper.
 
 ### EVALUATION PROCESS
 

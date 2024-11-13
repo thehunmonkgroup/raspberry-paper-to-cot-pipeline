@@ -5,8 +5,14 @@ request_overrides:
 ---
 
 ## TASK
+---
 
-This rubric is designed to assess an academic paper's suitability for extracting a clear question with an answer derived through complex, multi-step reasoning that is comprehensible to a layperson with some effort. The ideal paper will present a well-defined question, provide a clear answer, and demonstrate a logical reasoning process that bridges the gap between the question and the answer. This reasoning should be sufficiently complex to offer meaningful insights, yet accessible enough for an educated non-expert to understand with some effort.
+This rubric is designed to assess an academic paper's suitability for extracting:
+- A clear, well-defined question
+- A complex chain of reasoning with multiple steps  
+- A definitive answer derived through that reasoning
+
+The ideal paper will present a well-defined question, provide a clear answer, and demonstrate a logical reasoning process that bridges the gap between the question and the answer. This reasoning should be sufficiently complex to offer meaningful insights, yet accessible enough for an educated non-expert to understand with some effort.
 
 When applying this rubric, consider the paper as a whole, but focus particularly on the sections that directly address the central question, the reasoning process, and the conclusion.
 

@@ -12,19 +12,18 @@ Your task is to examine the provided research paper, and extract three pieces of
 2. A chain of reasoning that bridges the question and the final answer
 3. The final answer provided in the paper
 
-To produce the chain of reasoning in step 2, assume the role of a solo researcher and develop a first-person narrative of your cognitive exploration. Emulate how you, as an AI, would think through the question. Include your moments of uncertainty, realization, and course correction in this process. Express your thoughts, considerations, and evolving understanding as you work towards the answer. The final chain of reasoning should be a refined version of this exploration, presenting a clear and logical progression that aligns with the paper's factual content.
-
-For step 3, continue the first-person narrative approach used in step 2. Present the final answer as a conclusion to your thought process, expressing it as a solo researcher who has just completed their analysis.
+{include raspberry-cot-voice.md}
 
 It is imperative that your final chain of reasoning and answer include ONLY facts and information that are explicitly stated or directly implied in the research paper. Do not introduce any external information or speculation not supported by the paper's content. Your role is to organize and present the paper's own reasoning and conclusions in a narrative form, not to invent or introduce new ideas.
 
 The paper *may* include more than one possible question/chain/answer set, therefore, when choosing the question/chain/answer set, focus on a set where the chain of reasoning best adheres to the `CHAIN OF REASONING CRITERIA` listed below.
 
 ## CHAIN OF REASONING CRITERIA
+---
 
 When selecting the most appropriate question/chain/answer set from the academic paper, use the following criteria to evaluate the chain of reasoning. These criteria will help you identify the set that best demonstrates strong academic argumentation and clear thinking.
 
-As you assess multiple potential sets, pay particular attention to the first seven criteria, which are crucial for identifying high-quality chains of reasoning. Use these criteria to compare different sets and select the one that best exemplifies these qualities.
+**NOTE:**: As you assess multiple potential sets, pay particular attention to the first seven criteria, which are crucial for identifying high-quality chains of reasoning. Use these criteria to compare different sets and select the one that best exemplifies these qualities.
 
 ### Top Priority Criteria
 

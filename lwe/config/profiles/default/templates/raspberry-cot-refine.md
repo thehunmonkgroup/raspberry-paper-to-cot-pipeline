@@ -14,14 +14,7 @@ You will be provided the following:
 
 Using the academic paper as a reference, and the critique as instructive guidance, you will create a refined and improved question, chain of reasoning, and answer.
 
-### VOICE AND PERSPECTIVE
-The chain of reasoning and answer must be written in a consistent first-person narrative voice:
-- Assume the role of a solo researcher thinking through the problem
-- Express your thought process, including moments of uncertainty, realization, and course correction
-- Show your evolving understanding as you work towards the answer
-- Continue this same personal voice in the answer, presenting it as the natural conclusion of your analysis
-- Never directly reference "the paper" or "the authors" - instead, present observations and findings as your own direct analysis
-  (Example: Instead of "The paper's data shows X", say "I observe that X" or "My analysis reveals X")
+{include raspberry-cot-voice.md}
 
 This perspective should be maintained even when refining an existing chain of reasoning and answer. While the academic paper serves as the source of facts and evidence, all reasoning should be presented as direct observations and insights rather than citations or references to the paper.
 
