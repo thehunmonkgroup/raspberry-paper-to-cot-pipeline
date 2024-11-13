@@ -27,9 +27,12 @@ from raspberry_paper_to_cot_pipeline.fetch_arxiv_paper_urls_by_category import (
 
 
 def parse_arguments() -> argparse.Namespace:
-    """Parse command-line arguments.
+    """Parse and validate command-line arguments for the script.
+    
+    Sets up argument parser with all required and optional arguments for 
+    controlling paper fetching behavior.
 
-    :return: Parsed command-line arguments
+    :return: Namespace containing all parsed command line arguments
     :rtype: argparse.Namespace
     """
     parser = argparse.ArgumentParser(
@@ -123,9 +126,10 @@ class ArxivPaperUrlFetcherCLI:
         self.utils = Utils(database=self.database, logger=self.logger)
 
     def display_config(self) -> None:
-        """Display the current configuration.
+        """Display the current configuration settings.
 
-        Prints the current date range and category settings with descriptions.
+        Prints the configured date range and category settings along with 
+        category descriptions from the arXiv taxonomy.
 
         :return: None
         :rtype: None
@@ -142,7 +146,8 @@ class ArxivPaperUrlFetcherCLI:
     def display_categories(self) -> None:
         """Display all available arXiv categories with descriptions.
 
-        Fetches and prints the complete list of arXiv categories with their descriptions.
+        Fetches the complete arXiv taxonomy and prints each category code
+        along with its full description in a formatted list.
 
         :return: None
         :rtype: None
@@ -153,14 +158,14 @@ class ArxivPaperUrlFetcherCLI:
             print(f"* {category:<20} {description}")
 
     def get_categories(self) -> List[str]:
-        """Get the list of categories to process.
+        """Get and validate the list of categories to process.
 
-        Retrieves and validates the list of categories to be processed, either from
-        user input or default settings.
+        Retrieves categories from either user input or default settings.
+        Validates each category against the official arXiv taxonomy.
 
-        :return: List of valid arXiv category codes
+        :return: List of validated arXiv category codes
         :rtype: List[str]
-        :raises ValueError: If any specified category codes are invalid
+        :raises ValueError: If any specified category codes are not found in the arXiv taxonomy
         """
         self.logger.debug("Getting categories list")
         categories = (
@@ -177,12 +182,12 @@ class ArxivPaperUrlFetcherCLI:
         return categories
 
     def should_show_info(self) -> bool:
-        """Check if information display is requested.
+        """Check if information display mode is requested.
 
         Determines if the script should display configuration or category
-        information and exit.
+        information and exit based on command line flags.
 
-        :return: True if information was displayed, False otherwise
+        :return: True if information was displayed and script should exit, False otherwise
         :rtype: bool
         """
         if self.config:
@@ -194,13 +199,14 @@ class ArxivPaperUrlFetcherCLI:
         return False
 
     def validate_dates(self) -> None:
-        """Validate the begin and end dates.
+        """Validate the begin and end dates for paper filtering.
 
-        Checks that both dates are valid and properly ordered.
+        Ensures both dates are in valid YYYY-MM-DD format and that the end
+        date occurs after the begin date.
 
         :return: None
         :rtype: None
-        :raises ValueError: If dates are invalid or end date is not after begin date
+        :raises ValueError: If dates are in invalid format or end date is not after begin date
         """
         self.logger.debug(f"Validating dates: begin={self.begin}, end={self.end}")
         self.utils.validate_date(self.begin, "--begin")
@@ -215,11 +221,12 @@ class ArxivPaperUrlFetcherCLI:
     def process_categories(self) -> None:
         """Process each category for paper fetching.
 
-        Iterates through categories and initiates paper fetching for each one.
-        Handles interruptions gracefully.
+        Iterates through validated categories and initiates paper fetching for each one.
+        Handles keyboard interruptions gracefully to allow clean shutdown.
 
         :return: None
         :rtype: None
+        :raises KeyboardInterrupt: If user interrupts the process
         :raises Exception: If paper fetching fails for any category
         """
         categories = self.get_categories()
