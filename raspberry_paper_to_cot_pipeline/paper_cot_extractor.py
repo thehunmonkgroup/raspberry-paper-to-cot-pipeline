@@ -27,8 +27,11 @@ from raspberry_paper_to_cot_pipeline.utils import Utils
 
 def parse_arguments() -> argparse.Namespace:
     """Parse and validate command-line arguments for the CoT extraction process.
+    
+    Configures and processes all command-line arguments needed for the Chain of Thought
+    extraction pipeline.
 
-    :return: Namespace containing the parsed command-line arguments
+    :return: Parsed command-line arguments
     :rtype: argparse.Namespace
     """
     parser = argparse.ArgumentParser(
@@ -151,6 +154,10 @@ class CoTExtractor:
     ):
         """Initialize the CoTExtractor with processing configuration.
 
+        Sets up all necessary attributes and configurations for the Chain of Thought
+        extraction pipeline, including model presets, file paths, and processing options.
+        Initializes logging and utility components.
+
         :param extraction_preset: Model configuration for initial extraction
         :type extraction_preset: str
         :param critique_preset: Model configuration for critique generation
@@ -207,13 +214,17 @@ class CoTExtractor:
 
     def fetch_specific_paper(
         self, paper_id: str
-    ) -> Generator[Union[Dict[str, Any], sqlite3.Row], None, None]:
-        """
-        Fetch a specific paper from the database.
+    ) -> Generator[sqlite3.Row, None, None]:
+        """Fetch a specific paper from the database by its ID.
 
-        :param paper_id: ID of the paper to fetch
-        :return: Generator yielding the paper data
-        :raises RuntimeError: If paper is not found
+        Queries the database for a paper with the given ID and yields its data.
+        Used when processing a single specific paper rather than batch processing.
+
+        :param paper_id: ID of the paper to fetch from database
+        :type paper_id: str
+        :return: Generator yielding the paper data as dictionary or database row
+        :rtype: Generator[Union[Dict[str, Any], sqlite3.Row], None, None]
+        :raises RuntimeError: If paper with given ID is not found in database
         """
         query = """
         SELECT id, paper_id, paper_url
@@ -227,10 +238,14 @@ class CoTExtractor:
         yield from papers
 
     def fetch_papers(self) -> Generator[sqlite3.Row, None, None]:
-        """
-        Fetch papers from the database based on suitability score or specific paper ID.
+        """Fetch papers from the database for processing.
 
-        :return: Generator of paper data dictionaries containing id, paper_id, and paper_url
+        Retrieves papers based on either a specific paper ID if provided, or based on
+        suitability score and processing status. Handles both single-paper and batch
+        processing modes.
+
+        :return: Generator of paper data rows containing id, paper_id, and paper_url
+        :rtype: Generator[sqlite3.Row, None, None]
         """
         if hasattr(self, "paper_id") and self.paper_id:
             return self.fetch_specific_paper(self.paper_id)
@@ -244,11 +259,15 @@ class CoTExtractor:
         )
 
     def _check_suitability(self, paper: sqlite3.Row) -> bool:
-        """
-        Check if paper meets suitability requirements.
+        """Check if paper meets minimum suitability requirements for processing.
 
-        :param paper: Paper data
-        :return: True if paper is suitable, False otherwise
+        Evaluates the paper's profiler suitability score against the minimum threshold
+        to determine if it should be processed.
+
+        :param paper: Paper data containing profiler_suitability_score
+        :type paper: sqlite3.Row
+        :return: True if paper meets suitability requirements, False otherwise
+        :rtype: bool
         """
         if (
             "profiler_suitability_score" in paper.keys()
@@ -260,13 +279,18 @@ class CoTExtractor:
             return False
         return True
 
-    def _handle_extraction_stage(self, paper: sqlite3.Row, pdf_text: str) -> tuple:
-        """
-        Handle the initial extraction stage.
+    def _handle_extraction_stage(self, paper: sqlite3.Row, pdf_text: str) -> Tuple[str, str, str]:
+        """Handle the initial Chain of Thought extraction stage.
 
-        :param paper: Paper data
-        :param pdf_text: Text content of paper
-        :return: Tuple of extraction results
+        Processes the paper text to extract the initial question, chain of reasoning,
+        and answer. Writes the extraction results to an artifact file.
+
+        :param paper: Paper data containing paper_id and metadata
+        :type paper: sqlite3.Row
+        :param pdf_text: Extracted text content of the paper
+        :type pdf_text: str
+        :return: Tuple of (question, chain_of_reasoning, answer)
+        :rtype: Tuple[str, str, str]
         """
         question, chain_of_reasoning, answer, initial_response = (
             self.process_initial_cot_extraction(pdf_text)
@@ -285,15 +309,24 @@ class CoTExtractor:
         answer: str,
         pdf_text: str,
     ) -> str:
-        """
-        Handle the critique stage.
+        """Handle the critique stage of the CoT extraction pipeline.
 
-        :param paper: Paper data
-        :param question: Extracted question
-        :param chain_of_reasoning: Chain of reasoning
-        :param answer: Answer
-        :param pdf_text: Paper text content
-        :return: Generated critique
+        Processes the initial extraction results to generate a critique of the reasoning
+        and conclusions. Writes critique results to an artifact file.
+
+        :param paper: Paper data containing paper_id and metadata
+        :type paper: sqlite3.Row
+        :param question: Initially extracted question
+        :type question: str
+        :param chain_of_reasoning: Initially extracted reasoning chain
+        :type chain_of_reasoning: str
+        :param answer: Initially extracted answer
+        :type answer: str
+        :param pdf_text: Full text content of the paper
+        :type pdf_text: str
+        :return: Generated critique of the extraction
+        :rtype: str
+        :raises: None
         """
         critique, critique_response = self.process_critique(
             question, chain_of_reasoning, answer, pdf_text
@@ -311,15 +344,23 @@ class CoTExtractor:
         critique: str,
         pdf_text: str,
     ) -> None:
-        """
-        Handle the refinement stage.
+        """Handle the refinement stage of the CoT extraction pipeline.
 
-        :param paper: Paper data
-        :param question: Original question
-        :param chain_of_reasoning: Original chain of reasoning
-        :param answer: Original answer
-        :param critique: Generated critique
-        :param pdf_text: Paper text content
+        Processes the critique to generate refined versions of the question, reasoning
+        chain and answer. Writes both refinement and training artifacts.
+
+        :param paper: Paper data containing paper_id and metadata
+        :type paper: sqlite3.Row
+        :param question: Original extracted question
+        :type question: str
+        :param chain_of_reasoning: Original reasoning chain
+        :type chain_of_reasoning: str
+        :param answer: Original extracted answer
+        :type answer: str
+        :param critique: Generated critique of initial extraction
+        :type critique: str
+        :param pdf_text: Full text content of the paper
+        :type pdf_text: str
         """
         refined_q, refined_c, refined_a, refinement_response = self.process_refinement(
             question, chain_of_reasoning, answer, critique, pdf_text
@@ -422,14 +463,21 @@ class CoTExtractor:
         answer: str,
         raw_content: str,
     ) -> None:
-        """
-        Write initial extraction artifact to a file.
+        """Write the initial CoT extraction results to an artifact file.
 
-        :param paper: Paper data
-        :param question: Extracted question
-        :param chain_of_reasoning: Extracted chain of reasoning
+        Creates a formatted artifact file containing the extracted question, reasoning
+        chain, and answer, along with metadata and raw LLM response.
+
+        :param paper: Paper data containing paper_id and paper_url
+        :type paper: sqlite3.Row
+        :param question: Extracted research question
+        :type question: str
+        :param chain_of_reasoning: Extracted reasoning chain
+        :type chain_of_reasoning: str
         :param answer: Extracted answer
-        :param raw_content: Raw LWE response content
+        :type answer: str
+        :param raw_content: Raw LLM response content
+        :type raw_content: str
         """
         artifact_name = constants.COT_INITIAL_EXTRACTION_ARTIFACT_PATTERN.format(
             paper_id=paper["paper_id"]
@@ -467,12 +515,17 @@ Raw Content:
         critique: str,
         raw_content: str,
     ) -> None:
-        """
-        Write critique artifact to a file.
+        """Write the critique results to an artifact file.
 
-        :param paper: Paper data
-        :param critique: Critique
-        :param critique_response: Raw critique response
+        Creates a formatted artifact file containing the generated critique along
+        with metadata and raw LLM response.
+
+        :param paper: Paper data containing paper_id and paper_url
+        :type paper: sqlite3.Row
+        :param critique: Generated critique of the extraction
+        :type critique: str
+        :param raw_content: Raw LLM response content
+        :type raw_content: str
         """
         artifact_name = constants.COT_CRITIQUE_ARTIFACT_PATTERN.format(
             paper_id=paper["paper_id"]
@@ -498,14 +551,21 @@ Raw Response:
         answer: str,
         raw_content: str,
     ) -> None:
-        """
-        Write refinement artifact to a file.
+        """Write the refinement results to an artifact file.
 
-        :param paper: Paper data
-        :param question: Refined question
-        :param chain_of_reasoning: Refined chain of reasoning
+        Creates a formatted artifact file containing the refined question, reasoning
+        chain, and answer, along with metadata and raw LLM response.
+
+        :param paper: Paper data containing paper_id and paper_url
+        :type paper: sqlite3.Row
+        :param question: Refined research question
+        :type question: str
+        :param chain_of_reasoning: Refined reasoning chain
+        :type chain_of_reasoning: str
         :param answer: Refined answer
-        :param raw_content: Raw refinement content
+        :type answer: str
+        :param raw_content: Raw LLM response content
+        :type raw_content: str
         """
         artifact_name = constants.COT_REFINEMENT_ARTIFACT_PATTERN.format(
             paper_id=paper["paper_id"]
@@ -582,13 +642,17 @@ Raw Content:
             self.logger.error(f"Unexpected error in initial extraction: {str(e)}")
             raise RuntimeError(f"Initial extraction processing failed: {str(e)}")
 
-    def extract_critique(self, xml_string: str) -> Tuple[str, str]:
-        """
-        Extract analysis and critique content from XML response.
+    def extract_critique(self, xml_string: str) -> str:
+        """Extract analysis and critique content from XML response.
 
-        :param xml_string: XML string containing critique response
-        :return: Critique content
-        :raises ValueError: If XML parsing fails
+        Parses the XML response from the LLM to extract the structured critique
+        content from the designated XML tags.
+
+        :param xml_string: XML formatted string containing critique response
+        :type xml_string: str
+        :return: Extracted critique content
+        :rtype: Tuple[str, str]
+        :raises ValueError: If XML string is empty or missing required elements
         """
         if not xml_string:
             raise ValueError("Empty XML string")
@@ -732,13 +796,19 @@ Raw Content:
         chain_of_reasoning: str,
         answer: str,
     ) -> None:
-        """
-        Write training artifact to a file.
+        """Write the final training data artifact to a JSONL file.
 
-        :param paper: Paper data
-        :param question: Extracted question
-        :param chain_of_reasoning: Extracted chain of reasoning
-        :param answer: Extracted answer
+        Creates a training data entry in JSONL format containing the system message,
+        question as user input, and reasoning chain with answer as assistant response.
+
+        :param paper: Paper data containing paper_id
+        :type paper: sqlite3.Row
+        :param question: Final refined question
+        :type question: str
+        :param chain_of_reasoning: Final refined reasoning chain
+        :type chain_of_reasoning: str
+        :param answer: Final refined answer
+        :type answer: str
         """
         artifact_name = f"{paper['paper_id']}-training-data.jsonl"
         training_data = {
@@ -749,7 +819,19 @@ Raw Content:
         self.utils.write_training_artifact(artifact_name, training_data)
 
     def run(self) -> None:
-        """Execute the main logic of the CoT extraction process."""
+        """Execute the main logic of the CoT extraction process.
+
+        Orchestrates the complete Chain of Thought extraction pipeline:
+        1. Fetches papers from database based on criteria
+        2. For each paper:
+           - Downloads and processes PDF
+           - Performs initial CoT extraction
+           - Generates critique
+           - Refines extraction based on critique
+           - Creates training artifacts
+        
+        :raises: SystemExit: If a fatal error occurs during processing
+        """
         try:
             papers = self.fetch_papers()
             for paper in papers:
@@ -763,7 +845,12 @@ Raw Content:
 
 
 def main():
-    """Main entry point for CLI usage."""
+    """Main entry point for CLI usage.
+
+    Parses command line arguments and initializes the CoT extraction pipeline.
+    Configures the extractor with provided options and executes the pipeline.
+
+    """
     args = parse_arguments()
     if args.debug:
         print(f"Arguments: {vars(args)}")
