@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 
 """
-Pipeline script that orchestrates the full paper processing workflow:
-profiling → scoring → CoT extraction.
+Pipeline script for orchestrating the complete paper processing workflow.
+
+This module implements a multi-stage pipeline that processes research papers through
+several stages: profiling, scoring, Chain of Thought (CoT) extraction, quality
+assessment, and training data generation. Each stage builds upon the results of
+the previous stage to create a comprehensive paper analysis pipeline.
 """
 
 import argparse
@@ -19,7 +23,20 @@ from raspberry_paper_to_cot_pipeline.utils import Utils
 
 
 class PaperCoTPipeline:
-    """Orchestrates the full paper processing pipeline."""
+    """
+    Orchestrates the complete paper processing pipeline.
+
+    This class manages the execution of multiple processing stages for research papers,
+    including profiling, scoring, CoT extraction, quality assessment, and training
+    data generation. It handles the flow control and error management between stages.
+
+    :param selection_strategy: Strategy for selecting papers in the profiling stage
+    :type selection_strategy: Literal["random", "category_balanced"]
+    :param limit: Maximum number of papers to process in each stage
+    :type limit: int
+    :param debug: Flag to enable debug logging
+    :type debug: bool
+    """
 
     def __init__(
         self,
@@ -28,11 +45,16 @@ class PaperCoTPipeline:
         debug: bool = False,
     ) -> None:
         """
-        Initialize the pipeline.
+        Initialize the pipeline with specified configuration.
 
         :param selection_strategy: Strategy for paper selection in profiling stage
+        :type selection_strategy: Literal["random", "category_balanced"]
         :param limit: Number of papers to process in each stage
+        :type limit: int
         :param debug: Enable debug logging
+        :type debug: bool
+        :return: None
+        :rtype: None
         """
         self.limit = limit
         self.selection_strategy = selection_strategy
@@ -40,7 +62,17 @@ class PaperCoTPipeline:
         self.logger = Utils.setup_logging(__name__, debug)
 
     def run(self) -> None:
-        """Execute the full pipeline sequence."""
+        """
+        Execute the complete pipeline sequence.
+
+        Runs all pipeline stages in sequence: paper profiling, profile scoring,
+        CoT extraction, quality assessment, quality scoring, and training data
+        generation. Handles errors and logging for each stage.
+
+        :return: None
+        :rtype: None
+        :raises Exception: If any pipeline stage fails
+        """
         try:
             # Stage 1: Profile papers
             self.logger.info("Starting paper profiling stage...")
@@ -99,7 +131,15 @@ class PaperCoTPipeline:
 
 
 def parse_arguments() -> argparse.Namespace:
-    """Parse command line arguments."""
+    """
+    Parse command line arguments for pipeline configuration.
+
+    Defines and processes command line arguments for configuring the pipeline,
+    including selection strategy, processing limits, and debug options.
+
+    :return: Parsed command line arguments
+    :rtype: argparse.Namespace
+    """
     parser = argparse.ArgumentParser(
         description="Run the complete paper processing pipeline."
     )
@@ -121,7 +161,16 @@ def parse_arguments() -> argparse.Namespace:
 
 
 def main():
-    """Main entry point."""
+    """
+    Main entry point for the pipeline execution.
+
+    Initializes and runs the paper processing pipeline with command line arguments.
+    Handles command line argument parsing and pipeline initialization.
+
+    :return: None
+    :rtype: None
+    :raises SystemExit: If the pipeline execution fails
+    """
     args = parse_arguments()
     pipeline = PaperCoTPipeline(
         selection_strategy=args.selection_strategy, limit=args.limit, debug=args.debug
