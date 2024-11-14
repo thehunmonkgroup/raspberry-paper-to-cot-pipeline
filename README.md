@@ -99,7 +99,13 @@ raspberry-fetch-paper-urls
    raspberry-paper-cot-pipeline
    ```
 
-   This runs the rest of the pipeline scripts with default arguments. For more control, you can also run each script individually:
+   This runs the rest of the pipeline scripts with default arguments.
+
+   By default this will select one paper randomly from the verified paper links, and run it through the rest of the pipeline with default settings.
+
+   Run the script with `--help` to see how to run the full pipeline with more papers and other selection strategies.
+
+   For more control, you can also run each script individually:
 
    ```sh
    raspberry-paper-profiler
