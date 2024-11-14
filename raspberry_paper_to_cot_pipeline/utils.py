@@ -501,7 +501,7 @@ class Utils:
         WHERE url_row_num = 1
         ORDER BY category, category_row_num;
         """
-        params: tuple = (limit,)
+        params: tuple = (status,)
         try:
             with get_db_connection(self.database) as conn:
                 conn.row_factory = sqlite3.Row
