@@ -479,7 +479,7 @@ class Utils:
             ROW_NUMBER() OVER (ORDER BY RANDOM()) AS global_row_num
           FROM paper_categories pc
           JOIN papers p ON pc.paper_id = p.id
-          WHERE p.processing_status = '{status}'
+          WHERE p.processing_status = ?
         ),
         selected_papers AS (
           SELECT category, id, paper_id, paper_url, category_row_num, global_row_num
@@ -501,7 +501,7 @@ class Utils:
         WHERE url_row_num = 1
         ORDER BY category, category_row_num;
         """
-        params: tuple = (status, limit)
+        params: tuple = (limit,)
         try:
             with get_db_connection(self.database) as conn:
                 conn.row_factory = sqlite3.Row
