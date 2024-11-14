@@ -7,6 +7,22 @@ name = "raspberry_paper_to_cot_pipeline"
 version = "0.1.0"
 description = "A pipeline for processing research papers"
 requires-python = ">=3.7"
+dependencies = [
+    "beautifulsoup4",
+    "python-dateutil",
+    "requests",
+    "tenacity",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pip-tools",    # For dependency management
+    "pytest",       # For testing
+    "black",        # For code formatting
+    "isort",        # For import sorting
+    "mypy",         # For type checking
+    "flake8",       # For linting
+]
 
 [project.scripts]
 raspberry-fetch-paper-urls = "raspberry_paper_to_cot_pipeline.fetch_paper_urls:main"

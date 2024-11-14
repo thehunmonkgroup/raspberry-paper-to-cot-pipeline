@@ -24,6 +24,10 @@ The idea is that these academic papers represent the best of how humans reason t
    ```sh
    pip install -e .
    ```
+   ...or for a development install...
+   ```sh
+   pip install -e .[dev]
+   ```
 
 ## Pipeline Workflow
 
