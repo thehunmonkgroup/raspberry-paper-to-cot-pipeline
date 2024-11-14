@@ -14,7 +14,10 @@ The idea is that these academic papers represent the best of how humans reason t
 
 ## Installation
 
-1. Install [LWE](https://llm-workflow-engine.readthedocs.io/en/latest/installation.html) and any needed [provider plugins](https://llm-workflow-engine.readthedocs.io/en/latest/plugins.html#provider-plugins)
+1. Install [LLM Workflow Engine](https://llm-workflow-engine.readthedocs.io/en/latest/installation.html)
+2. Install the following LWE plugins:
+  * [Chat Anthropic](https://github.com/llm-workflow-engine/lwe-plugin-provider-chat-anthropic)
+  * Any other [Provider plugins](https://llm-workflow-engine.readthedocs.io/en/latest/plugins.html#provider-plugins) needed depending on the models you'll want to use
 2. [Configure](https://llm-workflow-engine.readthedocs.io/en/latest/initial_setup.html) any needed API keys for the models used in the pipeline
 3. Clone this repository, change directory into the root
 4. Install the package:
