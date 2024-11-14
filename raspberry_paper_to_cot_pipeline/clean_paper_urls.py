@@ -30,6 +30,7 @@ import sys
 
 from raspberry_paper_to_cot_pipeline import constants
 from raspberry_paper_to_cot_pipeline.utils import Utils
+from raspberry_paper_to_cot_pipeline.utils import get_db_connection
 
 # Retry configuration constants
 RETRY_ATTEMPTS = 2
@@ -299,7 +300,7 @@ class PaperCleaner:
             f"Preparing to mark all papers with status '{constants.STATUS_PAPER_LINK_DOWNLOADED}' as '{constants.STATUS_PAPER_LINK_VERIFIED}'"
         )
         try:
-            with self.utils.get_db_connection(self.database) as conn:
+            with get_db_connection(self.database) as conn:
                 cursor = conn.cursor()
                 cursor.execute(
                     """
