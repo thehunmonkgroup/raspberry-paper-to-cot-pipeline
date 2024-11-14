@@ -1,4 +1,4 @@
-requests
 beautifulsoup4
-tenacity
 python-dateutil
+requests
+tenacity
