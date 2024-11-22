@@ -1,6 +1,5 @@
 flowchart TD
     A[Fetch Paper URLs] --> B[Database]
-    B <--> D[Clean Papers]
     B <--> E[Profile Papers]
     B <--> F[Score Papers]
     B <--> G[Extract CoT]
@@ -16,7 +15,6 @@ flowchart TD
     L --> Q[CoT Refinement]
     Q --> R[Candidate Training Files]
     R --> J
-    D --> E
     E --> F
     F --> G
     G --> H

@@ -216,8 +216,6 @@ CREATE TABLE IF NOT EXISTS paper_categories (
 """
 DEFAULT_FETCH_BY_STATUS_COLUMNS = ["id", "paper_id", "paper_url"]
 STATUS_PAPER_LINK_DOWNLOADED = "paper_link_downloaded"
-STATUS_PAPER_LINK_VERIFIED = "paper_link_verified"
-STATUS_PAPER_MISSING = "paper_missing"
 STATUS_PAPER_PROFILED = "paper_profiled"
 STATUS_PAPER_PROFILE_SCORED = "paper_profile_scored"
 STATUS_COT_EXTRACTED = "cot_extracted"
@@ -225,10 +223,6 @@ STATUS_COT_QUALITY_ASSESSED = "cot_quality_assessed"
 STATUS_COT_QUALITY_SCORED = "cot_quality_scored"
 STATUS_FAILED_COT_EXTRACTION = "failed_cot_extraction"
 STATUS_FAILED_COT_QUALITY_ASSESSMENT = "failed_cot_quality_assessment"
-
-# URL cleaning
-PAPER_URL_REQUEST_TIMEOUT_SECONDS = 15
-PAPER_URL_PROGRESS_LOG_BATCH_SIZE = 1000
 
 # Training
 DEFAULT_CONSOLIDATED_TRAINING_FILENAME = "consolidated-training-data.jsonl"

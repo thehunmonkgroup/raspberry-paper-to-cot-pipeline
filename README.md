@@ -38,13 +38,12 @@ The following diagram illustrates the pipeline workflow:
 ![Pipeline Diagram](misc/pipeline-diagram.svg)
 
 1. **raspberry-fetch-paper-urls**: Retrieve academic papers from arXiv.org
-2. **raspberry-clean-paper-urls**: Verify paper accessibility and remove inaccessible papers
-3. **raspberry-paper-profiler**: Analyze and profile the papers based on specific criteria, store criteria data in database
+2. **raspberry-paper-profiler**: Analyze and profile the papers based on specific criteria, store criteria data in database
 
    Artifacts generated:
    * Profiling inference artifact
-4. **raspberry-paper-profile-scorer**: Assign suitability scores to the papers based on profiling criteria, store in database
-5. **raspberry-paper-cot-extractor**: Extract Chain of Thought sets from the papers through a three-stage process:
+3. **raspberry-paper-profile-scorer**: Assign suitability scores to the papers based on profiling criteria, store in database
+4. **raspberry-paper-cot-extractor**: Extract Chain of Thought sets from the papers through a three-stage process:
    * Initial Extraction: Generate initial question, reasoning chain and answer
    * Critique: Analyze and critique the initial extraction
    * Refinement: Improve the CoT based on critique feedback
@@ -54,7 +53,7 @@ The following diagram illustrates the pipeline workflow:
    * Critique inference artifact
    * Refinement inference artifact
    * Training data artifact in JSONL format
-6. **raspberry-cot-quality-assessor**: Assess the quality of the refined Chain of Thought sets from the papers based on specific criteria, store criteria in the database
+5. **raspberry-cot-quality-assessor**: Assess the quality of the refined Chain of Thought sets from the papers based on specific criteria, store criteria in the database
 6. **raspberry-cot-quality-scorer**: Assign suitability scores to the refined Chain of Thought sets based on quality assessment criteria, store in database
 7. **raspberry-generate-training-data**: Compile the final training data from the individual training artifacts, filtering out invalid Chain of Thought sets based on their quality assessment score
 
@@ -88,13 +87,7 @@ raspberry-fetch-paper-urls
 ## Running the Pipeline
 
 1. Fetch papers as described above
-2. Clean the papers
-   ```sh
-   raspberry-clean-paper-urls
-   ```
-
-   Cleaning can take a long time if you've downloaded a lot of links. The cleaning process is not strictly necessary (its purpose is to verify that the PDF for a paper is actually available), if you'd like to skip it, run the script with the `--skip-cleaning` argument.
-3. Run the rest of the pipeline
+2. Run the rest of the pipeline
    ```sh
    raspberry-paper-cot-pipeline
    ```

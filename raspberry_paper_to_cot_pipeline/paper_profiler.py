@@ -303,11 +303,11 @@ Raw Inference Output:
         """
         if self.selection_strategy == "random":
             return self.utils.fetch_papers_by_processing_status(
-                status=constants.STATUS_PAPER_LINK_VERIFIED, limit=self.limit
+                status=constants.STATUS_PAPER_LINK_DOWNLOADED, limit=self.limit
             )
         else:  # category_balanced
             return self.utils.fetch_papers_by_processing_status_balanced_by_category(
-                status=constants.STATUS_PAPER_LINK_VERIFIED, limit=self.limit
+                status=constants.STATUS_PAPER_LINK_DOWNLOADED, limit=self.limit
             )
 
     def run(self) -> None:
