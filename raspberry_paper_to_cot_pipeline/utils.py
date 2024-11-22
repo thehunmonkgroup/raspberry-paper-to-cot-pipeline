@@ -274,7 +274,7 @@ class Utils:
         :rtype: Path
         """
         pdf_path = Path(pdf_path)
-        return pdf_path.with_suffix('.md')
+        return pdf_path.with_suffix(".md")
 
     def _read_cached_text(self, cache_path: Path) -> Optional[str]:
         """Read cached text if it exists.

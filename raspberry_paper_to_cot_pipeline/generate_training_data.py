@@ -108,7 +108,9 @@ class TrainingDataGenerator:
         database: str = constants.DEFAULT_DB_NAME,
         suitability_score: int = constants.COT_QUALITY_ASSESSMENT_DEFAULT_SUITABILITY_SCORE,
         training_file_name: str = constants.DEFAULT_CONSOLIDATED_TRAINING_FILENAME,
-        training_artifacts_directory: Union[str, Path] = constants.DEFAULT_TRAINING_ARTIFACTS_DIR,
+        training_artifacts_directory: Union[
+            str, Path
+        ] = constants.DEFAULT_TRAINING_ARTIFACTS_DIR,
         limit: Optional[int] = None,
         debug: bool = False,
     ):
@@ -282,7 +284,9 @@ class TrainingDataGenerator:
             ):
                 total = processed_count + skipped_count
                 percentage = (processed_count / total * 100) if total > 0 else 0
-                self.logger.info(f"Generated {processed_count} training examples ({percentage:.1f}% of total processed)")
+                self.logger.info(
+                    f"Generated {processed_count} training examples ({percentage:.1f}% of total processed)"
+                )
 
         return processed_count, skipped_count
 
@@ -327,7 +331,7 @@ def main():
     """Main entry point for CLI usage.
 
     Parses command line arguments and runs the training data generation process.
-    
+
     :raises SystemExit: With code 1 if an unrecoverable error occurs
     :raises ArgumentError: If invalid command line arguments are provided
     """

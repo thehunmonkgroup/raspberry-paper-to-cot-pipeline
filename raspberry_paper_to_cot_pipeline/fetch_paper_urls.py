@@ -28,8 +28,8 @@ from raspberry_paper_to_cot_pipeline.fetch_arxiv_paper_urls_by_category import (
 
 def parse_arguments() -> argparse.Namespace:
     """Parse and validate command-line arguments for the script.
-    
-    Sets up argument parser with all required and optional arguments for 
+
+    Sets up argument parser with all required and optional arguments for
     controlling paper fetching behavior.
 
     :return: Namespace containing all parsed command line arguments
@@ -128,7 +128,7 @@ class ArxivPaperUrlFetcherCLI:
     def display_config(self) -> None:
         """Display the current configuration settings.
 
-        Prints the configured date range and category settings along with 
+        Prints the configured date range and category settings along with
         category descriptions from the arXiv taxonomy.
 
         :return: None

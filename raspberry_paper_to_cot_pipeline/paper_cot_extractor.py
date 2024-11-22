@@ -16,9 +16,8 @@ to track paper processing status.
 
 import argparse
 import requests
-from typing import Dict, Any, Tuple, Generator, Optional, Union
+from typing import Tuple, Generator, Optional
 import sqlite3
-import sys
 import xml
 import xml.etree.ElementTree as ET
 from raspberry_paper_to_cot_pipeline import constants
@@ -212,9 +211,7 @@ class CoTExtractor:
         )
         self.utils.setup_lwe()
 
-    def fetch_specific_paper(
-        self, paper_id: str
-    ) -> Generator[sqlite3.Row, None, None]:
+    def fetch_specific_paper(self, paper_id: str) -> Generator[sqlite3.Row, None, None]:
         """Fetch a specific paper from the database by its ID.
 
         Queries the database for a paper with the given ID and yields its data.
@@ -279,7 +276,9 @@ class CoTExtractor:
             return False
         return True
 
-    def _handle_extraction_stage(self, paper: sqlite3.Row, pdf_text: str) -> Tuple[str, str, str]:
+    def _handle_extraction_stage(
+        self, paper: sqlite3.Row, pdf_text: str
+    ) -> Tuple[str, str, str]:
         """Handle the initial Chain of Thought extraction stage.
 
         Processes the paper text to extract the initial question, chain of reasoning,
@@ -392,7 +391,9 @@ class CoTExtractor:
             question, chain_of_reasoning, answer = self._handle_extraction_stage(
                 paper, pdf_text
             )
-            self.logger.info(f"Completed extraction stage for paper {paper['paper_id']}")
+            self.logger.info(
+                f"Completed extraction stage for paper {paper['paper_id']}"
+            )
             self.logger.debug(
                 f"Extraction details - Question length: {len(question)}, "
                 f"Reasoning length: {len(chain_of_reasoning)}, "
@@ -410,7 +411,9 @@ class CoTExtractor:
             self._handle_refinement_stage(
                 paper, question, chain_of_reasoning, answer, critique, pdf_text
             )
-            self.logger.info(f"Completed refinement stage for paper {paper['paper_id']}")
+            self.logger.info(
+                f"Completed refinement stage for paper {paper['paper_id']}"
+            )
             self.logger.debug(f"Refinement completed for paper {paper['paper_id']}")
 
             self.utils.update_paper_status(paper["id"], constants.STATUS_COT_EXTRACTED)

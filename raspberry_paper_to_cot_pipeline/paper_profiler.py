@@ -19,8 +19,7 @@ import argparse
 import copy
 import sqlite3
 import xml.etree.ElementTree as ET
-from typing import Dict, Any, Optional, Generator, Literal
-import sys
+from typing import Dict, Optional, Generator, Literal
 from raspberry_paper_to_cot_pipeline import constants
 from raspberry_paper_to_cot_pipeline.utils import Utils
 
@@ -324,7 +323,7 @@ Raw Inference Output:
             self.logger.error(
                 f"An error occurred during the paper profiling process: {e}"
             )
-            sys.exit(1)
+            raise
 
 
 def main():

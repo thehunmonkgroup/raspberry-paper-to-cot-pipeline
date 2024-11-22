@@ -17,7 +17,6 @@ The module implements a scoring system that:
 """
 
 import sqlite3
-import sys
 from typing import List, Optional, Generator
 
 from raspberry_paper_to_cot_pipeline import constants
@@ -256,4 +255,4 @@ class BaseScorer:
             self.logger.error(
                 f"An error occurred during the scoring process: {processing_error}"
             )
-            sys.exit(1)
+            raise

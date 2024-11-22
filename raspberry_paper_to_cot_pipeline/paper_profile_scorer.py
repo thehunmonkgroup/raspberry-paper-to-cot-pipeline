@@ -72,8 +72,7 @@ class PaperProfileScorer(BaseScorer):
 
 
 def main() -> None:
-    """Execute the paper scoring process.
-    """
+    """Execute the paper scoring process."""
     args = parse_arguments()
     scorer = PaperProfileScorer(
         limit=args.limit,

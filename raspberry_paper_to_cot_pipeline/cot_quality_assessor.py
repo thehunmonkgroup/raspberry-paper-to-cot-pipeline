@@ -27,7 +27,7 @@ Assessment criteria evaluated:
 import argparse
 import copy
 import xml.etree.ElementTree as ET
-from typing import Dict, Any, Optional, Tuple
+from typing import Dict, Optional, Tuple
 import sqlite3
 import sys
 from raspberry_paper_to_cot_pipeline import constants
@@ -255,9 +255,7 @@ Raw Inference Output:
                 return False
         return True
 
-    def get_refinement_data(
-        self, paper: sqlite3.Row
-    ) -> Optional[Tuple[str, str, str]]:
+    def get_refinement_data(self, paper: sqlite3.Row) -> Optional[Tuple[str, str, str]]:
         """
         Retrieve refined question, reasoning chain, and answer from paper artifact.
 

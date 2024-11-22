@@ -53,7 +53,7 @@ class ArxivPaperUrlFetcher:
     :type database: str
     :param debug: Enable debug logging if True
     :type debug: bool
-    
+
     :ivar logger: Logger instance for this class
     :type logger: logging.Logger
     :ivar utils: Utility class instance for database operations
@@ -142,8 +142,12 @@ class ArxivPaperUrlFetcher:
                             results.append(result)
 
                         params["start"] += len(entries)
-                        self.logger.info(f"Completed fetching papers for category {categories[0]}: {len(results)} papers retrieved")
-                        self.logger.info(f"Total papers fetched for category {categories[0]}: {len(results)}")
+                        self.logger.info(
+                            f"Completed fetching papers for category {categories[0]}: {len(results)} papers retrieved"
+                        )
+                        self.logger.info(
+                            f"Total papers fetched for category {categories[0]}: {len(results)}"
+                        )
                     else:
                         attempts += 1
 
@@ -190,7 +194,9 @@ class ArxivPaperUrlFetcher:
         retry=(retry_if_exception_type(RequestException)),
         reraise=True,
     )
-    def _fetch_arxiv_data(self, params: Dict[str, Any]) -> Optional[Union[ET.Element, Literal[False]]]:
+    def _fetch_arxiv_data(
+        self, params: Dict[str, Any]
+    ) -> Optional[Union[ET.Element, Literal[False]]]:
         """Fetch data from arXiv API and parse the response.
 
         :param params: Query parameters for the API request
@@ -505,7 +511,7 @@ def parse_arguments() -> argparse.Namespace:
         description="Search arXiv for recent papers and generate PDF download links."
     )
     # Required arguments
-    required_group = parser.add_argument_group('required arguments')
+    required_group = parser.add_argument_group("required arguments")
     required_group.add_argument(
         "--category", type=str, required=True, help="arXiv category to search."
     )
@@ -521,7 +527,7 @@ def parse_arguments() -> argparse.Namespace:
         required=True,
         help="End date for paper filter (YYYY-MM-DD).",
     )
-    
+
     # Optional arguments
     parser.add_argument(
         "--start-index",
@@ -535,11 +541,7 @@ def parse_arguments() -> argparse.Namespace:
         default=constants.DEFAULT_DB_NAME,
         help="Name of the SQLite database file (default: %(default)s)",
     )
-    parser.add_argument(
-        "--debug", 
-        action="store_true", 
-        help="Enable debug logging."
-    )
+    parser.add_argument("--debug", action="store_true", help="Enable debug logging.")
     return parser.parse_args()
 
 
