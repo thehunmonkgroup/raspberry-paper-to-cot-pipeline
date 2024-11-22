@@ -54,10 +54,10 @@ XML Template:
 <results>
   <analysis>
     <![CDATA[
-      {Provide detailed reasoning for each evaluation point, explaining how the question/CoT/answer set meets or fails to meet each criterion}
+      {Provide detailed reasoning for each evaluation point, explaining how the question/chain of reasoning/answer set meets or fails to meet each criterion. You MUST explicitly identify any instances where the set references "the paper", "the authors", "the study", uses phrases like "according to" or "the research shows", or indicates the information comes from a written document - these are critical failures that must be highlighted first in your analysis.}
     ]]>
   </analysis>
-  
+
   <source_fidelity>
     <contains_only_paper_content>
       <![CDATA[
@@ -130,9 +130,14 @@ XML Template:
   <structural_quality>
     <consistent_voice>
       <![CDATA[
-        {Does the set maintain consistent first-person narrative voice throughout? Answer Yes or No}
+        {Are all observations and conclusions presented in a consistent first-person narrative voice (e.g., "I observe", "I find") rather than citations or references? Answer Yes or No}
       ]]>
     </consistent_voice>
+    <no_paper_references>
+      <![CDATA[
+        {Is the set completely free from any references to "the paper", "the authors", "the study", or any indication that the information comes from a written document? Answer Yes or No}
+      ]]>
+    </no_paper_references>
     <terms_explained>
       <![CDATA[
         {Are all technical terms used properly explained? Answer Yes or No}

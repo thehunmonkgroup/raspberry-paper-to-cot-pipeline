@@ -137,6 +137,7 @@ COT_QUALITY_ASSESSMENT_CRITERIA = [
     "appropriate_complexity",
     # structural_quality criteria
     "consistent_voice",
+    "no_paper_references",
     "terms_explained",
     "no_contradictions",
     "complete_flow",
@@ -149,6 +150,8 @@ REQUIRED_COT_QUALITY_ASSESSMENT_CRITERIA = [
     "steps_supported_by_paper",
     "no_logical_leaps",
     "answer_addresses_question",
+    "consistent_voice",
+    "no_paper_references",
 ]
 
 # ArXiv.
@@ -166,7 +169,7 @@ FETCH_MAX_EMPTY_RESULTS_ATTEMPTS = 10
 COT_EXTRACTION_DEFAULT_SUITABILITY_SCORE = 8
 
 # CoT quality assessment.
-COT_QUALITY_ASSESSMENT_DEFAULT_SUITABILITY_SCORE = 14
+COT_QUALITY_ASSESSMENT_DEFAULT_SUITABILITY_SCORE = 15
 
 # Database.
 DEFAULT_DB_NAME = CWD / "papers.db"
@@ -200,6 +203,7 @@ CREATE TABLE IF NOT EXISTS papers (
     cot_quality_assessment_criteria_answer_addresses_question INT DEFAULT 0,
     cot_quality_assessment_criteria_appropriate_complexity INT DEFAULT 0,
     cot_quality_assessment_criteria_consistent_voice INT DEFAULT 0,
+    cot_quality_assessment_criteria_no_paper_references INT DEFAULT 0,
     cot_quality_assessment_criteria_terms_explained INT DEFAULT 0,
     cot_quality_assessment_criteria_no_contradictions INT DEFAULT 0,
     cot_quality_assessment_criteria_complete_flow INT DEFAULT 0,

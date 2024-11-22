@@ -9,7 +9,7 @@ request_overrides:
 
 This rubric is designed to assess an academic paper's suitability for extracting:
 - A clear, well-defined question
-- A complex chain of reasoning with multiple steps  
+- A complex chain of reasoning with multiple steps
 - A definitive answer derived through that reasoning
 
 The ideal paper will present a well-defined question, provide a clear answer, and demonstrate a logical reasoning process that bridges the gap between the question and the answer. This reasoning should be sufficiently complex to offer meaningful insights, yet accessible enough for an educated non-expert to understand with some effort.

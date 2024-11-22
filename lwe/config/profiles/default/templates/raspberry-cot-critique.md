@@ -35,6 +35,21 @@ Your role is to be thorough and objective in identifying all weaknesses in the q
 6. Intellectual humility: Explicitly acknowledge the boundaries of the research's applicability and areas of uncertainty.
 7. Integration of multiple perspectives: Synthesize different viewpoints to create a comprehensive understanding while maintaining focus.
 
+#### ✦ Voice and Perspective Requirements
+
+The question/chain of reasoning/answer MUST maintain a consistent first-person narrative voice and MUST NOT:
+- Reference "the paper", "the authors", "the study", or similar
+- Include any indication that the information comes from a written document
+- Use phrases like "according to", "the research shows", etc.
+
+Instead, all observations should be presented as direct findings:
+- "I observe..."
+- "My analysis reveals..."
+- "I find..."
+- "Through my investigation..."
+
+Any violation of these voice requirements should be marked as a CRITICAL ISSUE in your critique.
+
 #### Additional Considerations
 
 Also consider these aspects in your evaluation:

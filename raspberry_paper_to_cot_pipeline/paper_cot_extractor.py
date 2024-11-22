@@ -27,7 +27,7 @@ from raspberry_paper_to_cot_pipeline.utils import Utils
 
 def parse_arguments() -> argparse.Namespace:
     """Parse and validate command-line arguments for the CoT extraction process.
-    
+
     Configures and processes all command-line arguments needed for the Chain of Thought
     extraction pipeline.
 
@@ -432,6 +432,7 @@ class CoTExtractor:
             self.utils.update_paper_status(
                 paper["id"], constants.STATUS_FAILED_COT_EXTRACTION
             )
+            raise
         except xml.etree.ElementTree.ParseError as e:
             self.logger.error(
                 f"XML parsing error for paper {paper['paper_id']}: {str(e)}"
@@ -453,6 +454,7 @@ class CoTExtractor:
             self.utils.update_paper_status(
                 paper["id"], constants.STATUS_FAILED_COT_EXTRACTION
             )
+            raise
 
     def write_initial_cot_extraction_artifact(
         self,
@@ -633,13 +635,13 @@ Raw Content:
 
         except requests.RequestException as e:
             self.logger.error(f"LWE API request failed: {str(e)}")
-            raise RuntimeError(f"LWE API request failed: {str(e)}")
+            raise RuntimeError(f"LWE API request failed: {str(e)}") from e
         except ValueError as e:
             self.logger.error(f"Failed to parse LWE response: {str(e)}")
-            raise RuntimeError(f"Failed to parse LWE response: {str(e)}")
+            raise RuntimeError(f"Failed to parse LWE response: {str(e)}") from e
         except Exception as e:
             self.logger.error(f"Unexpected error in initial extraction: {str(e)}")
-            raise RuntimeError(f"Initial extraction processing failed: {str(e)}")
+            raise RuntimeError(f"Initial extraction processing failed: {str(e)}") from e
 
     def extract_critique(self, xml_string: str) -> str:
         """Extract analysis and critique content from XML response.
@@ -714,16 +716,16 @@ Raw Content:
 
         except requests.RequestException as e:
             self.logger.error(f"LWE API request failed during critique: {str(e)}")
-            raise RuntimeError(f"Critique LWE API request failed: {str(e)}")
+            raise RuntimeError(f"Critique LWE API request failed: {str(e)}") from e
         except xml.etree.ElementTree.ParseError as e:
             self.logger.error(f"Failed to parse critique XML: {str(e)}")
-            raise RuntimeError(f"Failed to parse critique XML: {str(e)}")
+            raise RuntimeError(f"Failed to parse critique XML: {str(e)}") from e
         except ValueError as e:
             self.logger.error(f"Invalid critique response format: {str(e)}")
-            raise RuntimeError(f"Invalid critique format: {str(e)}")
+            raise RuntimeError(f"Invalid critique format: {str(e)}") from e
         except Exception as e:
             self.logger.error(f"Unexpected error in critique processing: {str(e)}")
-            raise RuntimeError(f"Critique processing failed: {str(e)}")
+            raise RuntimeError(f"Critique processing failed: {str(e)}") from e
 
     def process_refinement(
         self,
@@ -780,13 +782,13 @@ Raw Content:
 
         except requests.RequestException as e:
             self.logger.error(f"LWE API request failed during refinement: {str(e)}")
-            raise RuntimeError(f"Refinement LWE API request failed: {str(e)}")
+            raise RuntimeError(f"Refinement LWE API request failed: {str(e)}") from e
         except ValueError as e:
             self.logger.error(f"Failed to parse refinement response: {str(e)}")
-            raise RuntimeError(f"Failed to parse refinement response: {str(e)}")
+            raise RuntimeError(f"Failed to parse refinement response: {str(e)}") from e
         except Exception as e:
             self.logger.error(f"Unexpected error in refinement processing: {str(e)}")
-            raise RuntimeError(f"Refinement processing failed: {str(e)}")
+            raise RuntimeError(f"Refinement processing failed: {str(e)}") from e
 
     def write_training_artifact(
         self,
@@ -828,7 +830,7 @@ Raw Content:
            - Generates critique
            - Refines extraction based on critique
            - Creates training artifacts
-        
+
         :raises: SystemExit: If a fatal error occurs during processing
         """
         try:
@@ -840,7 +842,7 @@ Raw Content:
             self.logger.error(
                 f"An error occurred during the CoT extraction process: {e}"
             )
-            sys.exit(1)
+            raise
 
 
 def main():
