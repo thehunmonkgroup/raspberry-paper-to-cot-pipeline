@@ -1,23 +1,20 @@
 #!/usr/bin/env python3
 
 """
-Quality assessment module for Chain of Thought (CoT) extractions from research papers.
+Voice assessment module for Chain of Thought (CoT) transformations.
 
-This module evaluates Chain of Thought extractions from research papers against defined
-quality criteria. It manages the complete assessment workflow including paper loading,
-criteria evaluation, and report generation.
-
-The module implements a systematic assessment process that:
-1. Loads papers with completed CoT extractions from database
-2. Executes LWE templates for criteria evaluation
-3. Parses assessment results and updates paper status
-4. Generates detailed assessment artifacts for tracking
+This module evaluates voice-transformed Chain of Thought content against defined
+criteria to ensure proper first-person transformation while maintaining content
+accuracy. It manages the complete assessment workflow including:
+1. Loading papers with completed voice transformations
+2. Comparing against original refined content
+3. Evaluating voice requirements and content preservation
+4. Generating detailed assessment artifacts
 
 Assessment criteria evaluated:
-- Source fidelity: Accuracy of extracted information
-- Reasoning integrity: Logical coherence of chain of thought
-- Training utility: Value for training purposes
-- Structural quality: Format and completeness of extraction
+- Content preservation: Structural integrity and information fidelity
+- Factual accuracy: Grounding in paper and academic integrity
+- Voice requirements: First-person narrative, removal of source references
 
 :raises ValueError: If assessment criteria validation fails
 :raises sqlite3.Error: If database operations fail
@@ -36,23 +33,21 @@ from raspberry_paper_to_cot_pipeline.utils import Utils
 
 def parse_arguments() -> argparse.Namespace:
     """
-    Parse and validate command-line arguments for the CoT quality assessment process.
+    Parse and validate command-line arguments for the voice assessment process.
 
     Configures and processes command line arguments for controlling the assessment
     workflow. Sets up required paths, processing limits, and execution parameters.
 
-    :param: None
     :return: Parsed command line arguments
     :rtype: argparse.Namespace
-    :raises: None
     """
     parser = argparse.ArgumentParser(
-        description="Assess Chain of Thought extractions from papers."
+        description="Assess voice transformation of Chain of Thought content."
     )
     parser.add_argument(
         "--assessor-preset",
         type=str,
-        default=constants.DEFAULT_COT_QUALITY_ASSESSOR_PRESET,
+        default=constants.DEFAULT_COT_VOICING_ASSESSOR_PRESET,
         help="Model configuration used for assessment, default: %(default)s",
     )
     parser.add_argument(
@@ -76,42 +71,32 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument(
         "--template",
         type=str,
-        default=constants.DEFAULT_COT_QUALITY_ASSESSOR_TEMPLATE,
+        default=constants.DEFAULT_COT_VOICING_ASSESSOR_TEMPLATE,
         help="LWE assessment template name, default: %(default)s",
     )
     parser.add_argument("--debug", action="store_true", help="Enable debug logging")
     return parser.parse_args()
 
 
-class CoTQualityAssessor:
-    """Handles quality assessment of Chain of Thought (CoT) extractions from research papers.
+class CoTVoicingAssessor:
+    """Handles voice assessment of Chain of Thought (CoT) transformations.
 
-    This class implements the core functionality for evaluating CoT extractions against
-    defined quality criteria. It manages the assessment workflow including loading papers,
-    running evaluations, and generating assessment artifacts.
-
-    Attributes:
-        assessor_preset (str): Model configuration used for assessment
-        database (str): Path to the SQLite database
-        inference_artifacts_directory (str): Directory for storing assessment artifacts
-        limit (Optional[int]): Maximum number of papers to process
-        template (str): Name of the LWE assessment template
-        debug (bool): Debug logging flag
-        logger (logging.Logger): Configured logger instance
-        utils (Utils): Utility instance for common operations
+    This class implements the core functionality for evaluating voice-transformed
+    CoT content against defined criteria. It manages the assessment workflow including
+    loading papers, running evaluations, and generating assessment artifacts.
     """
 
     def __init__(
         self,
         limit: Optional[int],
-        debug: bool = False,
-        assessor_preset: str = constants.DEFAULT_COT_QUALITY_ASSESSOR_PRESET,
+        assessor_preset: str = constants.DEFAULT_COT_VOICING_PRESET,
         database: str = constants.DEFAULT_DB_NAME,
         inference_artifacts_directory: str = constants.DEFAULT_INFERENCE_ARTIFACTS_DIR,
-        template: str = constants.DEFAULT_COT_QUALITY_ASSESSOR_TEMPLATE,
+        template: str = constants.DEFAULT_COT_VOICING_TEMPLATE,
+        debug: bool = False,
     ) -> None:
         """
-        Initialize the CoTQualityAssessor with configuration parameters.
+        Initialize the CoTVoicingAssessor with configuration parameters.
 
         Sets up the assessor instance with provided configuration parameters and
         initializes required utilities and logging.
@@ -128,15 +113,11 @@ class CoTQualityAssessor:
         :type inference_artifacts_directory: str
         :param template: LWE assessment template name
         :type template: str
-        :return: None
-        :rtype: None
-        :raises ValueError: If any directory paths are invalid
-        :raises RuntimeError: If logger setup fails
         """
+        self.limit = limit
         self.assessor_preset = assessor_preset
         self.database = database
         self.inference_artifacts_directory = inference_artifacts_directory
-        self.limit = limit
         self.template = template
         self.debug = debug
         self.logger = Utils.setup_logging(__name__, self.debug)
@@ -151,25 +132,22 @@ class CoTQualityAssessor:
     def parse_xml(self, xml_string: str) -> Dict[str, int]:
         """Parse assessment criteria values from XML response string.
 
-        Extracts boolean values for each defined assessment criterion from the XML
-        structure. Validates presence of all required criteria and converts text
-        responses to binary values.
+        Extracts boolean values for each defined voice assessment criterion from
+        the XML structure.
 
         :param xml_string: XML formatted assessment response
         :type xml_string: str
         :return: Dictionary mapping criteria names to binary values (0 or 1)
         :rtype: Dict[str, int]
         :raises ValueError: If any required criterion is missing from XML
-        :raises ET.ParseError: If XML string is malformed or invalid
-        :raises TypeError: If criterion value cannot be converted to binary
         """
         root = ET.fromstring(xml_string)
         criteria = {}
-        for criterion in constants.COT_QUALITY_ASSESSMENT_CRITERIA:
+        for criterion in constants.COT_VOICING_ASSESSMENT_CRITERIA:
             element = root.find(f".//{criterion}")
             if element is not None:
                 value = element.text.strip()
-                criteria[f"cot_quality_assessment_criteria_{criterion}"] = (
+                criteria[f"cot_voicing_assessment_{criterion}"] = (
                     1 if value.lower() in ["yes", "y"] else 0
                 )
             else:
@@ -180,20 +158,16 @@ class CoTQualityAssessor:
         """
         Format assessment criteria and values into a human-readable string.
 
-        Converts the criteria dictionary into a formatted multi-line string where each
-        criterion is displayed with its corresponding Yes/No value.
-
         :param criteria: Dictionary mapping criteria names to binary values (0 or 1)
         :type criteria: Dict[str, int]
         :return: Formatted string with one criterion per line
         :rtype: str
-        :raises KeyError: If a required criterion is missing from the dictionary
         """
         output = []
-        for criterion in constants.COT_QUALITY_ASSESSMENT_CRITERIA:
+        for criterion in constants.COT_VOICING_ASSESSMENT_CRITERIA:
             answer = (
                 "Yes"
-                if criteria[f"cot_quality_assessment_criteria_{criterion}"] == 1
+                if criteria[f"cot_voicing_assessment_{criterion}"] == 1
                 else "No"
             )
             output.append(f"  {criterion}: {answer}")
@@ -205,27 +179,20 @@ class CoTQualityAssessor:
         """
         Write assessment results and metadata to an artifact file.
 
-        Creates a formatted artifact file containing paper metadata, assessment results,
-        and raw inference output for archival and debugging purposes.
-
-        :param paper: Database row containing paper metadata (paper_id, paper_url)
+        :param paper: Database row containing paper metadata
         :type paper: sqlite3.Row
         :param criteria: Dictionary of assessment criteria results
         :type criteria: Dict[str, int]
         :param xml_content: Raw XML output from the assessment
         :type xml_content: str
-        :return: None
-        :rtype: None
-        :raises FileNotFoundError: If artifact directory is not accessible
-        :raises IOError: If writing to artifact file fails
         """
-        artifact_name = constants.COT_QUALITY_ASSESSMENT_ARTIFACT_PATTERN.format(
+        artifact_name = constants.COT_VOICING_ASSESMENT_ARTIFACT_PATTERN.format(
             paper_id=paper["paper_id"]
         )
         content = f"""Paper URL: {paper['paper_url']}
-CoT assessment preset: {self.assessor_preset}
+CoT voicing assessment preset: {self.assessor_preset}
 
-CoT assessment results:
+CoT voicing assessment results:
 
 {self.get_pretty_printed_criteria(criteria)}
 
@@ -237,53 +204,37 @@ Raw Inference Output:
 """
         self.utils.write_inference_artifact(artifact_name, content)
 
-    def check_required_criteria(self, criteria: Dict[str, int]) -> bool:
-        """
-        Verify that all required quality assessment criteria are satisfied.
-
-        Checks each required criterion defined in REQUIRED_COT_QUALITY_ASSESSMENT_CRITERIA
-        against the provided criteria values to ensure they meet minimum quality standards.
-
-        :param criteria: Dictionary mapping criteria names to binary values (0 or 1)
-        :type criteria: Dict[str, int]
-        :return: True if all required criteria are met, False otherwise
-        :rtype: bool
-        :raises KeyError: If a required criterion is missing from the dictionary
-        """
-        for criterion in constants.REQUIRED_COT_QUALITY_ASSESSMENT_CRITERIA:
-            if criteria[f"cot_quality_assessment_criteria_{criterion}"] != 1:
-                return False
-        return True
-
     def run_assessment(
-        self, paper_content: str, question: str, chain_of_reasoning: str, answer: str
+        self,
+        paper_content: str,
+        original_content: Tuple[str, str, str],
+        voiced_content: Tuple[str, str, str],
     ) -> Tuple[Dict[str, int], str]:
         """
-        Execute quality assessment template and process the results.
-
-        Runs the LWE template with provided paper content and CoT components,
-        then processes the response to extract assessment criteria results.
+        Execute voice assessment template and process the results.
 
         :param paper_content: Full text content of the research paper
         :type paper_content: str
-        :param question: Extracted research question
-        :type question: str
-        :param chain_of_reasoning: Extracted reasoning chain
-        :type chain_of_reasoning: str
-        :param answer: Extracted answer/conclusion
-        :type answer: str
+        :param original_content: Original (question, chain_of_reasoning, answer)
+        :type original_content: Tuple[str, str, str]
+        :param voiced_content: Voiced (question, chain_of_reasoning, answer)
+        :type voiced_content: Tuple[str, str, str]
         :return: Tuple containing (criteria dictionary, raw XML response)
         :rtype: Tuple[Dict[str, int], str]
-        :raises ValueError: If XML content cannot be extracted from response
-        :raises RuntimeError: If LWE template execution fails
         """
+        orig_q, orig_c, orig_a = original_content
+        _, voiced_c, voiced_a = voiced_content
+
         lwe_response = self.utils.run_lwe_template(
             self.template,
             {
                 "paper": paper_content,
-                "question": question,
-                "chain_of_reasoning": chain_of_reasoning,
-                "answer": answer,
+                "original_question": orig_q,
+                "original_chain_of_reasoning": orig_c,
+                "original_answer": orig_a,
+                "question": orig_q,
+                "chain_of_reasoning": voiced_c,
+                "answer": voiced_a,
             },
         )
         xml_content = self.utils.extract_xml(lwe_response)
@@ -297,113 +248,86 @@ Raw Inference Output:
         self, paper_id: str, criteria: Dict[str, int]
     ) -> None:
         """
-        Update paper record with quality assessment results.
-
-        Stores the assessment criteria results and updates the paper's processing
-        status in the database.
+        Update paper record with voice assessment results.
 
         :param paper_id: Database ID of the paper
         :type paper_id: str
         :param criteria: Dictionary mapping criteria names to assessment results
         :type criteria: Dict[str, int]
-        :return: None
-        :rtype: None
-        :raises sqlite3.Error: If database update fails
         """
         data = copy.deepcopy(criteria)
-        data["processing_status"] = constants.STATUS_COT_QUALITY_ASSESSED
+        data["processing_status"] = constants.STATUS_COT_VOICING_ASSESSED
         self.utils.update_paper(paper_id, data)
 
     def process_paper(self, paper: sqlite3.Row) -> None:
         """
-        Execute quality assessment workflow for a single paper.
+        Execute voice assessment workflow for a single paper.
 
-        Processes an individual paper through the complete assessment pipeline:
-        1. Extracts text content from PDF
-        2. Retrieves refinement data
-        3. Runs quality assessment
-        4. Generates assessment artifact
-        5. Updates paper status
-
-        :param paper: Database row containing paper metadata (id, paper_id, paper_url)
+        :param paper: Database row containing paper metadata
         :type paper: sqlite3.Row
-        :return: None
-        :rtype: None
-        :raises ValueError: If paper content cannot be processed
-        :raises FileNotFoundError: If required artifacts are missing
-        :raises sqlite3.Error: If database updates fail
         """
         try:
             text = self.utils.get_pdf_text(paper)
-            refinement_data = self.utils.extract_question_chain_of_reasoning_answer_from_artifact(paper, constants.COT_REFINEMENT_ARTIFACT_PATTERN)
-            if not refinement_data:
+            original_content = self.utils.extract_question_chain_of_reasoning_answer_from_artifact(paper, constants.COT_REFINEMENT_ARTIFACT_PATTERN)
+            voiced_content = self.utils.extract_question_chain_of_reasoning_answer_from_artifact(paper, constants.COT_VOICING_ARTIFACT_PATTERN)
+            if not original_content or not voiced_content:
                 raise ValueError(
-                    "Could not retrieve refinement data for paper"
+                    "Could not retrieve original data or voiced data for paper"
                 )
 
-            question, chain_of_reasoning, answer = refinement_data
             criteria, xml_content = self.run_assessment(
-                text, question, chain_of_reasoning, answer
+                text, original_content, voiced_content
             )
             self.write_assessment_artifact(paper, criteria, xml_content)
             self.update_assessment_results(paper["id"], criteria)
             self.logger.info(
-                f"Successfully assessed paper {paper['paper_id']} - Status: {constants.STATUS_COT_QUALITY_ASSESSED}"
+                f"Successfully assessed paper {paper['paper_id']} - Status: {constants.STATUS_COT_VOICING_ASSESSED}"
             )
 
         except Exception as e:
             self.logger.error(f"Error processing paper {paper['paper_id']}: {str(e)}")
             self.utils.update_paper_status(
-                paper["id"], constants.STATUS_FAILED_COT_QUALITY_ASSESSMENT
+                paper["id"], constants.STATUS_FAILED_COT_VOICING_ASSESSMENT
             )
 
     def run(self) -> None:
-        """Execute the main Chain of Thought quality assessment workflow.
+        """Execute the main Chain of Thought voice assessment workflow.
 
         Orchestrates the complete assessment process:
-            1. Fetches papers with STATUS_COT_EXTRACTED status
-            2. Processes each paper through quality assessment
+            1. Fetches papers with completed voice transformations
+            2. Processes each paper through voice assessment
             3. Updates paper status and stores assessment results
             4. Generates assessment artifacts
-
-        :raises sqlite3.Error: If database operations fail
-        :raises Exception: If assessment process encounters errors
-        :raises SystemExit: With code 1 if process fails critically
         """
         try:
             papers = self.utils.fetch_papers_by_processing_status(
-                status=constants.STATUS_COT_EXTRACTED,
+                status=constants.STATUS_COT_VOICED,
                 limit=self.limit,
             )
             for paper in papers:
                 self.process_paper(paper)
-            self.logger.info("CoT quality assessment process completed")
+            self.logger.info("CoT voice assessment process completed")
         except Exception as e:
             self.logger.error(
-                f"An error occurred during the CoT quality assessment process: {e}"
+                f"An error occurred during the CoT voice assessment process: {e}"
             )
             sys.exit(1)
 
 
 def main() -> None:
     """
-    Main entry point for the CoT quality assessment CLI.
+    Main entry point for the CoT voice assessment CLI.
 
     Parses command line arguments and initializes the assessment process.
-    Handles the complete workflow from paper loading through assessment.
-
-    :return: None
-    :rtype: None
-    :raises SystemExit: With code 1 if process fails critically
     """
     args = parse_arguments()
-    assessor = CoTQualityAssessor(
+    assessor = CoTVoicingAssessor(
         limit=args.limit,
-        debug=args.debug,
         assessor_preset=args.assessor_preset,
         database=args.database,
         inference_artifacts_directory=args.inference_artifacts_directory,
         template=args.template,
+        debug=args.debug,
     )
     assessor.run()
 

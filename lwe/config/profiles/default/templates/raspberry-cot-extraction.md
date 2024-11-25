@@ -12,7 +12,6 @@ Your task is to examine the provided research paper, and extract three pieces of
 2. A chain of reasoning that bridges the question and the final answer
 3. The final answer provided in the paper
 
-{% include "raspberry-cot-voice.md" %}
 
 It is imperative that your final chain of reasoning and answer include ONLY facts and information that are explicitly stated or directly implied in the research paper. Do not introduce any external information or speculation not supported by the paper's content. Your role is to organize and present the paper's own reasoning and conclusions in a narrative form, not to invent or introduce new ideas.
 

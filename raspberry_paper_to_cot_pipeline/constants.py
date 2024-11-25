@@ -10,17 +10,23 @@ DEFAULT_COT_EXTRACTION_PRESET = "claude-sonnet"
 DEFAULT_COT_CRITIQUE_PRESET = "claude-sonnet"
 DEFAULT_COT_REFINEMENT_PRESET = "claude-sonnet"
 DEFAULT_COT_QUALITY_ASSESSOR_PRESET = "claude-sonnet"
+DEFAULT_COT_VOICING_PRESET = "claude-sonnet"
+DEFAULT_COT_VOICING_ASSESSOR_PRESET = "claude-sonnet"
 DEFAULT_PAPER_PROFILER_TEMPLATE = "raspberry-paper-profiler.md"
 DEFAULT_COT_EXTRACTION_TEMPLATE = "raspberry-cot-extraction.md"
 DEFAULT_COT_CRITIQUE_TEMPLATE = "raspberry-cot-critique.md"
 DEFAULT_COT_REFINEMENT_TEMPLATE = "raspberry-cot-refine.md"
 DEFAULT_COT_QUALITY_ASSESSOR_TEMPLATE = "raspberry-cot-quality-assessor.md"
+DEFAULT_COT_VOICING_TEMPLATE = "raspberry-cot-voicing.md"
+DEFAULT_COT_VOICING_ASSESSOR_TEMPLATE = "raspberry-cot-voicing-assessor.md"
 
 # Artifact naming patterns
 COT_INITIAL_EXTRACTION_ARTIFACT_PATTERN = "{paper_id}-cot-initial-extraction.txt"
 COT_CRITIQUE_ARTIFACT_PATTERN = "{paper_id}-cot-critique.txt"
 COT_REFINEMENT_ARTIFACT_PATTERN = "{paper_id}-cot-refinement.txt"
 COT_QUALITY_ASSESSMENT_ARTIFACT_PATTERN = "{paper_id}-cot-quality-assessment.txt"
+COT_VOICING_ARTIFACT_PATTERN = "{paper_id}-cot-voicing.txt"
+COT_VOICING_ASSESMENT_ARTIFACT_PATTERN = "{paper_id}-cot-voicing-assessment.txt"
 TRAINING_ARTIFACT_PATTERN = "{paper_id}-training-data.jsonl"
 # TODO: This should use the package root, not CWD.
 LWE_CONFIG_DIR = CWD / "lwe" / "config"
@@ -136,8 +142,6 @@ COT_QUALITY_ASSESSMENT_CRITERIA = [
     "answer_addresses_question",
     "appropriate_complexity",
     # structural_quality criteria
-    "consistent_voice",
-    "no_paper_references",
     "terms_explained",
     "no_contradictions",
     "complete_flow",
@@ -150,8 +154,26 @@ REQUIRED_COT_QUALITY_ASSESSMENT_CRITERIA = [
     "steps_supported_by_paper",
     "no_logical_leaps",
     "answer_addresses_question",
-    "consistent_voice",
-    "no_paper_references",
+]
+
+# CoT voicing assessment
+COT_VOICING_ASSESSMENT_CRITERIA = [
+    # content_preservation criteria
+    "structural_integrity",
+    "information_fidelity",
+    # factual_accuracy criteria
+    "factual_grounding",
+    "academic_integrity",
+    # voice_requirements criteria
+    "first_person_narrative",
+    "no_source_references",
+    "natural_expression",
+]
+
+REQUIRED_COT_VOICING_ASSESSMENT_CRITERIA = [
+    "factual_grounding",
+    "first_person_narrative",
+    "no_source_references",
 ]
 
 # ArXiv.
@@ -169,7 +191,10 @@ FETCH_MAX_EMPTY_RESULTS_ATTEMPTS = 10
 COT_EXTRACTION_DEFAULT_SUITABILITY_SCORE = 8
 
 # CoT quality assessment.
-COT_QUALITY_ASSESSMENT_DEFAULT_SUITABILITY_SCORE = 15
+COT_QUALITY_ASSESSMENT_DEFAULT_SUITABILITY_SCORE = 13
+
+# CoT voicing assessment.
+COT_VOICING_ASSESSMENT_DEFAULT_SUITABILITY_SCORE = 6
 
 # Database.
 DEFAULT_DB_NAME = CWD / "papers.db"
@@ -202,12 +227,18 @@ CREATE TABLE IF NOT EXISTS papers (
     cot_quality_assessment_criteria_multi_step_progression INT DEFAULT 0,
     cot_quality_assessment_criteria_answer_addresses_question INT DEFAULT 0,
     cot_quality_assessment_criteria_appropriate_complexity INT DEFAULT 0,
-    cot_quality_assessment_criteria_consistent_voice INT DEFAULT 0,
-    cot_quality_assessment_criteria_no_paper_references INT DEFAULT 0,
     cot_quality_assessment_criteria_terms_explained INT DEFAULT 0,
     cot_quality_assessment_criteria_no_contradictions INT DEFAULT 0,
     cot_quality_assessment_criteria_complete_flow INT DEFAULT 0,
-    cot_quality_assessment_suitability_score INT DEFAULT 0
+    cot_quality_assessment_suitability_score INT DEFAULT 0,
+    cot_voicing_assessment_structural_integrity INT DEFAULT 0,
+    cot_voicing_assessment_information_fidelity INT DEFAULT 0,
+    cot_voicing_assessment_factual_grounding INT DEFAULT 0,
+    cot_voicing_assessment_academic_integrity INT DEFAULT 0,
+    cot_voicing_assessment_first_person_narrative INT DEFAULT 0,
+    cot_voicing_assessment_no_source_references INT DEFAULT 0,
+    cot_voicing_assessment_natural_expression INT DEFAULT 0,
+    cot_voicing_assessment_suitability_score INT DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS paper_categories (
@@ -225,8 +256,13 @@ STATUS_PAPER_PROFILE_SCORED = "paper_profile_scored"
 STATUS_COT_EXTRACTED = "cot_extracted"
 STATUS_COT_QUALITY_ASSESSED = "cot_quality_assessed"
 STATUS_COT_QUALITY_SCORED = "cot_quality_scored"
+STATUS_COT_VOICED = "cot_voiced"
+STATUS_COT_VOICING_ASSESSED = "cot_voicing_assessed"
+STATUS_COT_VOICING_SCORED = "cot_voicing_scored"
 STATUS_FAILED_COT_EXTRACTION = "failed_cot_extraction"
 STATUS_FAILED_COT_QUALITY_ASSESSMENT = "failed_cot_quality_assessment"
+STATUS_FAILED_COT_VOICING = "failed_cot_voicing"
+STATUS_FAILED_COT_VOICING_ASSESSMENT = "failed_cot_voicing_assessment"
 
 # Training
 DEFAULT_CONSOLIDATED_TRAINING_FILENAME = "consolidated-training-data.jsonl"

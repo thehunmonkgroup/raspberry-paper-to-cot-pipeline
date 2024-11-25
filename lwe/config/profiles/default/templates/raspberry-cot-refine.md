@@ -14,10 +14,6 @@ You will be provided the following:
 
 Using the academic paper as a reference, and the critique as instructive guidance, you will create a refined and improved question, chain of reasoning, and answer.
 
-{% include "raspberry-cot-voice.md" %}
-
-This perspective should be maintained even when refining an existing chain of reasoning and answer. While the academic paper serves as the source of facts and evidence, all reasoning should be presented as direct observations and insights rather than citations or references to the paper.
-
 ### REFINEMENT REQUIREMENTS
 Your task is to improve the existing question, chain of reasoning, and answer by:
 1. Ensuring accuracy to the paper:

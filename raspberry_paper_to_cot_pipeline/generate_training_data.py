@@ -4,8 +4,8 @@
 This script processes papers that have been quality scored and combines their training
 artifacts into a single consolidated training file. It performs the following:
 
-- Checks paper suitability scores against a configurable minimum threshold
-- Collects individual training artifacts for papers meeting the threshold
+- Checks paper suitability scores against configurable minimum thresholds
+- Collects individual training artifacts for papers meeting the thresholds
 - Combines qualified artifacts into a single JSONL training file
 - Handles error recovery and logging throughout the process
 
@@ -41,10 +41,16 @@ def parse_arguments() -> argparse.Namespace:
         help="Path to the SQLite database. Default: %(default)s",
     )
     parser.add_argument(
-        "--suitability-score",
+        "--cot-quality-assessment-suitability-score",
         type=int,
         default=constants.COT_QUALITY_ASSESSMENT_DEFAULT_SUITABILITY_SCORE,
-        help="Minimum suitability score required. Default: %(default)s",
+        help="Minimum CoT quality assessment suitability score required. Default: %(default)s",
+    )
+    parser.add_argument(
+        "--cot-voicing-assessment-suitability-score",
+        type=int,
+        default=constants.COT_VOICING_ASSESSMENT_DEFAULT_SUITABILITY_SCORE,
+        help="Minimum CoT voicing assessment suitability score required. Default: %(default)s",
     )
     parser.add_argument(
         "--training-file-name",
@@ -81,23 +87,6 @@ class TrainingDataGenerator:
     - Processing individual paper training artifacts
     - Combining artifacts into a consolidated training file
     - Progress tracking and error handling
-
-    :ivar database: Path to the SQLite database
-    :type database: str
-    :ivar suitability_score: Minimum required suitability score
-    :type suitability_score: int
-    :ivar training_file_name: Name of the output training file
-    :type training_file_name: str
-    :ivar training_artifacts_directory: Directory containing training artifacts
-    :type training_artifacts_directory: Path
-    :ivar limit: Maximum number of papers to process
-    :type limit: Optional[int]
-    :ivar debug: Enable debug logging
-    :type debug: bool
-    :ivar logger: Logger instance for this class
-    :type logger: logging.Logger
-    :ivar utils: Utility class instance
-    :type utils: Utils
     """
 
     # Number of papers to process before logging progress
@@ -106,7 +95,8 @@ class TrainingDataGenerator:
     def __init__(
         self,
         database: str = constants.DEFAULT_DB_NAME,
-        suitability_score: int = constants.COT_QUALITY_ASSESSMENT_DEFAULT_SUITABILITY_SCORE,
+        cot_quality_assessment_suitability_score: int = constants.COT_QUALITY_ASSESSMENT_DEFAULT_SUITABILITY_SCORE,
+        cot_voicing_assessment_suitability_score: int = constants.COT_VOICING_ASSESSMENT_DEFAULT_SUITABILITY_SCORE,
         training_file_name: str = constants.DEFAULT_CONSOLIDATED_TRAINING_FILENAME,
         training_artifacts_directory: Union[
             str, Path
@@ -118,8 +108,10 @@ class TrainingDataGenerator:
 
         :param database: Path to the SQLite database
         :type database: str
-        :param suitability_score: Minimum required suitability score
-        :type suitability_score: int
+        :param cot_quality_assessment_suitability_score: Minimum required suitability score for CoT quality assessment
+        :type cot_quality_assessment_suitability_score: int
+        :param cot_voicing_assessment_suitability_score: Minimum required suitability score for CoT voicing assessment
+        :type cot_voicing_assessment_suitability_score: int
         :param training_file_name: Name of the output training file
         :type training_file_name: str
         :param training_artifacts_directory: Directory containing training artifacts
@@ -130,7 +122,8 @@ class TrainingDataGenerator:
         :type debug: bool
         """
         self.database = database
-        self.suitability_score = suitability_score
+        self.cot_quality_assessment_suitability_score = cot_quality_assessment_suitability_score
+        self.cot_voicing_assessment_suitability_score = cot_voicing_assessment_suitability_score
         self.training_file_name = training_file_name
         self.training_artifacts_directory = Path(training_artifacts_directory)
         self.limit = limit
@@ -153,14 +146,15 @@ class TrainingDataGenerator:
         :raises sqlite3.Error: If database query fails
         """
         select_columns = constants.DEFAULT_FETCH_BY_STATUS_COLUMNS + [
-            "cot_quality_assessment_suitability_score"
+            "cot_quality_assessment_suitability_score",
+            "cot_voicing_assessment_suitability_score",
         ]
         self.logger.debug(
-            f"Fetching papers with status {constants.STATUS_COT_QUALITY_SCORED}, "
+            f"Fetching papers with status {constants.STATUS_COT_VOICING_SCORED}, "
             f"columns: {select_columns}, limit: {self.limit}"
         )
         return self.utils.fetch_papers_by_processing_status(
-            status=constants.STATUS_COT_QUALITY_SCORED,
+            status=constants.STATUS_COT_VOICING_SCORED,
             select_columns=select_columns,
             limit=self.limit,
         )
@@ -168,7 +162,7 @@ class TrainingDataGenerator:
     def process_paper(self, paper: sqlite3.Row) -> Optional[Dict[str, Any]]:
         """Process a single paper's training data if it meets criteria.
 
-        Checks if the paper meets the minimum suitability score and attempts to
+        Checks if the paper meets the minimum suitability scores and attempts to
         load its training artifact if qualified.
 
         :param paper: Paper record from database containing ID and quality score
@@ -178,10 +172,16 @@ class TrainingDataGenerator:
         :raises FileNotFoundError: If training artifact file is missing
         :raises json.JSONDecodeError: If training artifact is not valid JSON
         """
-        score = paper["cot_quality_assessment_suitability_score"]
-        if score < self.suitability_score:
+        quality_score = paper["cot_quality_assessment_suitability_score"]
+        voicing_score = paper["cot_voicing_assessment_suitability_score"]
+        if quality_score < self.cot_quality_assessment_suitability_score:
             self.logger.info(
-                f"Skipping paper {paper['paper_id']}: score {score} below threshold {self.suitability_score}"
+                f"Skipping paper {paper['paper_id']}: CoT quality score {quality_score} below threshold {self.cot_quality_assessment_suitability_score}"
+            )
+            return None
+        if voicing_score < self.cot_voicing_assessment_suitability_score:
+            self.logger.info(
+                f"Skipping paper {paper['paper_id']}: CoT voicing score {voicing_score} below threshold {self.cot_voicing_assessment_suitability_score}"
             )
             return None
 
@@ -304,7 +304,8 @@ class TrainingDataGenerator:
         self.logger.info(
             f"Starting training data generation. "
             f"Database: {self.database}, "
-            f"Minimum score: {self.suitability_score}, "
+            f"Minimum CoT quaility score: {self.cot_quality_assessment_suitability_score}, "
+            f"Minimum CoT voicing score: {self.cot_voicing_assessment_suitability_score}, "
             f"Limit: {self.limit}"
         )
 
@@ -338,7 +339,8 @@ def main():
     args = parse_arguments()
     generator = TrainingDataGenerator(
         database=args.database,
-        suitability_score=args.suitability_score,
+        cot_quality_assessment_suitability_score=args.cot_quality_assessment_suitability_score,
+        cot_voicing_assessment_suitability_score=args.cot_voicing_assessment_suitability_score,
         training_file_name=args.training_file_name,
         training_artifacts_directory=args.training_artifacts_directory,
         limit=args.limit,

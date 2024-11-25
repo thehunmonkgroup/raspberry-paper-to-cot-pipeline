@@ -18,6 +18,7 @@ from raspberry_paper_to_cot_pipeline.paper_profile_scorer import PaperProfileSco
 from raspberry_paper_to_cot_pipeline.paper_cot_extractor import CoTExtractor
 from raspberry_paper_to_cot_pipeline.cot_quality_assessor import CoTQualityAssessor
 from raspberry_paper_to_cot_pipeline.cot_quality_scorer import CoTQualityScorer
+from raspberry_paper_to_cot_pipeline.cot_voicing import CoTVoicing
 from raspberry_paper_to_cot_pipeline.generate_training_data import TrainingDataGenerator
 from raspberry_paper_to_cot_pipeline.utils import Utils
 
@@ -85,11 +86,11 @@ class PaperCoTPipeline:
 
             # Stage 2: Score papers
             self.logger.info("Starting paper scoring stage...")
-            scorer = PaperProfileScorer(
+            profiler_scorer = PaperProfileScorer(
                 limit=None,
                 debug=self.debug,
             )
-            scorer.run()
+            profiler_scorer.run()
 
             # Stage 3: Extract CoT
             self.logger.info("Starting CoT extraction stage...")
@@ -101,21 +102,28 @@ class PaperCoTPipeline:
 
             # Stage 4: CoT quality assessment
             self.logger.info("Starting CoT quality assessment stage...")
-            assessor = CoTQualityAssessor(
+            cot_quality_assessor = CoTQualityAssessor(
                 limit=None,
                 debug=self.debug,
             )
-            assessor.run()
+            cot_quality_assessor.run()
 
             # Stage 5: CoT quality scoring
             self.logger.info("Starting CoT quality scoring stage...")
-            scorer = CoTQualityScorer(
+            cot_quality_scorer = CoTQualityScorer(
                 limit=None,
                 debug=self.debug,
             )
-            scorer.run()
+            cot_quality_scorer.run()
 
-            # Stage 6: Generate training data
+            # Stage 6: Transform CoT into correct voice
+            voicer = CoTVoicing(
+                limit=None,
+                debug=self.debug,
+            )
+            voicer.run()
+
+            # Stage 7: Generate training data
             self.logger.info("Starting training data generation stage...")
             generator = TrainingDataGenerator(
                 limit=None,

@@ -32,6 +32,9 @@ raspberry-paper-profile-scorer = "raspberry_paper_to_cot_pipeline.paper_profile_
 raspberry-paper-cot-extractor = "raspberry_paper_to_cot_pipeline.paper_cot_extractor:main"
 raspberry-cot-quality-assessor = "raspberry_paper_to_cot_pipeline.cot_quality_assessor:main"
 raspberry-cot-quality-scorer = "raspberry_paper_to_cot_pipeline.cot_quality_scorer:main"
+raspberry-cot-voicing = "raspberry_paper_to_cot_pipeline.cot_voicing:main"
+raspberry-cot-voicing-assessor = "raspberry_paper_to_cot_pipeline.cot_voicing_assessor:main"
+raspberry-cot-voicing-scorer = "raspberry_paper_to_cot_pipeline.cot_voicing_scorer:main"
 raspberry-paper-cot-pipeline = "raspberry_paper_to_cot_pipeline.paper_cot_pipeline:main"
 raspberry-generate-training-data = "raspberry_paper_to_cot_pipeline.generate_training_data:main"
 

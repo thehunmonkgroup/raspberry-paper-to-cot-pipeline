@@ -128,16 +128,6 @@ XML Template:
   </training_utility>
 
   <structural_quality>
-    <consistent_voice>
-      <![CDATA[
-        {Are all observations and conclusions presented in a consistent first-person narrative voice (e.g., "I observe", "I find") rather than citations or references? Answer Yes or No}
-      ]]>
-    </consistent_voice>
-    <no_paper_references>
-      <![CDATA[
-        {Is the set completely free from any references to "the paper", "the authors", "the study", or any indication that the information comes from a written document? Answer Yes or No}
-      ]]>
-    </no_paper_references>
     <terms_explained>
       <![CDATA[
         {Are all technical terms used properly explained? Answer Yes or No}
