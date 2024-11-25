@@ -4,21 +4,31 @@ flowchart TD
     B <--> F[Score Papers]
     B <--> G[Extract CoT]
     B <--> H[CoT Quality]
-    B --> I[Score CoT]
+    B <--> I[Score CoT]
+    B <--> S[Voice CoT]
+    B <--> T[Voice Quality]
+    B <--> U[Score Voice]
     B --> J[Build Training File]
     E --> K[Profile Artifact]
     G --> L[CoT Artifacts]
     H --> M[CoT Quality Artifact]
+    S --> V[Voice Artifact]
+    T --> W[Voice Quality Artifact]
     J --> N[Final Training File]
     L --> O[Initial CoT]
     L --> P[CoT Critique]
     L --> Q[CoT Refinement]
-    Q --> R[Candidate Training Files]
+    V --> R[Candidate Training Files]
     R --> J
     E --> F
     F --> G
     G --> H
     H --> I
-    I --> J
+    I --> S
+    S --> T
+    T --> U
     O --> P
     P --> Q
+    I --> R
+    U --> R
+    Q --> S
