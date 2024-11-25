@@ -384,9 +384,9 @@ class Utils:
         if question_elem is None:
             question = ""
         else:
-            question = textwrap.dedent(question_elem.text.strip())
-        chain_of_reasoning = textwrap.dedent(chain_elem.text.strip())
-        answer = textwrap.dedent(answer_elem.text.strip())
+            question = textwrap.dedent(question_elem.text).strip()
+        chain_of_reasoning = textwrap.dedent(chain_elem.text).strip()
+        answer = textwrap.dedent(answer_elem.text).strip()
 
         return question, chain_of_reasoning, answer
 
