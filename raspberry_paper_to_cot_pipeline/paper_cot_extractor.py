@@ -378,7 +378,7 @@ class CoTExtractor:
         if not self._check_suitability(paper):
             return
 
-        self.logger.debug(f"Starting processing of paper {paper['paper_id']}")
+        self.logger.info(f"Starting processing of paper {paper['paper_id']}")
         self.logger.debug(f"Paper details: {dict(paper)}")
 
         try:

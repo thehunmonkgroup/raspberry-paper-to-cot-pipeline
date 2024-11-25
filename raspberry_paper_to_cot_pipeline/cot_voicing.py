@@ -274,6 +274,9 @@ Raw Content:
                 f"Skipping paper {paper['paper_id']}: score {score} below threshold {self.suitability_score}"
             )
             return None
+        self.logger.info(
+            f"Transforming paper {paper['paper_id']}"
+        )
         try:
             text = self.utils.get_pdf_text(paper)
             refined_data = self.utils.extract_question_chain_of_reasoning_answer_from_artifact(paper, constants.COT_REFINEMENT_ARTIFACT_PATTERN)

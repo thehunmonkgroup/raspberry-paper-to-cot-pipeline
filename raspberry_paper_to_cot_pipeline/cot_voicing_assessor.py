@@ -262,6 +262,9 @@ Raw Inference Output:
         :param paper: Database row containing paper metadata
         :type paper: sqlite3.Row
         """
+        self.logger.info(
+            f"Asssssing paper {paper['paper_id']}"
+        )
         try:
             text = self.utils.get_pdf_text(paper)
             original_content = self.utils.extract_question_chain_of_reasoning_answer_from_artifact(paper, constants.COT_REFINEMENT_ARTIFACT_PATTERN)

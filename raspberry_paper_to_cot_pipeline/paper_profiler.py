@@ -280,6 +280,9 @@ Raw Inference Output:
         :param paper: Paper data containing id, paper_id, and paper_url
         :type paper: sqlite3.Row
         """
+        self.logger.info(
+            f"Profiling paper {paper['paper_id']}"
+        )
         try:
             _, _, xml_content = self._extract_and_validate_content(paper)
             self._process_criteria_and_update(paper, xml_content)
