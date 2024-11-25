@@ -19,6 +19,8 @@ from raspberry_paper_to_cot_pipeline.paper_cot_extractor import CoTExtractor
 from raspberry_paper_to_cot_pipeline.cot_quality_assessor import CoTQualityAssessor
 from raspberry_paper_to_cot_pipeline.cot_quality_scorer import CoTQualityScorer
 from raspberry_paper_to_cot_pipeline.cot_voicing import CoTVoicing
+from raspberry_paper_to_cot_pipeline.cot_voicing_assessor import CoTVoicingAssessor
+from raspberry_paper_to_cot_pipeline.cot_voicing_scorer import CoTVoicingScorer
 from raspberry_paper_to_cot_pipeline.generate_training_data import TrainingDataGenerator
 from raspberry_paper_to_cot_pipeline.utils import Utils
 
@@ -122,7 +124,23 @@ class PaperCoTPipeline:
             )
             voicer.run()
 
-            # Stage 7: Generate training data
+            # Stage 7: CoT voicing assessment
+            self.logger.info("Starting CoT voicing assessment stage...")
+            cot_voicing_assessor = CoTVoicingAssessor(
+                limit=None,
+                debug=self.debug,
+            )
+            cot_voicing_assessor.run()
+
+            # Stage 8: CoT voicing scoring
+            self.logger.info("Starting CoT voicing scoring stage...")
+            cot_voicing_scorer = CoTVoicingScorer(
+                limit=None,
+                debug=self.debug,
+            )
+            cot_voicing_scorer.run()
+
+            # Stage 9: Generate training data
             self.logger.info("Starting training data generation stage...")
             generator = TrainingDataGenerator(
                 limit=None,
