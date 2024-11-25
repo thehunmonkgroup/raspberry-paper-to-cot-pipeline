@@ -72,7 +72,6 @@ class PaperCoTPipeline:
 
         :return: None
         :rtype: None
-        :raises Exception: If any pipeline stage fails
         """
         try:
             # Stage 1: Profile papers
@@ -177,7 +176,6 @@ def main():
 
     :return: None
     :rtype: None
-    :raises SystemExit: If the pipeline execution fails
     """
     args = parse_arguments()
     pipeline = PaperCoTPipeline(

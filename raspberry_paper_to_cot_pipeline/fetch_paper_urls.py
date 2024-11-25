@@ -91,7 +91,6 @@ class ArxivPaperUrlFetcherCLI:
     :type database: str
     :param debug: Flag to enable debug mode
     :type debug: bool
-    :raises ValueError: If provided dates or categories are invalid
     """
 
     def __init__(
@@ -165,7 +164,6 @@ class ArxivPaperUrlFetcherCLI:
 
         :return: List of validated arXiv category codes
         :rtype: List[str]
-        :raises ValueError: If any specified category codes are not found in the arXiv taxonomy
         """
         self.logger.debug("Getting categories list")
         categories = (
@@ -206,7 +204,6 @@ class ArxivPaperUrlFetcherCLI:
 
         :return: None
         :rtype: None
-        :raises ValueError: If dates are in invalid format or end date is not after begin date
         """
         self.logger.debug(f"Validating dates: begin={self.begin}, end={self.end}")
         self.utils.validate_date(self.begin, "--begin")
@@ -226,8 +223,6 @@ class ArxivPaperUrlFetcherCLI:
 
         :return: None
         :rtype: None
-        :raises KeyboardInterrupt: If user interrupts the process
-        :raises Exception: If paper fetching fails for any category
         """
         categories = self.get_categories()
         fetcher = ArxivPaperUrlFetcher(self.database, self.debug)
@@ -246,10 +241,6 @@ class ArxivPaperUrlFetcherCLI:
         This method orchestrates the entire process of fetching arXiv papers based on
         the provided command-line arguments. It handles configuration display, category
         listing, date validation, and paper fetching for each specified category.
-
-        :raises ValueError: If date validation fails
-        :raises KeyboardInterrupt: If process is interrupted by user
-        :raises Exception: For any other unexpected errors
         """
         try:
             if self.should_show_info():

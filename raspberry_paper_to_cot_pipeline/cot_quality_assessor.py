@@ -18,10 +18,6 @@ Assessment criteria evaluated:
 - Reasoning integrity: Logical coherence of chain of thought
 - Training utility: Value for training purposes
 - Structural quality: Format and completeness of extraction
-
-:raises ValueError: If assessment criteria validation fails
-:raises sqlite3.Error: If database operations fail
-:raises FileNotFoundError: If required artifacts are missing
 """
 
 import argparse
@@ -44,7 +40,6 @@ def parse_arguments() -> argparse.Namespace:
     :param: None
     :return: Parsed command line arguments
     :rtype: argparse.Namespace
-    :raises: None
     """
     parser = argparse.ArgumentParser(
         description="Assess Chain of Thought extractions from papers."
@@ -130,8 +125,6 @@ class CoTQualityAssessor:
         :type template: str
         :return: None
         :rtype: None
-        :raises ValueError: If any directory paths are invalid
-        :raises RuntimeError: If logger setup fails
         """
         self.assessor_preset = assessor_preset
         self.database = database
@@ -160,8 +153,6 @@ class CoTQualityAssessor:
         :return: Dictionary mapping criteria names to binary values (0 or 1)
         :rtype: Dict[str, int]
         :raises ValueError: If any required criterion is missing from XML
-        :raises ET.ParseError: If XML string is malformed or invalid
-        :raises TypeError: If criterion value cannot be converted to binary
         """
         root = ET.fromstring(xml_string)
         criteria = {}
@@ -187,7 +178,6 @@ class CoTQualityAssessor:
         :type criteria: Dict[str, int]
         :return: Formatted string with one criterion per line
         :rtype: str
-        :raises KeyError: If a required criterion is missing from the dictionary
         """
         output = []
         for criterion in constants.COT_QUALITY_ASSESSMENT_CRITERIA:
@@ -216,8 +206,6 @@ class CoTQualityAssessor:
         :type xml_content: str
         :return: None
         :rtype: None
-        :raises FileNotFoundError: If artifact directory is not accessible
-        :raises IOError: If writing to artifact file fails
         """
         artifact_name = constants.COT_QUALITY_ASSESSMENT_ARTIFACT_PATTERN.format(
             paper_id=paper["paper_id"]
@@ -248,7 +236,6 @@ Raw Inference Output:
         :type criteria: Dict[str, int]
         :return: True if all required criteria are met, False otherwise
         :rtype: bool
-        :raises KeyError: If a required criterion is missing from the dictionary
         """
         for criterion in constants.REQUIRED_COT_QUALITY_ASSESSMENT_CRITERIA:
             if criteria[f"cot_quality_assessment_criteria_{criterion}"] != 1:
@@ -275,7 +262,6 @@ Raw Inference Output:
         :return: Tuple containing (criteria dictionary, raw XML response)
         :rtype: Tuple[Dict[str, int], str]
         :raises ValueError: If XML content cannot be extracted from response
-        :raises RuntimeError: If LWE template execution fails
         """
         lwe_response = self.utils.run_lwe_template(
             self.template,
@@ -308,7 +294,6 @@ Raw Inference Output:
         :type criteria: Dict[str, int]
         :return: None
         :rtype: None
-        :raises sqlite3.Error: If database update fails
         """
         data = copy.deepcopy(criteria)
         data["processing_status"] = constants.STATUS_COT_QUALITY_ASSESSED
@@ -329,9 +314,6 @@ Raw Inference Output:
         :type paper: sqlite3.Row
         :return: None
         :rtype: None
-        :raises ValueError: If paper content cannot be processed
-        :raises FileNotFoundError: If required artifacts are missing
-        :raises sqlite3.Error: If database updates fail
         """
         try:
             text = self.utils.get_pdf_text(paper)
@@ -365,10 +347,6 @@ Raw Inference Output:
             2. Processes each paper through quality assessment
             3. Updates paper status and stores assessment results
             4. Generates assessment artifacts
-
-        :raises sqlite3.Error: If database operations fail
-        :raises Exception: If assessment process encounters errors
-        :raises SystemExit: With code 1 if process fails critically
         """
         try:
             papers = self.utils.fetch_papers_by_processing_status(
@@ -394,7 +372,6 @@ def main() -> None:
 
     :return: None
     :rtype: None
-    :raises SystemExit: With code 1 if process fails critically
     """
     args = parse_arguments()
     assessor = CoTQualityAssessor(

@@ -38,7 +38,6 @@ def get_db_connection(
     :type database_path: Union[str, Path]
     :yield: SQLite connection object configured with WAL and IMMEDIATE isolation
     :rtype: Generator[sqlite3.Connection, None, None]
-    :raises sqlite3.Error: If database connection cannot be established
     :raises FileNotFoundError: If database directory doesn't exist
     """
     path = Path(database_path)
@@ -128,7 +127,6 @@ class Utils:
 
         :return: Configured LWE API backend instance
         :rtype: ApiBackend
-        :raises RuntimeError: If configuration fails
         """
         config = Config(
             config_dir=str(constants.LWE_CONFIG_DIR),
@@ -180,7 +178,6 @@ class Utils:
         :type pdf_path: Path
         :param pdf_content: Binary content of the PDF file
         :type pdf_content: bytes
-        :raises OSError: If directory creation or file writing fails
         """
         pdf_path.parent.mkdir(parents=True, exist_ok=True)
         pdf_path.write_bytes(pdf_content)
@@ -201,7 +198,6 @@ class Utils:
         :type paper: Union[Dict[str, Any], sqlite3.Row]
         :return: String path to the downloaded PDF file
         :rtype: str
-        :raises requests.RequestException: If the download fails after all retries
         """
         response = requests.get(paper["paper_url"])
         response.raise_for_status()
@@ -221,7 +217,6 @@ class Utils:
         :type paper: Union[Dict[str, Any], sqlite3.Row]
         :return: Extracted text content from the PDF
         :rtype: str
-        :raises FileNotFoundError: If PDF file cannot be found or downloaded
         """
         pdf_path = self.make_pdf_cache_path_from_paper_id(paper["paper_id"])
         if not pdf_path.exists():
@@ -330,8 +325,6 @@ class Utils:
         :return: Extracted text
         :rtype: str
         :raises FileNotFoundError: If PDF file doesn't exist
-        :raises pymupdf4llm.ConversionError: If PDF conversion fails
-        :raises RuntimeError: If an unexpected error occurs
         """
         path = Path(pdf_path)
         if not path.exists():
@@ -406,8 +399,6 @@ class Utils:
         :type artifact_pattern: str
         :return: Tuple containing (question, chain_of_reasoning, answer) if successful, None otherwise
         :rtype: Optional[Tuple[str, str, str]]
-        :raises FileNotFoundError: If refinement artifact file doesn't exist
-        :raises ValueError: If artifact content cannot be parsed
         """
         try:
             artifact_name = artifact_pattern.format(
@@ -595,7 +586,6 @@ class Utils:
 
         :param directory: Path to the directory to create
         :type directory: Path
-        :raises OSError: If directory creation fails
         """
         directory.mkdir(parents=True, exist_ok=True)
 
@@ -630,7 +620,6 @@ class Utils:
         :type filename: str
         :param content: Content to write to the file
         :type content: str
-        :raises OSError: If directory creation or file writing fails
         """
         self.ensure_directory_exists(self.inference_artifacts_directory)
         artifact_file_path = self.inference_artifacts_directory / filename
@@ -646,8 +635,6 @@ class Utils:
         :type filename: str
         :param content: Content to serialize and write to the file
         :type content: str
-        :raises OSError: If directory creation or file writing fails
-        :raises json.JSONEncodeError: If content cannot be serialized to JSON
         """
         self.ensure_directory_exists(self.training_artifacts_directory)
         artifact_file_path = self.training_artifacts_directory / filename

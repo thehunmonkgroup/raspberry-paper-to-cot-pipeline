@@ -143,7 +143,6 @@ class TrainingDataGenerator:
 
         :return: Generator yielding qualified paper records with quality assessment scores
         :rtype: Generator[sqlite3.Row, None, None]
-        :raises sqlite3.Error: If database query fails
         """
         select_columns = constants.DEFAULT_FETCH_BY_STATUS_COLUMNS + [
             "cot_quality_assessment_suitability_score",
@@ -169,8 +168,6 @@ class TrainingDataGenerator:
         :type paper: sqlite3.Row
         :return: Training data dictionary if paper qualifies and artifact exists, None otherwise
         :rtype: Optional[Dict[str, Any]]
-        :raises FileNotFoundError: If training artifact file is missing
-        :raises json.JSONDecodeError: If training artifact is not valid JSON
         """
         quality_score = paper["cot_quality_assessment_suitability_score"]
         voicing_score = paper["cot_voicing_assessment_suitability_score"]
@@ -209,8 +206,6 @@ class TrainingDataGenerator:
 
         :return: Path object pointing to the initialized output file
         :rtype: Path
-        :raises OSError: If file creation or directory creation fails
-        :raises PermissionError: If lacking write permissions for target directory
         """
         self.logger.debug(
             f"Initializing output file in {self.training_artifacts_directory}"
@@ -239,9 +234,6 @@ class TrainingDataGenerator:
         :type data: Dict[str, Any]
         :param paper_id: ID of the paper being processed
         :type paper_id: str
-        :raises IOError: If writing to the file fails
-        :raises json.JSONEncodeError: If data cannot be serialized to JSON
-        :raises TypeError: If data contains non-serializable objects
         """
         self.logger.debug(
             f"Appending training data entry for paper {paper_id} to {output_path}"
@@ -260,9 +252,6 @@ class TrainingDataGenerator:
         :type output_path: Path
         :return: Tuple containing counts of processed and skipped papers
         :rtype: Tuple[int, int]
-        :raises sqlite3.Error: If database operations fail
-        :raises IOError: If file operations fail
-        :raises Exception: If any unhandled error occurs during processing
         """
         processed_count = 0
         skipped_count = 0

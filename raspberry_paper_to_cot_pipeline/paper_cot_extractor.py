@@ -325,7 +325,6 @@ class CoTExtractor:
         :type pdf_text: str
         :return: Generated critique of the extraction
         :rtype: str
-        :raises: None
         """
         critique, critique_response = self.process_critique(
             question, chain_of_reasoning, answer, pdf_text
@@ -834,7 +833,7 @@ Raw Content:
            - Refines extraction based on critique
            - Creates training artifacts
 
-        :raises: SystemExit: If a fatal error occurs during processing
+        :raises: Exception: If a fatal error occurs during processing
         """
         try:
             papers = self.fetch_papers()

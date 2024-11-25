@@ -15,10 +15,6 @@ Assessment criteria evaluated:
 - Content preservation: Structural integrity and information fidelity
 - Factual accuracy: Grounding in paper and academic integrity
 - Voice requirements: First-person narrative, removal of source references
-
-:raises ValueError: If assessment criteria validation fails
-:raises sqlite3.Error: If database operations fail
-:raises FileNotFoundError: If required artifacts are missing
 """
 
 import argparse

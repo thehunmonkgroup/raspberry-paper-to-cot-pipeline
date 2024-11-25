@@ -94,8 +94,6 @@ class ArxivPaperUrlFetcher:
         :type start_index: int
         :return: List of tuples containing arXiv paper IDs and PDF URLs
         :rtype: List[Tuple[str, str]]
-        :raises RequestException: If there's an error fetching data from the arXiv API
-        :raises ValueError: If date parsing fails
         """
         self.logger.info(
             "Searching for papers from %s to %s in categories: %s, starting from index %d",
@@ -203,8 +201,6 @@ class ArxivPaperUrlFetcher:
         :type params: Dict[str, Any]
         :return: Parsed XML root element if successful, None if parsing fails, False on parse error
         :rtype: Optional[ET.Element]
-        :raises RequestException: If the HTTP request fails or returns non-200 status
-        :raises ParseError: If the XML response cannot be parsed
         """
         base_url = "https://export.arxiv.org/api/query"
         self.logger.debug("Fetching papers from arXiv: %s: %s", base_url, params)
@@ -234,7 +230,6 @@ class ArxivPaperUrlFetcher:
         :type date_filter_end: str
         :return: Tuple of (paper_id, pdf_url) if valid, "BREAK" to stop processing, or None to skip
         :rtype: Optional[Union[Tuple[str, str], Literal["BREAK"]]]
-        :raises ValueError: If date parsing fails
         """
         updated_date = parse_date(
             entry.find("{http://www.w3.org/2005/Atom}updated").text
@@ -420,7 +415,7 @@ class ArxivPaperUrlFetcher:
 
         except sqlite3.Error as e:
             self.logger.error("Unexpected database error: %s", str(e))
-            sys.exit(1)
+            raise
 
     def category_exists_in_database(self, category: str) -> bool:
         """Check if the given category already exists in the database.
@@ -429,7 +424,6 @@ class ArxivPaperUrlFetcher:
         :type category: str
         :return: True if the category exists, False otherwise
         :rtype: bool
-        :raises sqlite3.Error: If database query fails
         """
         with sqlite3.connect(self.database) as conn:
             cursor = conn.cursor()
@@ -456,9 +450,6 @@ class ArxivPaperUrlFetcher:
         :type date_filter_end: str
         :param start_index: Starting index for the search
         :type start_index: int
-        :raises RequestException: If network errors occur during paper fetching
-        :raises sqlite3.Error: If database operations fail
-        :raises ValueError: If date parsing fails
         :rtype: None
         """
         # Register this instance for interrupt handling

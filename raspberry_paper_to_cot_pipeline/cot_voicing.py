@@ -236,7 +236,6 @@ Raw Content:
         :return: Tuple containing (transformed_chain, transformed_answer, raw_response)
         :rtype: Tuple[str, str, str]
         :raises ValueError: If transformation response is invalid
-        :raises RuntimeError: If LWE template execution fails
         """
         voicing_response = self.utils.run_lwe_template(
             self.template,

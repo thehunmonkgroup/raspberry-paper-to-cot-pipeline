@@ -148,7 +148,6 @@ class PaperProfiler:
         :type paper_content: str
         :return: Template execution response
         :rtype: str
-        :raises RuntimeError: If LWE template execution fails
         """
         self.logger.debug(f"Running LWE template '{self.template}'")
         template_vars = {"paper": paper_content}
@@ -223,7 +222,6 @@ class PaperProfiler:
         :type criteria: Dict[str, int]
         :param xml_content: Raw XML response content
         :type xml_content: str
-        :raises KeyError: If required paper fields are missing
         """
         self.logger.debug(f"Writing inference artifact for paper {paper['paper_id']}")
         artifact_name = f"{paper['paper_id']}-paper-profiling.txt"
@@ -252,7 +250,6 @@ Raw Inference Output:
         :return: Tuple containing (text content, LWE response, XML content)
         :rtype: tuple[str, str, str]
         :raises ValueError: If XML content cannot be extracted from response
-        :raises RuntimeError: If LWE template execution fails
         """
         text = self.utils.get_pdf_text(paper)
         lwe_response = self.run_lwe_template(text)
@@ -282,9 +279,6 @@ Raw Inference Output:
 
         :param paper: Paper data containing id, paper_id, and paper_url
         :type paper: sqlite3.Row
-        :raises ValueError: If XML content cannot be extracted from LWE response
-        :raises RuntimeError: If LWE template execution fails
-        :raises Exception: If paper processing fails for any other reason
         """
         try:
             _, _, xml_content = self._extract_and_validate_content(paper)
@@ -311,8 +305,6 @@ Raw Inference Output:
 
     def run(self) -> None:
         """Execute the main paper profiling workflow.
-
-        :raises SystemExit: If a critical error occurs during processing
         """
         try:
             papers = self.fetch_papers()
@@ -328,8 +320,6 @@ Raw Inference Output:
 
 def main():
     """Main entry point for command-line interface.
-
-    :raises SystemExit: If processing encounters a critical error
     """
     args = parse_arguments()
     profiler = PaperProfiler(

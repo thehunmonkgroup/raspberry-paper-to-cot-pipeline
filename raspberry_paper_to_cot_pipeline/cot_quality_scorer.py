@@ -12,9 +12,6 @@ The suitability score calculation follows these rules:
 
 The module provides both a command-line interface and programmatic usage through the
 CoTQualityScorer class.
-
-:raises sqlite3.Error: When database operations fail
-:raises ValueError: When invalid criteria values are encountered
 """
 
 import argparse

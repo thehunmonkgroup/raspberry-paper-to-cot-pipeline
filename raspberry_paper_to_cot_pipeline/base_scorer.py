@@ -10,10 +10,6 @@ The module implements a scoring system that:
 - Validates scoring criteria
 - Calculates composite scores
 - Provides extensible base functionality for specific scoring implementations
-
-:raises sqlite3.Error: When database operations fail
-:raises KeyError: When required paper fields are missing
-:raises ValueError: When invalid score values are encountered
 """
 
 import sqlite3
@@ -77,7 +73,6 @@ class BaseScorer:
         :type debug: bool
         :param database: Path to the SQLite database file
         :type database: str
-        :raises ValueError: If database path is invalid
         """
         self.limit = limit
         self.debug = debug
@@ -103,7 +98,6 @@ class BaseScorer:
         :type required_only: bool
         :return: List of prefixed column names for criteria
         :rtype: List[str]
-        :raises AttributeError: If criteria lists are not properly initialized
         """
         criteria = self.required_criteria_list if required_only else self.criteria_list
         return [f"{self.column_prefix}{c}" for c in criteria]
@@ -142,8 +136,6 @@ class BaseScorer:
         :type paper: sqlite3.Row
         :return: True if any required criteria are missing or have zero scores
         :rtype: bool
-        :raises KeyError: If required criteria fields are missing from the data
-        :raises ValueError: If criteria scores cannot be converted to integers
         """
         required_columns = self.build_criteria_columns(required_only=True)
         return any(
@@ -162,7 +154,6 @@ class BaseScorer:
         :return: Calculated suitability score, or 0 if requirements not met
         :rtype: int
         :raises KeyError: If any criteria fields are missing from paper data
-        :raises ValueError: If criteria scores cannot be converted to integers
         """
         try:
             if self.missing_required_criteria(paper):
@@ -182,7 +173,6 @@ class BaseScorer:
         :return: Generator yielding paper data rows from the database
         :rtype: Generator[sqlite3.Row, None, None]
         :raises sqlite3.Error: If database operations fail
-        :raises ValueError: If database configuration is invalid
         """
         select_columns = (
             constants.DEFAULT_FETCH_BY_STATUS_COLUMNS + self.build_criteria_columns()
@@ -207,7 +197,6 @@ class BaseScorer:
         :type paper: sqlite3.Row
         :raises KeyError: If required paper fields or criteria are missing
         :raises sqlite3.Error: If database update operations fail
-        :raises ValueError: If score calculations fail due to invalid data
         """
         try:
             suitability_score = self.calculate_suitability_score(paper)
@@ -232,10 +221,6 @@ class BaseScorer:
         Processes all eligible papers in batches, calculating and storing
         suitability scores. Provides progress logging and handles errors.
         Terminates with exit code 1 if an unrecoverable error occurs.
-
-        :raises SystemExit: If an unrecoverable error occurs during processing
-        :raises sqlite3.Error: If database operations fail
-        :raises ValueError: If paper processing fails due to invalid data
         """
         self.logger.info(
             f"Starting scoring process. Database: {self.database}, Limit: {self.limit}"
