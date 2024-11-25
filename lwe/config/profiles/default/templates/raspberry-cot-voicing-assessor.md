@@ -136,10 +136,9 @@ XML Template:
 
 ## ORIGINAL REFINED CONTENT
 
-The original refined content for comparison:
+The original refined content for comparison is fully enclosed within the `original_refined_content` XML tags below:
 
 <original_refined_content>
-
 Question:
 
 {{ original_question }}
@@ -151,12 +150,11 @@ Chain of reasoning:
 Answer:
 
 {{ original_answer }}
-
 </original_refined_content>
 
 ## REFERENCE PAPER
 
-The original paper for fact-checking:
+The original paper for fact-checking is fully enclosed within the `reference_paper` XML tags below:
 
 <reference_paper>
 {{ paper }}
@@ -164,10 +162,9 @@ The original paper for fact-checking:
 
 ## VOICE-TRANSFORMED CONTENT TO EVALUATE
 
-The voice-transformed content to evaluate:
+The voice-transformed content to evaluate is fully enclosed within the `content_to_evaluate` XML tags below:
 
 <content_to_evaluate>
-
 Question:
 
 {{ question }}
@@ -179,5 +176,4 @@ Chain of reasoning:
 Answer:
 
 {{ answer }}
-
 </content_to_evaluate>

@@ -113,7 +113,7 @@ XML Template:
 
 ## REFERENCE PAPER
 
-The original paper is provided for fact-checking during transformation:
+The original paper is provided for fact-checking during transformation and is fully enclosed within the `reference_paper` XML tags below:
 
 <reference_paper>
 {{ paper }}
@@ -121,20 +121,17 @@ The original paper is provided for fact-checking during transformation:
 
 ## ORIGINAL QUESTION
 
-The original question that the chain of reasoning and answer are meant to address:
+The original question that the chain of reasoning and answer are meant to address is fully enclosed within the `original_question` XML tags below:
 
 <original_question>
-
 {{ question }}
-
 </original_question>
 
 ## CONTENT TO TRANSFORM
 
-The chain of reasoning and answer to transform is provided below:
+The chain of reasoning and answer to transform is fully enclosed within the `content_to_transform` XML tags below:
 
 <content_to_transform>
-
 Chain of reasoning:
 
 {{ chain_of_reasoning }}
@@ -142,5 +139,4 @@ Chain of reasoning:
 Answer:
 
 {{ answer }}
-
 </content_to_transform>
