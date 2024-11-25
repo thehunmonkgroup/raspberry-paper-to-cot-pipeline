@@ -381,9 +381,13 @@ class Utils:
             raise AttributeError("Required XML elements missing")
 
         # Question doesn't exist in voicing, so make it optional.
-        question = question_elem.text.strip() if question_elem else ""
-        chain_of_reasoning = textwrap.dedent(chain_elem.text).strip()
-        answer = answer_elem.text.strip()
+        if question_elem is None:
+            question = ""
+        else:
+            question = textwrap.dedent(question_elem.text.strip())
+        chain_of_reasoning = textwrap.dedent(chain_elem.text.strip())
+        answer = textwrap.dedent(answer_elem.text.strip())
+
         return question, chain_of_reasoning, answer
 
     def extract_question_chain_of_reasoning_answer_from_artifact(self, paper: sqlite3.Row, artifact_pattern: str) -> Optional[Tuple[str, str, str]]:
