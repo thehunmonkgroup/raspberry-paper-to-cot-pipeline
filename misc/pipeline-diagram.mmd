@@ -1,34 +1,33 @@
 flowchart TD
-    A[Fetch Paper URLs] --> B[Database]
-    B <--> E[Profile Papers]
-    B <--> F[Score Papers]
-    B <--> G[Extract CoT]
-    B <--> H[CoT Quality]
-    B <--> I[Score CoT]
-    B <--> S[Voice CoT]
-    B <--> T[Voice Quality]
-    B <--> U[Score Voice]
-    B --> J[Build Training File]
-    E --> K[Profile Artifact]
-    G --> L[CoT Artifacts]
-    H --> M[CoT Quality Artifact]
-    S --> V[Voice Artifact]
-    T --> W[Voice Quality Artifact]
-    J --> N[Final Training File]
-    L --> O[Initial CoT]
-    L --> P[CoT Critique]
-    L --> Q[CoT Refinement]
-    V --> R[Candidate Training Files]
-    R --> J
-    E --> F
-    F --> G
-    G --> H
-    H --> I
-    I --> S
-    S --> T
-    T --> U
-    O --> P
-    P --> Q
-    I --> R
-    U --> R
-    Q --> S
+    FETCH[Fetch Paper URLs] --> DB[Database]
+    DB <--> PROFILE[Profile Papers]
+    DB <--> SCORE_P[Score Papers]
+    DB <--> EXTRACT[Extract CoT]
+    DB <--> COT_QUAL[CoT Quality]
+    DB <--> SCORE_C[Score CoT]
+    DB <--> VOICE_GEN[Voice CoT]
+    DB <--> VOICE_QUAL[Voice Quality]
+    DB <--> SCORE_V[Score Voice]
+    DB --> BUILD[Build Training File]
+    PROFILE --> PROF_ART[Profile Artifact]
+    EXTRACT --> COT_ART[CoT Artifacts]
+    COT_QUAL --> QUAL_ART[CoT Quality Artifact]
+    VOICE_GEN --> VOICE_ART[Voice Artifact]
+    VOICE_QUAL --> VQ_ART[Voice Quality Artifact]
+    BUILD --> TRAIN[Final Training File]
+    COT_ART --> INIT_COT[Initial CoT]
+    COT_ART --> COT_CRIT[CoT Critique]
+    COT_ART --> COT_REF[CoT Refinement]
+    PROFILE --> SCORE_P
+    SCORE_P --> EXTRACT
+    EXTRACT --> COT_QUAL
+    COT_QUAL --> SCORE_C
+    SCORE_C --> VOICE_GEN
+    VOICE_GEN --> VOICE_QUAL
+    VOICE_QUAL --> SCORE_V
+    INIT_COT --> COT_CRIT
+    COT_CRIT --> COT_REF
+    SCORE_C --> BUILD
+    SCORE_V --> BUILD
+    VOICE_ART --> BUILD
+    COT_REF --> VOICE_GEN
