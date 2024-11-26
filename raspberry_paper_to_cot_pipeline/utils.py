@@ -359,7 +359,7 @@ class Utils:
         )
         return match.group(0) if match else None
 
-    def clean_extracted_text(self, text: str | None) -> str:
+    def clean_extracted_text(self, text: str) -> str:
         """Clean extracted text by removing indentation and extra whitespace.
 
         :param text: Text to clean
@@ -367,8 +367,6 @@ class Utils:
         :return: Cleaned text
         :rtype: str
         """
-        if text is None:
-            return ""
         return textwrap.dedent(text).strip()
 
     def extract_question_chain_of_reasoning_answer(
@@ -396,7 +394,7 @@ class Utils:
         if None in (chain_elem, answer_elem):
             raise AttributeError("Required XML elements missing")
 
-        question = self.clean_extracted_text(question_elem.text)
+        question = self.clean_extracted_text(question_elem.text if question_elem is not None else "")
         chain_of_reasoning = self.clean_extracted_text(chain_elem.text)
         answer = self.clean_extracted_text(answer_elem.text)
 
