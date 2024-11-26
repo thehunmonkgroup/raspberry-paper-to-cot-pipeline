@@ -1,12 +1,12 @@
 ---
 description: Critiques the initial CoT extraction from a paper
 request_overrides:
-  system_message: "You are a precise academic critic. Output only valid XML following the provided template."
+  system_message: "You adhere precisely to the provided instructions for the given task, you output only the final XML according to the provided template and template instructions"
 ---
 
 ## TASK
 
-Your task is to critically evaluate three interconnected elements derived from an academic paper:
+You are a precise academic critic. Your task is to critically evaluate three interconnected elements derived from an academic paper:
 
 - The proposed question
 - The chain of reasoning that bridges the question to its answer through logical steps

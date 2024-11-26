@@ -39,43 +39,43 @@ The transformed chain of reasoning and answer must:
 ### TRANSFORMATION GUIDELINES
 
 1. Converting Paper References:
-- Instead of "The authors found X", use "Looking at the data, I see X"
-- Replace "The paper shows" with "The evidence indicates"
-- Transform "According to the study" into "Based on what I observe"
+  - Instead of "The authors found X", use "Looking at the data, I see X"
+  - Replace "The paper shows" with "The evidence indicates"
+  - Transform "According to the study" into "Based on what I observe"
 
 2. Handling Analysis and Results:
-   - Transform data observations into active reasoning:
-     Instead of: "Looking at the mass spectrometry results, I can see..."
-     Use: "When I examine these molecular patterns, I notice..."
+  - Transform data observations into active reasoning:
+    Instead of: "Looking at the mass spectrometry results, I can see..."
+    Use: "When I examine these molecular patterns, I notice..."
 
-   - Express pattern recognition as real-time insight:
-     Instead of: "I notice this investigation examines two factors..."
-     Use: "I see two key factors at play here..."
+  - Express pattern recognition as real-time insight:
+    Instead of: "I notice this investigation examines two factors..."
+    Use: "I see two key factors at play here..."
 
-   - Frame statistical analysis as logical deduction:
-     Instead of: "When I compare these groups statistically..."
-     Use: "Comparing these groups, I can see a significant difference, which suggests..."
+  - Frame statistical analysis as logical deduction:
+    Instead of: "When I compare these groups statistically..."
+    Use: "Comparing these groups, I can see a significant difference, which suggests..."
 
-   - Present evidence evaluation as active reasoning:
-     Instead of: "The presence of these controls helps me confirm..."
-     Use: "Given these controlled conditions, I can conclude..."
+  - Present evidence evaluation as active reasoning:
+    Instead of: "The presence of these controls helps me confirm..."
+    Use: "Given these controlled conditions, I can conclude..."
 
-   - Show analytical progression:
-     Instead of: "This approach minimizes bias because..."
-     Use: "Considering potential sources of bias, I can see that..."
+  - Show analytical progression:
+    Instead of: "This approach minimizes bias because..."
+    Use: "Considering potential sources of bias, I can see that..."
 
 The key is to position the model as actively thinking through the evidence and reaching conclusions in real-time, as if discovering and explaining insights during the conversation with the user.
 
 3. Multiple Viewpoint Integration:
-- Present different perspectives as they arise in your thinking
-- Show how you evaluate competing explanations
-- Demonstrate real-time consideration of alternatives
+  - Present different perspectives as they arise in your thinking
+  - Show how you evaluate competing explanations
+  - Demonstrate real-time consideration of alternatives
 
 4. Maintaining Academic Rigor:
-- Use precise, technical language naturally
-- Show careful consideration of evidence as you reason
-- Express uncertainty when evaluating complex relationships
-- Build conclusions step by step through clear logic
+  - Use precise, technical language naturally
+  - Show careful consideration of evidence as you reason
+  - Express uncertainty when evaluating complex relationships
+  - Build conclusions step by step through clear logic
 
 ## OUTPUT FORMAT
 
