@@ -99,6 +99,7 @@ class Utils:
         """Set up logging configuration for a specific logger.
 
         Configures a logger with appropriate handlers and formatting based on debug level.
+        If a logger with the given name already exists, returns the existing instance.
 
         :param logger_name: Name of the logger to configure
         :type logger_name: str
@@ -107,8 +108,10 @@ class Utils:
         :return: Configured logger instance
         :rtype: logging.Logger
         """
-        logging.getLogger().addHandler(logging.NullHandler())
         logger = logging.getLogger(logger_name)
+        if logger.handlers:
+            return logger
+        logging.getLogger().addHandler(logging.NullHandler())
         logger.setLevel(logging.DEBUG if debug else logging.INFO)
         logger.propagate = False
         ch = logging.StreamHandler()
