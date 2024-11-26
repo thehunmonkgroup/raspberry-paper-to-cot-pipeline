@@ -98,7 +98,7 @@ class CoTQualityAssessor:
 
     def __init__(
         self,
-        limit: Optional[int],
+        limit: Optional[int] = 1,
         debug: bool = False,
         assessor_preset: str = constants.DEFAULT_COT_QUALITY_ASSESSOR_PRESET,
         database: str = constants.DEFAULT_DB_NAME,

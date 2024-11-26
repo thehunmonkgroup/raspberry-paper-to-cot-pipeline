@@ -136,7 +136,7 @@ class CoTExtractor:
 
     def __init__(
         self,
-        limit: Optional[int],
+        limit: Optional[int] = 1,
         debug: bool = False,
         extraction_preset: str = constants.DEFAULT_COT_EXTRACTION_PRESET,
         critique_preset: str = constants.DEFAULT_COT_CRITIQUE_PRESET,

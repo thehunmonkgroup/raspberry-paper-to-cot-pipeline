@@ -84,7 +84,7 @@ class CoTVoicing:
 
     def __init__(
         self,
-        limit: Optional[int],
+        limit: Optional[int] = 1,
         voicing_preset: str = constants.DEFAULT_COT_VOICING_PRESET,
         database: str = constants.DEFAULT_DB_NAME,
         suitability_score: int = constants.COT_QUALITY_ASSESSMENT_DEFAULT_SUITABILITY_SCORE,

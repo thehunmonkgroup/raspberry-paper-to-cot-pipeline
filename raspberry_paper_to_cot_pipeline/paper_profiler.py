@@ -90,7 +90,7 @@ class PaperProfiler:
 
     def __init__(
         self,
-        limit: Optional[int],
+        limit: Optional[int] = 1,
         debug: bool = False,
         profiling_preset: str = constants.DEFAULT_PAPER_PROFILER_PRESET,
         database: str = constants.DEFAULT_DB_NAME,

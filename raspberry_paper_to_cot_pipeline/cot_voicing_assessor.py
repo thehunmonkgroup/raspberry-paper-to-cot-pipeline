@@ -84,11 +84,11 @@ class CoTVoicingAssessor:
 
     def __init__(
         self,
-        limit: Optional[int],
-        assessor_preset: str = constants.DEFAULT_COT_VOICING_PRESET,
+        limit: Optional[int] = 1,
+        assessor_preset: str = constants.DEFAULT_COT_VOICING_ASSESSOR_PRESET,
         database: str = constants.DEFAULT_DB_NAME,
         inference_artifacts_directory: str = constants.DEFAULT_INFERENCE_ARTIFACTS_DIR,
-        template: str = constants.DEFAULT_COT_VOICING_TEMPLATE,
+        template: str = constants.DEFAULT_COT_VOICING_ASSESSOR_TEMPLATE,
         debug: bool = False,
     ) -> None:
         """
