@@ -1,10 +1,13 @@
 import os
 from pathlib import Path
+from dotenv import load_dotenv
+
+load_dotenv()
 
 CWD = Path(os.getcwd())
 
 # LWE
-DEFAULT_LWE_PRESET = "claude-sonnet"
+DEFAULT_LWE_PRESET = os.getenv('RASPBERRY_DEFAULT_LWE_PRESET', "claude-sonnet")
 DEFAULT_PAPER_PROFILER_PRESET = DEFAULT_LWE_PRESET
 DEFAULT_COT_EXTRACTION_PRESET = DEFAULT_LWE_PRESET
 DEFAULT_COT_CRITIQUE_PRESET = DEFAULT_LWE_PRESET

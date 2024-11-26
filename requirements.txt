@@ -1,5 +1,6 @@
 # Core dependencies
 beautifulsoup4
 python-dateutil
+python-dotenv
 requests
 tenacity
