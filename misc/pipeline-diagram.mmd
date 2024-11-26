@@ -1,23 +1,53 @@
+---
+config:
+  theme: base
+  themeVariables:
+    background: "#ffffff"
+    primaryColor: "#ffffff"
+    primaryTextColor: "#000000"
+    primaryBorderColor: "#000000"
+    lineColor: "#000000"
+    edgeLabelBackground: "#ffffff"
+  flowchart:
+    htmlLabels: true
+    curve: basis
+---
+
 flowchart TD
-    FETCH[Fetch Paper URLs] --> DB[Database]
-    DB <--> PROFILE[Profile Papers]
-    DB <--> SCORE_P[Score Papers]
-    DB <--> EXTRACT[Extract CoT]
-    DB <--> COT_QUAL[CoT Quality]
-    DB <--> SCORE_C[Score CoT]
-    DB <--> VOICE_GEN[Voice CoT]
-    DB <--> VOICE_QUAL[Voice Quality]
-    DB <--> SCORE_V[Score Voice]
-    DB --> BUILD[Build Training File]
-    PROFILE --> PROF_ART[Profile Artifact]
-    EXTRACT --> COT_ART[CoT Artifacts]
-    COT_QUAL --> QUAL_ART[CoT Quality Artifact]
-    VOICE_GEN --> VOICE_ART[Voice Artifact]
-    VOICE_QUAL --> VQ_ART[Voice Quality Artifact]
-    BUILD --> TRAIN[Final Training File]
-    COT_ART --> INIT_COT[Initial CoT]
-    COT_ART --> COT_CRIT[CoT Critique]
-    COT_ART --> COT_REF[CoT Refinement]
+    subgraph Artifacts
+        direction LR
+        PROF_ART["`**Profile Artifact**`"]
+        QUAL_ART["`**CoT Quality Artifact**`"]
+        VOICE_ART["`**Voice Artifact**`"]
+        VQ_ART["`**Voice Quality Artifact**`"]
+        TRAIN["`**Final Training File**`"]
+        COT_ART[CoT Artifacts]
+        INIT_COT["`**Initial CoT**`"]
+        COT_CRIT["`**CoT Critique**`"]
+        COT_REF["`**CoT Refinement**`"]
+    end
+
+    subgraph Pipeline
+        direction LR
+        FETCH["`*Fetch Paper URLs*`"]
+        PROFILE["`*Profile Papers*`"]
+        SCORE_P["`*Score Papers*`"]
+        EXTRACT["`*Extract CoT*`"]
+        COT_QUAL["`*CoT Quality*`"]
+        SCORE_C["`*Score CoT*`"]
+        VOICE_GEN["`*Voice CoT*`"]
+        VOICE_QUAL["`*Voice Quality*`"]
+        SCORE_V["`*Score Voice*`"]
+        BUILD["`*Build Training File*`"]
+    end
+
+    subgraph Storage
+        direction LR
+        DB[Database]
+    end
+
+    %% Pipeline flow connections
+    FETCH --> PROFILE
     PROFILE --> SCORE_P
     SCORE_P --> EXTRACT
     EXTRACT --> COT_QUAL
@@ -25,9 +55,50 @@ flowchart TD
     SCORE_C --> VOICE_GEN
     VOICE_GEN --> VOICE_QUAL
     VOICE_QUAL --> SCORE_V
-    INIT_COT --> COT_CRIT
-    COT_CRIT --> COT_REF
-    SCORE_C --> BUILD
     SCORE_V --> BUILD
-    VOICE_ART --> BUILD
+
+    %% Database connections
+    FETCH --> DB
+    DB <--> PROFILE
+    DB <--> SCORE_P
+    DB <--> EXTRACT
+    DB <--> COT_QUAL
+    DB <--> SCORE_C
+    DB <--> VOICE_GEN
+    DB <--> VOICE_QUAL
+    DB <--> SCORE_V
+    DB --> BUILD
+
+    %% Artifact connections
+    PROFILE --> PROF_ART
+    EXTRACT --> COT_ART
+    COT_QUAL --> QUAL_ART
+    VOICE_GEN --> VOICE_ART
+    VOICE_QUAL --> VQ_ART
+    BUILD --> TRAIN
+    COT_ART --> INIT_COT
+    COT_ART --> COT_CRIT
+    COT_ART --> COT_REF
+    COT_REF --> COT_QUAL
     COT_REF --> VOICE_GEN
+
+    %% Build connections
+    SCORE_C --> BUILD
+    VOICE_ART --> BUILD
+
+    %% Subgraph connections
+    Storage ~~~ Pipeline
+    Pipeline ~~~ Artifacts
+
+    classDef default fill:#F5F5F5,color:#2F4858,stroke:#2F4858,stroke-width:1px
+    classDef pipelineSteps fill:#7FA99B,color:#ffffff,stroke:#2F4858,stroke-width:1px
+    classDef artifacts fill:#647CBF,color:#ffffff,stroke:#2F4858,stroke-width:1px
+
+    %% Apply classes to nodes
+    class PROFILE,SCORE_P,EXTRACT,COT_QUAL,SCORE_C,VOICE_GEN,VOICE_QUAL,SCORE_V,BUILD,FETCH pipelineSteps
+    class PROF_ART,QUAL_ART,VOICE_ART,VQ_ART,TRAIN,INIT_COT,COT_CRIT,COT_REF artifacts
+
+    %% Apply styles to arrows
+    linkStyle 0,1,2,3,4,5,6,7,8 stroke:#7FA99B,stroke-width:4
+    linkStyle 9,10,11,12,13,14,15,16,17,18 stroke:#2F4858,stroke-width:1,stroke-dasharray:5
+    linkStyle 19,20,21,22,23,24,25,26,27,28,29 stroke:#647CBF,stroke-width:4
