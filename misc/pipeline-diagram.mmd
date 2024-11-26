@@ -58,7 +58,7 @@ flowchart TD
     SCORE_V --> BUILD
 
     %% Database connections
-    FETCH --> DB
+    DB <--> FETCH
     DB <--> PROFILE
     DB <--> SCORE_P
     DB <--> EXTRACT
