@@ -359,7 +359,7 @@ class Utils:
         )
         return match.group(0) if match else None
 
-    def clean_extracted_text(self, text: str) -> str:
+    def clean_extracted_text(self, text: str | None) -> str:
         """Clean extracted text by removing indentation and extra whitespace.
 
         :param text: Text to clean
@@ -367,6 +367,8 @@ class Utils:
         :return: Cleaned text
         :rtype: str
         """
+        if text is None:
+            return ""
         return textwrap.dedent(text).strip()
 
     def extract_question_chain_of_reasoning_answer(
