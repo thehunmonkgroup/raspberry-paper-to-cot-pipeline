@@ -173,7 +173,7 @@ class PaperProfiler:
         for question in constants.PAPER_PROFILING_CRITERIA:
             element = root.find(f".//{question}")
             if element is not None:
-                value = element.text.strip()
+                value = self.utils.clean_extracted_text(element.text)
                 criteria[f"profiler_criteria_{question}"] = (
                     1 if value.lower() in ["yes", "y"] else 0
                 )

@@ -156,8 +156,8 @@ class CoTVoicing:
             raise ValueError("Missing required transformation elements")
 
         return (
-            chain.text.strip(),
-            answer.text.strip()
+            self.utils.clean_extracted_text(chain.text),
+            self.utils.clean_extracted_text(answer.text)
         )
 
     def write_voicing_artifact(

@@ -159,7 +159,7 @@ class CoTQualityAssessor:
         for criterion in constants.COT_QUALITY_ASSESSMENT_CRITERIA:
             element = root.find(f".//{criterion}")
             if element is not None:
-                value = element.text.strip()
+                value = self.utils.clean_extracted_text(element.text)
                 criteria[f"cot_quality_assessment_criteria_{criterion}"] = (
                     1 if value.lower() in ["yes", "y"] else 0
                 )

@@ -356,6 +356,16 @@ class Utils:
         )
         return match.group(0) if match else None
 
+    def clean_extracted_text(self, text: str) -> str:
+        """Clean extracted text by removing indentation and extra whitespace.
+
+        :param text: Text to clean
+        :type text: str
+        :return: Cleaned text
+        :rtype: str
+        """
+        return textwrap.dedent(text).strip()
+
     def extract_question_chain_of_reasoning_answer(
         self, content: str
     ) -> Tuple[str, str, str]:
@@ -377,16 +387,13 @@ class Utils:
         chain_elem = root.find(".//chain_of_reasoning")
         answer_elem = root.find(".//answer")
 
+        # Question doesn't exist in voicing, so make it optional
         if None in (chain_elem, answer_elem):
             raise AttributeError("Required XML elements missing")
 
-        # Question doesn't exist in voicing, so make it optional.
-        if question_elem is None:
-            question = ""
-        else:
-            question = textwrap.dedent(question_elem.text).strip()
-        chain_of_reasoning = textwrap.dedent(chain_elem.text).strip()
-        answer = textwrap.dedent(answer_elem.text).strip()
+        question = self.clean_extracted_text(question_elem.text)
+        chain_of_reasoning = self.clean_extracted_text(chain_elem.text)
+        answer = self.clean_extracted_text(answer_elem.text)
 
         return question, chain_of_reasoning, answer
 

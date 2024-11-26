@@ -142,7 +142,7 @@ class CoTVoicingAssessor:
         for criterion in constants.COT_VOICING_ASSESSMENT_CRITERIA:
             element = root.find(f".//{criterion}")
             if element is not None:
-                value = element.text.strip()
+                value = self.utils.clean_extracted_text(element.text)
                 criteria[f"cot_voicing_assessment_{criterion}"] = (
                     1 if value.lower() in ["yes", "y"] else 0
                 )

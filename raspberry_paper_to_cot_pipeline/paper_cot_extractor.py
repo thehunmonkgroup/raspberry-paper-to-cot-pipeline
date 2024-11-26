@@ -663,7 +663,7 @@ Raw Content:
         critique = root.find(".//critique")
         if critique is None:
             raise ValueError("Missing required XML element critique")
-        return critique.text.strip()
+        return self.utils.clean_extracted_text(critique.text)
 
     def process_critique(
         self,
