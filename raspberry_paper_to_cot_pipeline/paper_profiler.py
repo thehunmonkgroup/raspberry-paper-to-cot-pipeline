@@ -280,9 +280,7 @@ Raw Inference Output:
         :param paper: Paper data containing id, paper_id, and paper_url
         :type paper: sqlite3.Row
         """
-        self.logger.info(
-            f"Profiling paper {paper['paper_id']}"
-        )
+        self.logger.info(f"Profiling paper {paper['paper_id']}")
         try:
             _, _, xml_content = self._extract_and_validate_content(paper)
             self._process_criteria_and_update(paper, xml_content)
@@ -307,8 +305,7 @@ Raw Inference Output:
             )
 
     def run(self) -> None:
-        """Execute the main paper profiling workflow.
-        """
+        """Execute the main paper profiling workflow."""
         try:
             papers = self.fetch_papers()
             for paper in papers:
@@ -322,8 +319,7 @@ Raw Inference Output:
 
 
 def main():
-    """Main entry point for command-line interface.
-    """
+    """Main entry point for command-line interface."""
     args = parse_arguments()
     profiler = PaperProfiler(
         limit=args.limit,

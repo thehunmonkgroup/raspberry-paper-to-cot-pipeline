@@ -394,13 +394,17 @@ class Utils:
         if None in (chain_elem, answer_elem):
             raise AttributeError("Required XML elements missing")
 
-        question = self.clean_extracted_text(question_elem.text if question_elem is not None else "")
+        question = self.clean_extracted_text(
+            question_elem.text if question_elem is not None else ""
+        )
         chain_of_reasoning = self.clean_extracted_text(chain_elem.text)
         answer = self.clean_extracted_text(answer_elem.text)
 
         return question, chain_of_reasoning, answer
 
-    def extract_question_chain_of_reasoning_answer_from_artifact(self, paper: sqlite3.Row, artifact_pattern: str) -> Optional[Tuple[str, str, str]]:
+    def extract_question_chain_of_reasoning_answer_from_artifact(
+        self, paper: sqlite3.Row, artifact_pattern: str
+    ) -> Optional[Tuple[str, str, str]]:
         """
         Retrieve refined question, reasoning chain, and answer from paper artifact.
 
@@ -415,13 +419,9 @@ class Utils:
         :rtype: Optional[Tuple[str, str, str]]
         """
         try:
-            artifact_name = artifact_pattern.format(
-                paper_id=paper["paper_id"]
-            )
+            artifact_name = artifact_pattern.format(paper_id=paper["paper_id"])
             refinement_content = self.read_inference_artifact(artifact_name)
-            return self.extract_question_chain_of_reasoning_answer(
-                refinement_content
-            )
+            return self.extract_question_chain_of_reasoning_answer(refinement_content)
         except (FileNotFoundError, ValueError) as e:
             self.logger.error(
                 f"Failed to get data from artifact {artifact_name} for paper {paper['paper_id']}: {str(e)}"

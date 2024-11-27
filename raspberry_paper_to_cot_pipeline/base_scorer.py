@@ -198,9 +198,7 @@ class BaseScorer:
         :raises KeyError: If required paper fields or criteria are missing
         :raises sqlite3.Error: If database update operations fail
         """
-        self.logger.debug(
-            f"Scoring paper {paper['paper_id']}"
-        )
+        self.logger.debug(f"Scoring paper {paper['paper_id']}")
         try:
             suitability_score = self.calculate_suitability_score(paper)
             data = {

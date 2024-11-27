@@ -122,8 +122,12 @@ class TrainingDataGenerator:
         :type debug: bool
         """
         self.database = database
-        self.cot_quality_assessment_suitability_score = cot_quality_assessment_suitability_score
-        self.cot_voicing_assessment_suitability_score = cot_voicing_assessment_suitability_score
+        self.cot_quality_assessment_suitability_score = (
+            cot_quality_assessment_suitability_score
+        )
+        self.cot_voicing_assessment_suitability_score = (
+            cot_voicing_assessment_suitability_score
+        )
         self.training_file_name = training_file_name
         self.training_artifacts_directory = Path(training_artifacts_directory)
         self.limit = limit

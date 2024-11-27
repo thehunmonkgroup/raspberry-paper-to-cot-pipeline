@@ -315,16 +315,16 @@ Raw Inference Output:
         :return: None
         :rtype: None
         """
-        self.logger.info(
-            f"Asssssing paper {paper['paper_id']}"
-        )
+        self.logger.info(f"Asssssing paper {paper['paper_id']}")
         try:
             text = self.utils.get_pdf_text(paper)
-            refinement_data = self.utils.extract_question_chain_of_reasoning_answer_from_artifact(paper, constants.COT_REFINEMENT_ARTIFACT_PATTERN)
-            if not refinement_data:
-                raise ValueError(
-                    "Could not retrieve refinement data for paper"
+            refinement_data = (
+                self.utils.extract_question_chain_of_reasoning_answer_from_artifact(
+                    paper, constants.COT_REFINEMENT_ARTIFACT_PATTERN
                 )
+            )
+            if not refinement_data:
+                raise ValueError("Could not retrieve refinement data for paper")
 
             question, chain_of_reasoning, answer = refinement_data
             criteria, xml_content = self.run_assessment(

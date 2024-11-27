@@ -162,9 +162,7 @@ class CoTVoicingAssessor:
         output = []
         for criterion in constants.COT_VOICING_ASSESSMENT_CRITERIA:
             answer = (
-                "Yes"
-                if criteria[f"cot_voicing_assessment_{criterion}"] == 1
-                else "No"
+                "Yes" if criteria[f"cot_voicing_assessment_{criterion}"] == 1 else "No"
             )
             output.append(f"  {criterion}: {answer}")
         return "\n".join(output)
@@ -262,13 +260,19 @@ Raw Inference Output:
         :param paper: Database row containing paper metadata
         :type paper: sqlite3.Row
         """
-        self.logger.info(
-            f"Asssssing paper {paper['paper_id']}"
-        )
+        self.logger.info(f"Asssssing paper {paper['paper_id']}")
         try:
             text = self.utils.get_pdf_text(paper)
-            original_content = self.utils.extract_question_chain_of_reasoning_answer_from_artifact(paper, constants.COT_REFINEMENT_ARTIFACT_PATTERN)
-            voiced_content = self.utils.extract_question_chain_of_reasoning_answer_from_artifact(paper, constants.COT_VOICING_ARTIFACT_PATTERN)
+            original_content = (
+                self.utils.extract_question_chain_of_reasoning_answer_from_artifact(
+                    paper, constants.COT_REFINEMENT_ARTIFACT_PATTERN
+                )
+            )
+            voiced_content = (
+                self.utils.extract_question_chain_of_reasoning_answer_from_artifact(
+                    paper, constants.COT_VOICING_ARTIFACT_PATTERN
+                )
+            )
             if not original_content or not voiced_content:
                 raise ValueError(
                     "Could not retrieve original data or voiced data for paper"

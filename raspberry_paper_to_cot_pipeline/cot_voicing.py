@@ -129,9 +129,7 @@ class CoTVoicing:
         )
         self.utils.setup_lwe()
 
-    def extract_transformed_content(
-        self, xml_string: str
-    ) -> Tuple[str, str]:
+    def extract_transformed_content(self, xml_string: str) -> Tuple[str, str]:
         """
         Extract transformed chain of reasoning and answer from XML response.
 
@@ -157,7 +155,7 @@ class CoTVoicing:
 
         return (
             self.utils.clean_extracted_text(chain.text),
-            self.utils.clean_extracted_text(answer.text)
+            self.utils.clean_extracted_text(answer.text),
         )
 
     def write_voicing_artifact(
@@ -274,16 +272,16 @@ Raw Content:
                 f"Skipping paper {paper['paper_id']}: score {score} below threshold {self.suitability_score}"
             )
             return None
-        self.logger.info(
-            f"Transforming paper {paper['paper_id']}"
-        )
+        self.logger.info(f"Transforming paper {paper['paper_id']}")
         try:
             text = self.utils.get_pdf_text(paper)
-            refined_data = self.utils.extract_question_chain_of_reasoning_answer_from_artifact(paper, constants.COT_REFINEMENT_ARTIFACT_PATTERN)
-            if not refined_data:
-                raise ValueError(
-                    "Could not retrieve refinement data for paper"
+            refined_data = (
+                self.utils.extract_question_chain_of_reasoning_answer_from_artifact(
+                    paper, constants.COT_REFINEMENT_ARTIFACT_PATTERN
                 )
+            )
+            if not refined_data:
+                raise ValueError("Could not retrieve refinement data for paper")
 
             question, chain_of_reasoning, answer = refined_data
             transformed_c, transformed_a, raw_response = self.process_voicing(
