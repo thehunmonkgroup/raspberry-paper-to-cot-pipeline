@@ -122,3 +122,27 @@ raspberry-fetch-paper-urls
    raspberry-cot-voicing-scorer
 
 All artifacts are output to the `results` directory in the root of the repository
+
+## Customization
+
+The pipeline can be customized using environment variables. A sample configuration file `sample.env` is provided showing all available overrides and their default values.
+
+To configure the pipeline:
+
+1. Copy `sample.env` to `.env`:
+   ```sh
+   cp sample.env .env
+   ```
+
+2. Edit `.env` and uncomment/modify any values you wish to override
+
+The configuration allows you to customize:
+- Model presets for each pipeline stage *([LLM Workflow Engine](https://llm-workflow-engine.readthedocs.io/en/latest/installation.html) specific)*
+- Template files used for prompts *([LLM Workflow Engine](https://llm-workflow-engine.readthedocs.io/en/latest/installation.html) specific)*
+- Directory locations for artifacts and cache
+- Database location
+- ArXiv paper fetch settings
+- Scoring thresholds
+- Training data generation settings
+
+All settings have sensible defaults if not explicitly configured. See `sample.env` for detailed descriptions of each setting.
