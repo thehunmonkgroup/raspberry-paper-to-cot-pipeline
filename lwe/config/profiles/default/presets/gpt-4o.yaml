@@ -1,0 +1,8 @@
+metadata:
+  name: gpt-4o
+  provider: chat_openai
+model_customizations:
+  max_tokens: 4096
+  model_name: gpt-4o-2024-11-20
+  n: 1
+  temperature: 0.0
