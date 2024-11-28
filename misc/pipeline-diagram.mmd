@@ -20,7 +20,8 @@ flowchart TD
         QUAL_ART["`**CoT Quality Artifact**`"]
         VOICE_ART["`**Voice Artifact**`"]
         VQ_ART["`**Voice Quality Artifact**`"]
-        TRAIN["`**Final Training File**`"]
+        TRAIN["`**JSONL Training File**`"]
+        READ_TRAIN["`**Readable Training File**`"]
         COT_ART[CoT Artifacts]
         INIT_COT["`**Initial CoT**`"]
         COT_CRIT["`**CoT Critique**`"]
@@ -76,6 +77,7 @@ flowchart TD
     VOICE_GEN --> VOICE_ART
     VOICE_QUAL --> VQ_ART
     BUILD --> TRAIN
+    BUILD --> READ_TRAIN
     COT_ART --> INIT_COT
     COT_ART --> COT_CRIT
     COT_ART --> COT_REF
@@ -96,9 +98,9 @@ flowchart TD
 
     %% Apply classes to nodes
     class PROFILE,SCORE_P,EXTRACT,COT_QUAL,SCORE_C,VOICE_GEN,VOICE_QUAL,SCORE_V,BUILD,FETCH pipelineSteps
-    class PROF_ART,QUAL_ART,VOICE_ART,VQ_ART,TRAIN,INIT_COT,COT_CRIT,COT_REF artifacts
+    class PROF_ART,QUAL_ART,VOICE_ART,VQ_ART,TRAIN,READ_TRAIN,INIT_COT,COT_CRIT,COT_REF artifacts
 
     %% Apply styles to arrows
     linkStyle 0,1,2,3,4,5,6,7,8 stroke:#7FA99B,stroke-width:4
     linkStyle 9,10,11,12,13,14,15,16,17,18 stroke:#2F4858,stroke-width:1,stroke-dasharray:5
-    linkStyle 19,20,21,22,23,24,25,26,27,28,29 stroke:#647CBF,stroke-width:4
+    linkStyle 19,20,21,22,23,24,25,26,27,28,29,30 stroke:#647CBF,stroke-width:4
