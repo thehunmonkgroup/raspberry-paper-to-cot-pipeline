@@ -171,18 +171,13 @@ class TrainingDataGenerator:
             limit=self.limit,
         )
 
-    def fetch_training_data_for_paper(
-        self, paper: sqlite3.Row
-    ) -> Optional[Dict[str, Any]]:
-        """Fetches a single paper's training data if it meets criteria.
+    def paper_qualifies_for_training_data(self, paper: sqlite3.Row) -> bool:
+        """Checks if a paper meets the minimum suitability scores.
 
-        Checks if the paper meets the minimum suitability scores and attempts to
-        load its training artifact if qualified.
-
-        :param paper: Paper record from database containing ID and quality score
+        :param paper: Paper record from database
         :type paper: sqlite3.Row
-        :return: Training data dictionary if paper qualifies and artifact exists, None otherwise
-        :rtype: Optional[Dict[str, Any]]
+        :return: True if paper meets minimum suitability scores, False otherwise
+        :rtype: bool
         """
         quality_score = paper["cot_quality_assessment_suitability_score"]
         voicing_score = paper["cot_voicing_assessment_suitability_score"]
@@ -190,18 +185,81 @@ class TrainingDataGenerator:
             self.logger.info(
                 f"Skipping paper {paper['paper_id']}: CoT quality score {quality_score} below threshold {self.cot_quality_assessment_suitability_score}"
             )
-            return None
+            return False
         if voicing_score < self.cot_voicing_assessment_suitability_score:
             self.logger.info(
                 f"Skipping paper {paper['paper_id']}: CoT voicing score {voicing_score} below threshold {self.cot_voicing_assessment_suitability_score}"
             )
-            return None
+            return False
+        self.logger.debug(
+            f"Paper {paper['paper_id']} meets minimum suitability scores"
+        )
+        return True
+
+    def fetch_human_readable_training_data_for_paper(
+        self, paper: sqlite3.Row
+    ) -> Optional[Dict[str, Any]]:
+        """Fetches a single paper's human-readable training data
+
+        :param paper: Paper record from database
+        :type paper: sqlite3.Row
+        :return: Paper inference data dictionary if artifacts exist, None otherwise
+        :rtype: Optional[Dict[str, Any]]
+        """
 
         try:
-            return self.extract_paper_info(paper)
+            original_content = (
+                self.utils.extract_question_chain_of_reasoning_answer_from_artifact(
+                    paper, constants.COT_REFINEMENT_ARTIFACT_PATTERN
+                )
+            )
+            voiced_content = (
+                self.utils.extract_question_chain_of_reasoning_answer_from_artifact(
+                    paper, constants.COT_VOICING_ARTIFACT_PATTERN
+                )
+            )
+            if not original_content or not voiced_content:
+                raise ValueError(
+                    "Could not retrieve original data or voiced data for paper"
+                )
+            model_preset = self.extract_model_preset_name(paper)
+            orig_q, _, _ = original_content
+            _, voiced_c, voiced_a = voiced_content
+            return {
+                "paper_id": paper["paper_id"],
+                "paper_url": paper["paper_url"],
+                "model_preset": model_preset,
+                "question": orig_q,
+                "chain_of_reasoning": voiced_c,
+                "answer": voiced_a,
+            }
         except Exception as e:
             self.logger.error(
                 f"Error retrieving training data for paper {paper['paper_id']}: {e}"
+            )
+            return None
+
+    def fetch_training_data_for_paper(self, paper: sqlite3.Row) -> Optional[Dict[str, Any]]:
+        """Loads a single paper's training data.
+
+        :param paper: Paper record from database
+        :type paper: sqlite3.Row
+        :return: Training data dictionary if the artifact exists, None otherwise
+        :rtype: Optional[Dict[str, Any]]
+        """
+        try:
+            filename = constants.TRAINING_ARTIFACT_PATTERN.format(
+                paper_id=paper["paper_id"]
+            )
+            return self.utils.read_training_artifact(filename)
+        except FileNotFoundError:
+            self.logger.error(
+                f"Training artifact not found for paper {paper['paper_id']}"
+            )
+            return None
+        except Exception as e:
+            self.logger.error(
+                f"Error processing training data for paper {paper['paper_id']}: {e}"
             )
             return None
 
@@ -229,39 +287,6 @@ class TrainingDataGenerator:
             path.touch()
 
         return jsonl_path, md_path
-
-    def extract_paper_info(self, paper: sqlite3.Row) -> Dict[str, Any]:
-        """Extract paper information from the training artifacts.
-        :param paper: Paper record from database
-        :type paper: sqlite3.Row
-        :return: Dictionary containing paper information
-        :rtype: Dict[str, Any]
-        """
-        original_content = (
-            self.utils.extract_question_chain_of_reasoning_answer_from_artifact(
-                paper, constants.COT_REFINEMENT_ARTIFACT_PATTERN
-            )
-        )
-        voiced_content = (
-            self.utils.extract_question_chain_of_reasoning_answer_from_artifact(
-                paper, constants.COT_VOICING_ARTIFACT_PATTERN
-            )
-        )
-        if not original_content or not voiced_content:
-            raise ValueError(
-                "Could not retrieve original data or voiced data for paper"
-            )
-        model_preset = self.extract_model_preset_name(paper)
-        orig_q, _, _ = original_content
-        _, voiced_c, voiced_a = voiced_content
-        return {
-            "paper_id": paper["paper_id"],
-            "paper_url": paper["paper_url"],
-            "model_preset": model_preset,
-            "question": orig_q,
-            "chain_of_reasoning": voiced_c,
-            "answer": voiced_a,
-        }
 
     def extract_model_preset_name(self, paper: sqlite3.Row) -> str:
         """Extract model preset from the voiced artifact.
@@ -315,7 +340,7 @@ class TrainingDataGenerator:
         with open(output_path, "a") as f:
             f.write(entry + "\n")
 
-    def append_training_data(self, output_path: Path, data: Dict[str, Any]) -> None:
+    def append_training_data(self, output_path: Path, paper: sqlite3.Row, data: Dict[str, Any]) -> None:
         """Append a single training data entry to the JSONL file.
 
         Converts the training data dictionary to JSON and appends it as a new
@@ -323,11 +348,13 @@ class TrainingDataGenerator:
 
         :param output_path: Path to the output JSONL file
         :type output_path: Path
+        :param paper: Paper record from database
+        :type paper: sqlite3.Row
         :param data: Dictionary containing the training data to append
         :type data: Dict[str, Any]
         """
         self.logger.debug(
-            f"Appending training data entry for paper {data['paper_id']} to {output_path}"
+            f"Appending training data entry for paper {paper['paper_id']} to {output_path}"
         )
         with open(output_path, "a") as f:
             f.write(json.dumps(data) + "\n")
@@ -349,16 +376,20 @@ class TrainingDataGenerator:
 
         for paper in self.fetch_qualified_papers():
             self.logger.debug(f"Processing paper {paper['paper_id']}")
-            data = self.fetch_training_data_for_paper(paper)
-            if data:
-                self.append_training_data(jsonl_path, data)
-                self.append_markdown_entry(md_path, data)
+            if not self.paper_qualifies_for_training_data(paper):
+                skipped_count += 1
+                continue
+            training_data = self.fetch_training_data_for_paper(paper)
+            human_data = self.fetch_human_readable_training_data_for_paper(paper)
+            if training_data:
+                self.append_training_data(jsonl_path, paper, training_data)
+                if human_data:
+                    self.append_markdown_entry(md_path, human_data)
                 processed_count += 1
                 self.logger.info(f"Successfully processed paper {paper['paper_id']}")
             else:
                 skipped_count += 1
                 self.logger.debug(f"Skipped paper {paper['paper_id']}")
-
             if (
                 processed_count % self.PROGRESS_REPORT_INTERVAL == 0
                 and processed_count > 0
