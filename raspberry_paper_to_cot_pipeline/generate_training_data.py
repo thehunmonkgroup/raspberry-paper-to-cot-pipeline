@@ -15,6 +15,7 @@ quality assessment has been completed.
 
 import argparse
 import json
+import re
 import sqlite3
 from pathlib import Path
 from typing import Optional, Dict, Any, Generator, Tuple, Union
@@ -53,10 +54,16 @@ def parse_arguments() -> argparse.Namespace:
         help="Minimum CoT voicing assessment suitability score required. Default: %(default)s",
     )
     parser.add_argument(
-        "--training-file-name",
+        "--jsonl-training-file-name",
         type=str,
-        default=constants.DEFAULT_CONSOLIDATED_TRAINING_FILENAME,
-        help="Name of the output training file. Default: %(default)s",
+        default=constants.DEFAULT_JSONL_TRAINING_FILENAME,
+        help="Name of the JSONL training data output file. Default: %(default)s",
+    )
+    parser.add_argument(
+        "--human-readable-training-file-name",
+        type=str,
+        default=constants.DEFAULT_HUMAN_READABLE_TRAINING_FILENAME,
+        help="Name of the human-readable markdown training data output file. Default: %(default)s",
     )
     parser.add_argument(
         "--training-artifacts-directory",
@@ -97,7 +104,8 @@ class TrainingDataGenerator:
         database: str = constants.DEFAULT_DB_NAME,
         cot_quality_assessment_suitability_score: int = constants.COT_QUALITY_ASSESSMENT_DEFAULT_SUITABILITY_SCORE,
         cot_voicing_assessment_suitability_score: int = constants.COT_VOICING_ASSESSMENT_DEFAULT_SUITABILITY_SCORE,
-        training_file_name: str = constants.DEFAULT_CONSOLIDATED_TRAINING_FILENAME,
+        jsonl_training_file_name: str = constants.DEFAULT_JSONL_TRAINING_FILENAME,
+        human_readable_file_name: str = constants.DEFAULT_HUMAN_READABLE_TRAINING_FILENAME,
         training_artifacts_directory: Union[
             str, Path
         ] = constants.DEFAULT_TRAINING_ARTIFACTS_DIR,
@@ -128,7 +136,8 @@ class TrainingDataGenerator:
         self.cot_voicing_assessment_suitability_score = (
             cot_voicing_assessment_suitability_score
         )
-        self.training_file_name = training_file_name
+        self.jsonl_training_file_name = jsonl_training_file_name
+        self.human_readable_file_name = human_readable_file_name
         self.training_artifacts_directory = Path(training_artifacts_directory)
         self.limit = limit
         self.debug = debug
@@ -162,8 +171,10 @@ class TrainingDataGenerator:
             limit=self.limit,
         )
 
-    def process_paper(self, paper: sqlite3.Row) -> Optional[Dict[str, Any]]:
-        """Process a single paper's training data if it meets criteria.
+    def fetch_training_data_for_paper(
+        self, paper: sqlite3.Row
+    ) -> Optional[Dict[str, Any]]:
+        """Fetches a single paper's training data if it meets criteria.
 
         Checks if the paper meets the minimum suitability scores and attempts to
         load its training artifact if qualified.
@@ -187,46 +198,124 @@ class TrainingDataGenerator:
             return None
 
         try:
-            filename = constants.TRAINING_ARTIFACT_PATTERN.format(
-                paper_id=paper["paper_id"]
-            )
-            return self.utils.read_training_artifact(filename)
-        except FileNotFoundError:
-            self.logger.error(
-                f"Training artifact not found for paper {paper['paper_id']}"
-            )
-            return None
+            return self.extract_paper_info(paper)
         except Exception as e:
             self.logger.error(
-                f"Error processing training data for paper {paper['paper_id']}: {e}"
+                f"Error retrieving training data for paper {paper['paper_id']}: {e}"
             )
             return None
 
-    def initialize_output_file(self) -> Path:
-        """Create and initialize the output file for writing training data.
+    def initialize_output_files(self) -> Tuple[Path, Path]:
+        """Create and initialize the output files for writing training data.
 
         Creates the output directory if it doesn't exist, removes any existing
-        output file, and creates a new empty file.
+        output files, and creates new empty files.
 
-        :return: Path object pointing to the initialized output file
-        :rtype: Path
+        :return: Tuple of Path objects pointing to the initialized output files (jsonl, markdown)
+        :rtype: Tuple[Path, Path]
         """
         self.logger.debug(
-            f"Initializing output file in {self.training_artifacts_directory}"
+            f"Initializing output files in {self.training_artifacts_directory}"
         )
         self.utils.ensure_directory_exists(self.training_artifacts_directory)
 
-        output_path = self.training_artifacts_directory / self.training_file_name
-        self.logger.debug(f"Removing existing file if present: {output_path}")
-        output_path.unlink(missing_ok=True)
+        jsonl_path = self.training_artifacts_directory / self.jsonl_training_file_name
+        md_path = self.training_artifacts_directory / self.human_readable_file_name
 
-        self.logger.debug(f"Creating new empty file: {output_path}")
-        output_path.touch()
-        return output_path
+        for path in [jsonl_path, md_path]:
+            self.logger.debug(f"Removing existing file if present: {path}")
+            path.unlink(missing_ok=True)
+            self.logger.debug(f"Creating new empty file: {path}")
+            path.touch()
 
-    def append_training_data(
-        self, output_path: Path, data: Dict[str, Any], paper_id: str
-    ) -> None:
+        return jsonl_path, md_path
+
+    def extract_paper_info(self, paper: sqlite3.Row) -> Dict[str, Any]:
+        """Extract paper information from the training artifacts.
+        :param paper: Paper record from database
+        :type paper: sqlite3.Row
+        :return: Dictionary containing paper information
+        :rtype: Dict[str, Any]
+        """
+        original_content = (
+            self.utils.extract_question_chain_of_reasoning_answer_from_artifact(
+                paper, constants.COT_REFINEMENT_ARTIFACT_PATTERN
+            )
+        )
+        voiced_content = (
+            self.utils.extract_question_chain_of_reasoning_answer_from_artifact(
+                paper, constants.COT_VOICING_ARTIFACT_PATTERN
+            )
+        )
+        if not original_content or not voiced_content:
+            raise ValueError(
+                "Could not retrieve original data or voiced data for paper"
+            )
+        model_preset = self.extract_model_preset_name(paper)
+        orig_q, _, _ = original_content
+        _, voiced_c, voiced_a = voiced_content
+        return {
+            "paper_id": paper["paper_id"],
+            "paper_url": paper["paper_url"],
+            "model_preset": model_preset,
+            "question": orig_q,
+            "chain_of_reasoning": voiced_c,
+            "answer": voiced_a,
+        }
+
+    def extract_model_preset_name(self, paper: sqlite3.Row) -> str:
+        """Extract model preset from the voiced artifact.
+
+        :param paper: Paper record from database
+        :type paper: sqlite3.Row
+        :return: Model preset string
+        :rtype: str
+        """
+        try:
+            filename = constants.COT_VOICING_ARTIFACT_PATTERN.format(
+                paper_id=paper["paper_id"]
+            )
+            voiced_content = self.utils.read_inference_artifact(filename)
+            preset_match = re.search(r"Voicing preset:\s*(.+?)(?:\n|$)", voiced_content)
+            if preset_match:
+                return preset_match.group(1).strip()
+            self.logger.warning(
+                f"Could not find model preset in voiced artifact for paper {paper['paper_id']}"
+            )
+            return "Unknown Model"
+        except Exception as e:
+            self.logger.warning(
+                f"Could not extract model preset for paper {paper['paper_id']}: {e}"
+            )
+            return "Unknown Model"
+
+    def append_markdown_entry(self, output_path: Path, data: Dict[str, Any]) -> None:
+        """Append a markdown entry to the output file.
+
+        :param output_path: Path to the markdown output file
+        :type output_path: Path
+        :param data: Training data dictionary containing paper info and content
+        :type data: Dict[str, Any]
+        """
+        entry = f"""---
+
+### Metadata
+- **Paper URL**: {data['paper_url']}
+- **Model**: {data['model_preset']}
+
+### Question
+{data['question']}
+
+### Chain of Reasoning
+{data['chain_of_reasoning']}
+
+### Answer
+{data['answer']}
+"""
+        with open(output_path, "a") as f:
+            f.write(entry + "\n")
+
+    def append_training_data(self, output_path: Path, data: Dict[str, Any]) -> None:
         """Append a single training data entry to the JSONL file.
 
         Converts the training data dictionary to JSON and appends it as a new
@@ -236,16 +325,14 @@ class TrainingDataGenerator:
         :type output_path: Path
         :param data: Dictionary containing the training data to append
         :type data: Dict[str, Any]
-        :param paper_id: ID of the paper being processed
-        :type paper_id: str
         """
         self.logger.debug(
-            f"Appending training data entry for paper {paper_id} to {output_path}"
+            f"Appending training data entry for paper {data['paper_id']} to {output_path}"
         )
         with open(output_path, "a") as f:
             f.write(json.dumps(data) + "\n")
 
-    def process_papers(self, output_path: Path) -> Tuple[int, int]:
+    def process_papers(self, jsonl_path: Path, md_path: Path) -> Tuple[int, int]:
         """Process all papers and return counts.
 
         Iterates through qualified papers, processes their training data, and
@@ -262,9 +349,10 @@ class TrainingDataGenerator:
 
         for paper in self.fetch_qualified_papers():
             self.logger.debug(f"Processing paper {paper['paper_id']}")
-            data = self.process_paper(paper)
+            data = self.fetch_training_data_for_paper(paper)
             if data:
-                self.append_training_data(output_path, data, paper["paper_id"])
+                self.append_training_data(jsonl_path, data)
+                self.append_markdown_entry(md_path, data)
                 processed_count += 1
                 self.logger.info(f"Successfully processed paper {paper['paper_id']}")
             else:
@@ -303,15 +391,21 @@ class TrainingDataGenerator:
         )
 
         try:
-            output_path = self.initialize_output_file()
-            processed_count, skipped_count = self.process_papers(output_path)
+            jsonl_path, md_path = self.initialize_output_files()
+            self.logger.info(
+                f"Training data output files: "
+                f"JSONL output: {jsonl_path}, "
+                f"Markdown output: {md_path}"
+            )
+            processed_count, skipped_count = self.process_papers(jsonl_path, md_path)
 
             if processed_count > 0:
                 self.logger.info(
                     f"Training data generation completed. "
                     f"Processed: {processed_count}, "
                     f"Skipped: {skipped_count}, "
-                    f"Output file: {output_path}"
+                    f"JSONL output: {jsonl_path}, "
+                    f"Markdown output: {md_path}"
                 )
             else:
                 self.logger.warning("No training data was generated")
@@ -334,7 +428,8 @@ def main():
         database=args.database,
         cot_quality_assessment_suitability_score=args.cot_quality_assessment_suitability_score,
         cot_voicing_assessment_suitability_score=args.cot_voicing_assessment_suitability_score,
-        training_file_name=args.training_file_name,
+        jsonl_training_file_name=args.jsonl_training_file_name,
+        human_readable_file_name=args.human_readable_training_file_name,
         training_artifacts_directory=args.training_artifacts_directory,
         limit=args.limit,
         debug=args.debug,

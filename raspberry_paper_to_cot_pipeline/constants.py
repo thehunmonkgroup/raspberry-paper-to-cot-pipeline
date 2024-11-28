@@ -309,8 +309,11 @@ STATUS_FAILED_COT_VOICING = "failed_cot_voicing"
 STATUS_FAILED_COT_VOICING_ASSESSMENT = "failed_cot_voicing_assessment"
 
 # Training
-DEFAULT_CONSOLIDATED_TRAINING_FILENAME = os.getenv(
-    "RASPBERRY_CONSOLIDATED_TRAINING_FILENAME", "consolidated-training-data.jsonl"
+DEFAULT_JSONL_TRAINING_FILENAME = os.getenv(
+    "RASPBERRY_JSONL_TRAINING_FILENAME", "consolidated-training-data.jsonl"
+)
+DEFAULT_HUMAN_READABLE_TRAINING_FILENAME = os.getenv(
+    "RASPBERRY_HUMAN_READABLE_TRAINING_FILENAME", "training-data-human-readable.md"
 )
 TRAINING_SYSTEM_MESSAGE = os.getenv(
     "RASPBERRY_TRAINING_SYSTEM_MESSAGE",
