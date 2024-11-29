@@ -485,10 +485,11 @@ class CoTExtractor:
         artifact_name = constants.COT_INITIAL_EXTRACTION_ARTIFACT_PATTERN.format(
             paper_id=paper["paper_id"]
         )
-        content = f"""Paper URL: {paper['paper_url']}
-Extraction preset: {self.extraction_preset}
-
-Extracted Information:
+        headers = {
+            constants.ARTIFACT_HEADER_KEY_PAPER_URL: paper["paper_url"],
+            constants.ARTIFACT_HEADER_KEY_MODEL_PRESET: self.extraction_preset,
+        }
+        content = f"""Extracted Information:
 
 ----------------------
 
@@ -510,7 +511,7 @@ Raw Content:
 
 {raw_content}
 """
-        self.utils.write_inference_artifact(artifact_name, content)
+        self.utils.write_inference_artifact(artifact_name, headers, content)
 
     def write_critique_artifact(
         self,
@@ -533,10 +534,11 @@ Raw Content:
         artifact_name = constants.COT_CRITIQUE_ARTIFACT_PATTERN.format(
             paper_id=paper["paper_id"]
         )
-        content = f"""Paper URL: {paper['paper_url']}
-Critique preset: {self.critique_preset}
-
-Critique:
+        headers = {
+            constants.ARTIFACT_HEADER_KEY_PAPER_URL: paper["paper_url"],
+            constants.ARTIFACT_HEADER_KEY_MODEL_PRESET: self.critique_preset,
+        }
+        content = f"""Critique:
 ----------------------
 {critique}
 
@@ -544,7 +546,7 @@ Raw Response:
 ----------------------
 {raw_content}
 """
-        self.utils.write_inference_artifact(artifact_name, content)
+        self.utils.write_inference_artifact(artifact_name, headers, content)
 
     def write_refinement_artifact(
         self,
@@ -573,10 +575,11 @@ Raw Response:
         artifact_name = constants.COT_REFINEMENT_ARTIFACT_PATTERN.format(
             paper_id=paper["paper_id"]
         )
-        content = f"""Paper URL: {paper['paper_url']}
-Refinement preset: {self.refinement_preset}
-
-Refined Information:
+        headers = {
+            constants.ARTIFACT_HEADER_KEY_PAPER_URL: paper["paper_url"],
+            constants.ARTIFACT_HEADER_KEY_MODEL_PRESET: self.refinement_preset,
+        }
+        content = f"""Refined Information:
 
 ----------------------
 
@@ -598,7 +601,7 @@ Raw Content:
 
 {raw_content}
 """
-        self.utils.write_inference_artifact(artifact_name, content)
+        self.utils.write_inference_artifact(artifact_name, headers, content)
 
     def process_initial_cot_extraction(
         self, pdf_text: str

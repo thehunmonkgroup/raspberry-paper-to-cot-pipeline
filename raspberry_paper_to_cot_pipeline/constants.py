@@ -63,6 +63,8 @@ COT_QUALITY_ASSESSMENT_ARTIFACT_PATTERN = "{paper_id}-cot-quality-assessment.txt
 COT_VOICING_ARTIFACT_PATTERN = "{paper_id}-cot-voicing.txt"
 COT_VOICING_ASSESMENT_ARTIFACT_PATTERN = "{paper_id}-cot-voicing-assessment.txt"
 TRAINING_ARTIFACT_PATTERN = "{paper_id}-training-data.jsonl"
+ARTIFACT_HEADER_KEY_PAPER_URL = "Paper-URL"
+ARTIFACT_HEADER_KEY_MODEL_PRESET = "Model-Preset"
 
 # Categories.
 ARXIV_DEFAULT_CATEGORIES = [

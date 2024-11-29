@@ -300,19 +300,17 @@ class TrainingDataGenerator:
             filename = constants.COT_VOICING_ARTIFACT_PATTERN.format(
                 paper_id=paper["paper_id"]
             )
-            voiced_content = self.utils.read_inference_artifact(filename)
-            preset_match = re.search(r"Voicing preset:\s*(.+?)(?:\n|$)", voiced_content)
-            if preset_match:
-                return preset_match.group(1).strip()
+            headers, _ = self.utils.read_inference_artifact(filename)
+            if constants.ARTIFACT_HEADER_KEY_MODEL_PRESET in headers:
+                return headers[constants.ARTIFACT_HEADER_KEY_MODEL_PRESET]
             self.logger.warning(
                 f"Could not find model preset in voiced artifact for paper {paper['paper_id']}"
             )
-            return "Unknown Model"
         except Exception as e:
             self.logger.warning(
                 f"Could not extract model preset for paper {paper['paper_id']}: {e}"
             )
-            return "Unknown Model"
+        return "unknown"
 
     def append_markdown_entry(self, output_path: Path, data: Dict[str, Any]) -> None:
         """Append a markdown entry to the output file.

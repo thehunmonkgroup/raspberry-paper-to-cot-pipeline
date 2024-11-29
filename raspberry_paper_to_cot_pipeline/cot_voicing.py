@@ -186,10 +186,11 @@ class CoTVoicing:
         artifact_name = constants.COT_VOICING_ARTIFACT_PATTERN.format(
             paper_id=paper["paper_id"]
         )
-        content = f"""Paper URL: {paper['paper_url']}
-Voicing preset: {self.voicing_preset}
-
-Transformed Content:
+        headers = {
+            constants.ARTIFACT_HEADER_KEY_PAPER_URL: paper["paper_url"],
+            constants.ARTIFACT_HEADER_KEY_MODEL_PRESET: self.voicing_preset,
+        }
+        content = f"""Transformed Content:
 
 ----------------------
 
@@ -211,7 +212,7 @@ Raw Content:
 
 {raw_content}
 """
-        self.utils.write_inference_artifact(artifact_name, content)
+        self.utils.write_inference_artifact(artifact_name, headers, content)
 
     def process_voicing(
         self,

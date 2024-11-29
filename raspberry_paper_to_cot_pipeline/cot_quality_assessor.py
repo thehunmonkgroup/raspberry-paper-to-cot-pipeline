@@ -210,10 +210,11 @@ class CoTQualityAssessor:
         artifact_name = constants.COT_QUALITY_ASSESSMENT_ARTIFACT_PATTERN.format(
             paper_id=paper["paper_id"]
         )
-        content = f"""Paper URL: {paper['paper_url']}
-CoT assessment preset: {self.assessor_preset}
-
-CoT assessment results:
+        headers = {
+            constants.ARTIFACT_HEADER_KEY_PAPER_URL: paper["paper_url"],
+            constants.ARTIFACT_HEADER_KEY_MODEL_PRESET: self.assessor_preset,
+        }
+        content = f"""CoT assessment results:
 
 {self.get_pretty_printed_criteria(criteria)}
 
@@ -223,7 +224,7 @@ Raw Inference Output:
 
 {xml_content}
 """
-        self.utils.write_inference_artifact(artifact_name, content)
+        self.utils.write_inference_artifact(artifact_name, headers, content)
 
     def check_required_criteria(self, criteria: Dict[str, int]) -> bool:
         """

@@ -225,11 +225,11 @@ class PaperProfiler:
         """
         self.logger.debug(f"Writing inference artifact for paper {paper['paper_id']}")
         artifact_name = f"{paper['paper_id']}-paper-profiling.txt"
-
-        content = f"""Paper URL: {paper['paper_url']}
-Profiling preset: {self.profiling_preset}
-
-Profiling results:
+        headers = {
+            constants.ARTIFACT_HEADER_KEY_PAPER_URL: paper["paper_url"],
+            constants.ARTIFACT_HEADER_KEY_MODEL_PRESET: self.profiling_preset,
+        }
+        content = f"""Profiling results:
 
 {self.get_pretty_printed_rubric_questions(criteria)}
 
@@ -239,7 +239,7 @@ Raw Inference Output:
 
 {xml_content}
 """
-        self.utils.write_inference_artifact(artifact_name, content)
+        self.utils.write_inference_artifact(artifact_name, headers, content)
         self.logger.debug(f"Successfully wrote inference artifact: {artifact_name}")
 
     def _extract_and_validate_content(self, paper: sqlite3.Row) -> tuple[str, str, str]:

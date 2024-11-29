@@ -1,8 +1,12 @@
 import logging
 import os
 import requests
+import email.parser
+import email.message
+from email.policy import Compat32
+import email.errors
 from pathlib import Path
-from typing import Union
+from typing import Union, Dict, Tuple
 import sqlite3
 import json
 import pymupdf4llm
@@ -54,6 +58,11 @@ def get_db_connection(
 
 class Utils:
     """Utility class for various operations in the raspberry_paper_to_cot_pipeline."""
+
+    # Custom email policy with minimal settings
+    EMAIL_POLICY = Compat32(
+        linesep='\n'
+    )
 
     def __init__(
         self,
@@ -420,9 +429,9 @@ class Utils:
         """
         try:
             artifact_name = artifact_pattern.format(paper_id=paper["paper_id"])
-            refinement_content = self.read_inference_artifact(artifact_name)
-            return self.extract_question_chain_of_reasoning_answer(refinement_content)
-        except (FileNotFoundError, ValueError) as e:
+            _, content = self.read_inference_artifact(artifact_name)
+            return self.extract_question_chain_of_reasoning_answer(content)
+        except (FileNotFoundError, ValueError, email.errors.MessageParseError) as e:
             self.logger.error(
                 f"Failed to get data from artifact {artifact_name} for paper {paper['paper_id']}: {str(e)}"
             )
@@ -603,42 +612,66 @@ class Utils:
         """
         directory.mkdir(parents=True, exist_ok=True)
 
-    def read_inference_artifact(self, filename: str) -> str:
-        """Read inference artifact from a file.
-
-        Loads and returns the content of an inference artifact file.
+    def read_inference_artifact(self, filename: str) -> Tuple[Dict[str, str], str]:
+        """Read and parse an inference artifact file in RFC 5322 format.
 
         :param filename: Name of the inference artifact file
         :type filename: str
-        :return: Content of the inference artifact
-        :rtype: str
+        :return: Tuple of (headers dict, content string)
+        :rtype: Tuple[Dict[str, str], str]
         :raises FileNotFoundError: If the artifact file doesn't exist
+        :raises email.errors.MessageParseError: If the file isn't valid RFC 5322 format
         """
         artifact_file_path = self.inference_artifacts_directory / filename
         try:
-            content = artifact_file_path.read_text()
+            raw_content = artifact_file_path.read_text()
+            parser = email.parser.Parser(policy=self.EMAIL_POLICY)
+            msg = parser.parsestr(raw_content)
+            headers = dict(msg.items())
+            content = msg.get_payload()
             self.logger.debug(
-                f"Successfully read inference artifact from {artifact_file_path} ({len(content)} characters)"
+                f"Successfully read inference artifact from {artifact_file_path} "
+                f"({len(headers)} headers, {len(content)} characters)"
             )
-            return content
+            return headers, content
         except FileNotFoundError:
             self.logger.error(f"Artifact file {artifact_file_path} not found")
             raise
+        except email.errors.MessageParseError as e:
+            self.logger.error(f"Failed to parse RFC 5322 format: {e}")
+            raise
 
-    def write_inference_artifact(self, filename: str, content: str) -> None:
-        """Write inference artifact to a file.
-
-        Saves inference artifact content to a file in the inference artifacts directory.
+    def write_inference_artifact(
+        self,
+        filename: str,
+        headers: Dict[str, str],
+        content: str
+    ) -> None:
+        """Write an inference artifact file in RFC 5322 format.
 
         :param filename: Name of the file to write
         :type filename: str
-        :param content: Content to write to the file
+        :param headers: Dictionary of header fields and values
+        :type headers: Dict[str, str]
+        :param content: Content body to write
         :type content: str
         """
+        msg = email.message.EmailMessage(policy=self.EMAIL_POLICY)
+        try:
+            for name, value in headers.items():
+                msg[name] = value
+        except (ValueError, KeyError) as e:
+            self.logger.error(f"Invalid RFC 5322 header format: {e}")
+            raise ValueError(f"Invalid RFC 5322 header format: {e}")
+        # Set content directly as plain text
+        msg.set_payload(content)
         self.ensure_directory_exists(self.inference_artifacts_directory)
         artifact_file_path = self.inference_artifacts_directory / filename
-        artifact_file_path.write_text(content)
-        self.logger.debug(f"Wrote inference artifact to {artifact_file_path}")
+        artifact_file_path.write_text(msg.as_string())
+        self.logger.debug(
+            f"Wrote inference artifact to {artifact_file_path} "
+            f"({len(headers)} headers, {len(content)} characters)"
+        )
 
     def write_training_artifact(self, filename: str, content: str) -> None:
         """Write training artifact to a file.
