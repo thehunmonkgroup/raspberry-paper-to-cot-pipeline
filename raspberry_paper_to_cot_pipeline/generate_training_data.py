@@ -15,10 +15,9 @@ quality assessment has been completed.
 
 import argparse
 import json
-import re
 import sqlite3
 from pathlib import Path
-from typing import Optional, Dict, Any, Generator, Tuple, Union
+from typing import Optional, Dict, Any, Generator, Tuple, Union, TextIO
 import sys
 
 from raspberry_paper_to_cot_pipeline import constants
@@ -60,10 +59,10 @@ def parse_arguments() -> argparse.Namespace:
         help="Name of the JSONL training data output file. Default: %(default)s",
     )
     parser.add_argument(
-        "--human-readable-training-file-name",
+        "--human-readable-training-stub",
         type=str,
-        default=constants.DEFAULT_HUMAN_READABLE_TRAINING_FILENAME,
-        help="Name of the human-readable markdown training data output file. Default: %(default)s",
+        default=constants.DEFAULT_HUMAN_READABLE_TRAINING_STUB,
+        help="Stub name of the human-readable markdown training data output file. Default: %(default)s",
     )
     parser.add_argument(
         "--training-artifacts-directory",
@@ -105,7 +104,7 @@ class TrainingDataGenerator:
         cot_quality_assessment_suitability_score: int = constants.COT_QUALITY_ASSESSMENT_DEFAULT_SUITABILITY_SCORE,
         cot_voicing_assessment_suitability_score: int = constants.COT_VOICING_ASSESSMENT_DEFAULT_SUITABILITY_SCORE,
         jsonl_training_file_name: str = constants.DEFAULT_JSONL_TRAINING_FILENAME,
-        human_readable_file_name: str = constants.DEFAULT_HUMAN_READABLE_TRAINING_FILENAME,
+        human_readable_stub: str = constants.DEFAULT_HUMAN_READABLE_TRAINING_STUB,
         training_artifacts_directory: Union[
             str, Path
         ] = constants.DEFAULT_TRAINING_ARTIFACTS_DIR,
@@ -120,8 +119,10 @@ class TrainingDataGenerator:
         :type cot_quality_assessment_suitability_score: int
         :param cot_voicing_assessment_suitability_score: Minimum required suitability score for CoT voicing assessment
         :type cot_voicing_assessment_suitability_score: int
-        :param training_file_name: Name of the output training file
-        :type training_file_name: str
+        :param jsonl_training_file_name: Name of the JSONL training data output file
+        :type jsonl_training_file_name: str
+        :param human_readable_stub: Stub for the human-readable training data output file
+        :type human_readable_stub: str
         :param training_artifacts_directory: Directory containing training artifacts
         :type training_artifacts_directory: Union[str, Path]
         :param limit: Maximum number of papers to process
@@ -137,7 +138,8 @@ class TrainingDataGenerator:
             cot_voicing_assessment_suitability_score
         )
         self.jsonl_training_file_name = jsonl_training_file_name
-        self.human_readable_file_name = human_readable_file_name
+        self.human_readable_stub = human_readable_stub
+        self.preset_files: Dict[str, TextIO] = {}
         self.training_artifacts_directory = Path(training_artifacts_directory)
         self.limit = limit
         self.debug = debug
@@ -263,14 +265,53 @@ class TrainingDataGenerator:
             )
             return None
 
-    def initialize_output_files(self) -> Tuple[Path, Path]:
+    def _get_human_readable_filename(self, preset: str) -> str:
+        """Generate full filename for a specific preset.
+
+        :param preset: Model preset name
+        :type preset: str
+        :return: Complete filename for the preset's output file
+        :rtype: str
+        """
+        return f"{self.human_readable_stub}-{preset}.md"
+
+    def _clean_existing_human_readable_files(self) -> None:
+        """Remove any existing human readable training files."""
+        pattern = f"{self.human_readable_stub}-*.md"
+        for file in self.training_artifacts_directory.glob(pattern):
+            self.logger.debug(f"Removing existing file: {file}")
+            file.unlink()
+
+    def _get_or_create_preset_file(self, preset: str) -> TextIO:
+        """Get or create file handle for a preset.
+
+        :param preset: Model preset name
+        :type preset: str
+        :return: File handle for writing
+        :rtype: TextIO
+        """
+        if preset not in self.preset_files:
+            filename = self._get_human_readable_filename(preset)
+            filepath = self.training_artifacts_directory / filename
+            self.preset_files[preset] = open(filepath, 'a')
+            self.logger.debug(f"Created new file for preset {preset}: {filepath}")
+        return self.preset_files[preset]
+
+    def _close_preset_files(self) -> None:
+        """Close all open preset files."""
+        for preset, file in self.preset_files.items():
+            self.logger.debug(f"Closing file for preset {preset}")
+            file.close()
+        self.preset_files.clear()
+
+    def initialize_output_files(self) -> Path:
         """Create and initialize the output files for writing training data.
 
         Creates the output directory if it doesn't exist, removes any existing
         output files, and creates new empty files.
 
-        :return: Tuple of Path objects pointing to the initialized output files (jsonl, markdown)
-        :rtype: Tuple[Path, Path]
+        :return: Path object pointing to the initialized JSONL file
+        :rtype: Path
         """
         self.logger.debug(
             f"Initializing output files in {self.training_artifacts_directory}"
@@ -278,15 +319,14 @@ class TrainingDataGenerator:
         self.utils.ensure_directory_exists(self.training_artifacts_directory)
 
         jsonl_path = self.training_artifacts_directory / self.jsonl_training_file_name
-        md_path = self.training_artifacts_directory / self.human_readable_file_name
+        self.logger.debug(f"Removing existing JSONL file if present: {jsonl_path}")
+        jsonl_path.unlink(missing_ok=True)
+        self.logger.debug(f"Creating new empty JSONL file: {jsonl_path}")
+        jsonl_path.touch()
 
-        for path in [jsonl_path, md_path]:
-            self.logger.debug(f"Removing existing file if present: {path}")
-            path.unlink(missing_ok=True)
-            self.logger.debug(f"Creating new empty file: {path}")
-            path.touch()
+        self._clean_existing_human_readable_files()
 
-        return jsonl_path, md_path
+        return jsonl_path
 
     def extract_model_preset_name(self, paper: sqlite3.Row) -> str:
         """Extract model preset from the voiced artifact.
@@ -312,19 +352,18 @@ class TrainingDataGenerator:
             )
         return "unknown"
 
-    def append_markdown_entry(self, output_path: Path, data: Dict[str, Any]) -> None:
-        """Append a markdown entry to the output file.
+    def _format_markdown_entry(self, data: Dict[str, Any]) -> str:
+        """Format markdown entry
 
-        :param output_path: Path to the markdown output file
-        :type output_path: Path
         :param data: Training data dictionary containing paper info and content
         :type data: Dict[str, Any]
+        :return: Formatted markdown entry
+        :rtype: str
         """
-        entry = f"""---
+        return f"""---
 
 ### Metadata
 - **Paper URL**: {data['paper_url']}
-- **Model**: {data['model_preset']}
 
 ### Question
 {data['question']}
@@ -335,8 +374,17 @@ class TrainingDataGenerator:
 ### Answer
 {data['answer']}
 """
-        with open(output_path, "a") as f:
-            f.write(entry + "\n")
+
+    def append_markdown_entry(self, data: Dict[str, Any]) -> None:
+        """Append a markdown entry to the appropriate preset file.
+
+        :param data: Training data dictionary containing paper info and content
+        :type data: Dict[str, Any]
+        """
+        preset = data['model_preset']
+        preset_file = self._get_or_create_preset_file(preset)
+        entry = self._format_markdown_entry(data)
+        preset_file.write(entry + "\n")
 
     def append_training_data(self, output_path: Path, paper: sqlite3.Row, data: Dict[str, Any]) -> None:
         """Append a single training data entry to the JSONL file.
@@ -357,7 +405,7 @@ class TrainingDataGenerator:
         with open(output_path, "a") as f:
             f.write(json.dumps(data) + "\n")
 
-    def process_papers(self, jsonl_path: Path, md_path: Path) -> Tuple[int, int]:
+    def process_papers(self, jsonl_path: Path) -> Tuple[int, int]:
         """Process all papers and return counts.
 
         Iterates through qualified papers, processes their training data, and
@@ -382,7 +430,7 @@ class TrainingDataGenerator:
             if training_data:
                 self.append_training_data(jsonl_path, paper, training_data)
                 if human_data:
-                    self.append_markdown_entry(md_path, human_data)
+                    self.append_markdown_entry(human_data)
                 processed_count += 1
                 self.logger.info(f"Successfully processed paper {paper['paper_id']}")
             else:
@@ -420,21 +468,16 @@ class TrainingDataGenerator:
         )
 
         try:
-            jsonl_path, md_path = self.initialize_output_files()
-            self.logger.info(
-                f"Training data output files: "
-                f"JSONL output: {jsonl_path}, "
-                f"Markdown output: {md_path}"
-            )
-            processed_count, skipped_count = self.process_papers(jsonl_path, md_path)
+            jsonl_path = self.initialize_output_files()
+            self.logger.info(f"JSONL output file: {jsonl_path}")
+            processed_count, skipped_count = self.process_papers(jsonl_path)
 
             if processed_count > 0:
                 self.logger.info(
                     f"Training data generation completed. "
                     f"Processed: {processed_count}, "
                     f"Skipped: {skipped_count}, "
-                    f"JSONL output: {jsonl_path}, "
-                    f"Markdown output: {md_path}"
+                    f"JSONL output: {jsonl_path}"
                 )
             else:
                 self.logger.warning("No training data was generated")
@@ -442,6 +485,8 @@ class TrainingDataGenerator:
         except Exception as e:
             self.logger.error(f"An error occurred during training data generation: {e}")
             sys.exit(1)
+        finally:
+            self._close_preset_files()
 
 
 def main():
@@ -458,7 +503,7 @@ def main():
         cot_quality_assessment_suitability_score=args.cot_quality_assessment_suitability_score,
         cot_voicing_assessment_suitability_score=args.cot_voicing_assessment_suitability_score,
         jsonl_training_file_name=args.jsonl_training_file_name,
-        human_readable_file_name=args.human_readable_training_file_name,
+        human_readable_stub=args.human_readable_training_stub,
         training_artifacts_directory=args.training_artifacts_directory,
         limit=args.limit,
         debug=args.debug,
