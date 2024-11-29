@@ -121,7 +121,17 @@ raspberry-fetch-paper-urls
    raspberry-cot-voicing-assessor
    raspberry-cot-voicing-scorer
 
+## Artifacts
+
 All artifacts are output to the `results` directory in the root of the repository
+
+Inference artifacts are stored in RFC 5322 format, which provides:
+
+ * Structured headers for metadata (like Paper-URL, Model-Preset)
+ * Clear separation between metadata and content
+ * Easy parsing using standard email libraries
+
+Training artifacts are stored in JSONL format for direct use in model training.
 
 ## Customization
 
