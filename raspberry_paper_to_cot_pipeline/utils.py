@@ -16,6 +16,7 @@ from urllib.parse import urlparse
 import xml.etree.ElementTree as ET
 import textwrap
 from typing import Union, Optional, List, Dict, Generator, Any, Tuple
+from datetime import timedelta
 from bs4 import BeautifulSoup
 from tenacity import (
     retry,
@@ -433,6 +434,26 @@ class Utils:
                 f"Failed to get data from artifact {artifact_name} for paper {paper['paper_id']}: {str(e)}"
             )
             return None
+
+    def format_duration(self, seconds: float) -> str:
+        """Format duration in seconds to a human readable string.
+
+        :param seconds: Duration in seconds
+        :type seconds: float
+        :return: Formatted duration string (e.g., "2h 15m 30s")
+        :rtype: str
+        """
+        duration = timedelta(seconds=seconds)
+        hours = duration.seconds // 3600 + duration.days * 24
+        minutes = (duration.seconds % 3600) // 60
+        secs = duration.seconds % 60
+        parts = []
+        if hours > 0:
+            parts.append(f"{hours}h")
+        if minutes > 0:
+            parts.append(f"{minutes}m")
+        parts.append(f"{secs}s")
+        return " ".join(parts)
 
     def create_database(self) -> None:
         """Conditionally creates an SQLite database with the required tables and columns.

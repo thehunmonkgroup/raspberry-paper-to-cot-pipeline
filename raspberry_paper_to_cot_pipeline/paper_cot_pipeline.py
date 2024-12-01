@@ -12,6 +12,8 @@ the previous stage to create a comprehensive paper analysis pipeline.
 import argparse
 import sys
 from typing import Literal
+from contextlib import contextmanager
+from datetime import datetime
 
 from raspberry_paper_to_cot_pipeline.paper_profiler import PaperProfiler
 from raspberry_paper_to_cot_pipeline.paper_profile_scorer import PaperProfileScorer
@@ -63,6 +65,22 @@ class PaperCoTPipeline:
         self.selection_strategy = selection_strategy
         self.debug = debug
         self.logger = Utils.setup_logging(__name__, debug)
+        self.utils = Utils()
+        self.stage_timings = {}
+
+    @contextmanager
+    def _time_stage(self, stage_name: str):
+        """Context manager to time pipeline stages.
+        
+        :param stage_name: Name of the pipeline stage
+        :type stage_name: str
+        """
+        start_time = datetime.now()
+        try:
+            yield
+        finally:
+            duration = (datetime.now() - start_time).total_seconds()
+            self.stage_timings[stage_name] = duration
 
     def run(self) -> None:
         """
@@ -75,79 +93,97 @@ class PaperCoTPipeline:
         :return: None
         :rtype: None
         """
+        pipeline_start = datetime.now()
         try:
             # Stage 1: Profile papers
-            self.logger.info("Starting paper profiling stage...")
-            profiler = PaperProfiler(
-                limit=self.limit,
-                selection_strategy=self.selection_strategy,
-                debug=self.debug,
-            )
-            profiler.run()
+            with self._time_stage("Paper Profiling"):
+                self.logger.info("Starting paper profiling stage...")
+                profiler = PaperProfiler(
+                    limit=self.limit,
+                    selection_strategy=self.selection_strategy,
+                    debug=self.debug,
+                )
+                profiler.run()
 
             # Stage 2: Score papers
-            self.logger.info("Starting paper scoring stage...")
-            profiler_scorer = PaperProfileScorer(
-                limit=None,
-                debug=self.debug,
-            )
-            profiler_scorer.run()
+            with self._time_stage("Paper Scoring"):
+                self.logger.info("Starting paper scoring stage...")
+                profiler_scorer = PaperProfileScorer(
+                    limit=None,
+                    debug=self.debug,
+                )
+                profiler_scorer.run()
 
             # Stage 3: Extract CoT
-            self.logger.info("Starting CoT extraction stage...")
-            extractor = CoTExtractor(
-                limit=None,
-                debug=self.debug,
-            )
-            extractor.run()
+            with self._time_stage("CoT Extraction"):
+                self.logger.info("Starting CoT extraction stage...")
+                extractor = CoTExtractor(
+                    limit=None,
+                    debug=self.debug,
+                )
+                extractor.run()
 
             # Stage 4: CoT quality assessment
-            self.logger.info("Starting CoT quality assessment stage...")
-            cot_quality_assessor = CoTQualityAssessor(
-                limit=None,
-                debug=self.debug,
-            )
-            cot_quality_assessor.run()
+            with self._time_stage("CoT Quality Assessment"):
+                self.logger.info("Starting CoT quality assessment stage...")
+                cot_quality_assessor = CoTQualityAssessor(
+                    limit=None,
+                    debug=self.debug,
+                )
+                cot_quality_assessor.run()
 
             # Stage 5: CoT quality scoring
-            self.logger.info("Starting CoT quality scoring stage...")
-            cot_quality_scorer = CoTQualityScorer(
-                limit=None,
-                debug=self.debug,
-            )
-            cot_quality_scorer.run()
+            with self._time_stage("CoT Quality Scoring"):
+                self.logger.info("Starting CoT quality scoring stage...")
+                cot_quality_scorer = CoTQualityScorer(
+                    limit=None,
+                    debug=self.debug,
+                )
+                cot_quality_scorer.run()
 
             # Stage 6: Transform CoT into correct voice
-            voicer = CoTVoicing(
-                limit=None,
-                debug=self.debug,
-            )
-            voicer.run()
+            with self._time_stage("CoT Voice Transformation"):
+                voicer = CoTVoicing(
+                    limit=None,
+                    debug=self.debug,
+                )
+                voicer.run()
 
             # Stage 7: CoT voicing assessment
-            self.logger.info("Starting CoT voicing assessment stage...")
-            cot_voicing_assessor = CoTVoicingAssessor(
-                limit=None,
-                debug=self.debug,
-            )
-            cot_voicing_assessor.run()
+            with self._time_stage("CoT Voice Assessment"):
+                self.logger.info("Starting CoT voicing assessment stage...")
+                cot_voicing_assessor = CoTVoicingAssessor(
+                    limit=None,
+                    debug=self.debug,
+                )
+                cot_voicing_assessor.run()
 
             # Stage 8: CoT voicing scoring
-            self.logger.info("Starting CoT voicing scoring stage...")
-            cot_voicing_scorer = CoTVoicingScorer(
-                limit=None,
-                debug=self.debug,
-            )
-            cot_voicing_scorer.run()
+            with self._time_stage("CoT Voice Scoring"):
+                self.logger.info("Starting CoT voicing scoring stage...")
+                cot_voicing_scorer = CoTVoicingScorer(
+                    limit=None,
+                    debug=self.debug,
+                )
+                cot_voicing_scorer.run()
 
             # Stage 9: Generate training data
-            self.logger.info("Starting training data generation stage...")
-            generator = TrainingDataGenerator(
-                limit=None,
-                debug=self.debug,
-            )
-            generator.run()
+            with self._time_stage("Training Data Generation"):
+                self.logger.info("Starting training data generation stage...")
+                generator = TrainingDataGenerator(
+                    limit=None,
+                    debug=self.debug,
+                )
+                generator.run()
 
+            pipeline_duration = (datetime.now() - pipeline_start).total_seconds()
+            
+            # Log timing summary
+            self.logger.info("\nPipeline Timing Summary:")
+            for stage, duration in self.stage_timings.items():
+                self.logger.info(f"{stage}: {self.utils.format_duration(duration)}")
+            self.logger.info(f"\nTotal Pipeline Duration: {self.utils.format_duration(pipeline_duration)}")
+            
             self.logger.info("Pipeline completed successfully")
 
         except Exception as e:
