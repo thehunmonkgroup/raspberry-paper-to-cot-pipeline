@@ -57,7 +57,7 @@ The following diagram illustrates the pipeline workflow:
    Artifacts generated:
    * CoT quality assessment artifact
 6. **raspberry-cot-quality-scorer:** Assign suitability scores to the refined Chain of Thought sets based on quality assessment criteria, store in database
-7. **raspberry-cot-voicing:** Rewrite the extracted and refined Chain of Thought sets into a suitable first-person reasoning 'voice', suitable for training data
+7. **raspberry-cot-voicing:** Rewrite the extracted and refined Chain of Thought sets into a first-person reasoning 'voice', suitable for training data
 
    Artifacts generated:
    * Voicing artifact
@@ -67,7 +67,7 @@ The following diagram illustrates the pipeline workflow:
    Artifacts generated:
    * CoT voicing assessment artifact
 9. **raspberry-cot-voicing-scorer:** Assign suitability scores to the voiced Chain of Thought sets based on quality assessment criteria, store in database
-10. **raspberry-generate-training-data**: Compile the final training data from the individual training artifacts, filtering out invalid Chain of Thought sets based on their quality assessment score
+10. **raspberry-generate-training-data**: Compile the final training data from the individual training artifacts, filtering out invalid Chain of Thought sets based on their quality and voicing assessment scores
 
    Artifacts generated:
    * Final training data in JSONL format
@@ -107,7 +107,7 @@ raspberry-fetch-paper-urls
 
    This runs the rest of the pipeline scripts with default arguments.
 
-   By default this will select one paper randomly from the verified paper links, and run it through the rest of the pipeline with default settings.
+   By default this will select one paper randomly from the downloaded paper links, and run it through the rest of the pipeline with default settings.
 
    Run the script with `--help` to see how to run the full pipeline with more papers and other selection strategies.
 
@@ -121,6 +121,7 @@ raspberry-fetch-paper-urls
    raspberry-cot-voicing
    raspberry-cot-voicing-assessor
    raspberry-cot-voicing-scorer
+   raspberry-generate-training-data
 
 ## Artifacts
 
