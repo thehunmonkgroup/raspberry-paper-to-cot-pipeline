@@ -6,7 +6,6 @@ import email.message
 from email.policy import Compat32
 import email.errors
 from pathlib import Path
-from typing import Union, Dict, Tuple
 import sqlite3
 import json
 import pymupdf4llm
@@ -16,7 +15,7 @@ from contextlib import contextmanager
 from urllib.parse import urlparse
 import xml.etree.ElementTree as ET
 import textwrap
-from typing import Optional, List, Dict, Generator, Any, Tuple
+from typing import Union, Optional, List, Dict, Generator, Any, Tuple
 from bs4 import BeautifulSoup
 from tenacity import (
     retry,
@@ -60,9 +59,7 @@ class Utils:
     """Utility class for various operations in the raspberry_paper_to_cot_pipeline."""
 
     # Custom email policy with minimal settings
-    EMAIL_POLICY = Compat32(
-        linesep='\n'
-    )
+    EMAIL_POLICY = Compat32(linesep="\n")
 
     def __init__(
         self,
@@ -642,10 +639,7 @@ class Utils:
             raise
 
     def write_inference_artifact(
-        self,
-        filename: str,
-        headers: Dict[str, str],
-        content: str
+        self, filename: str, headers: Dict[str, str], content: str
     ) -> None:
         """Write an inference artifact file in RFC 5322 format.
 
@@ -792,7 +786,9 @@ class Utils:
             self.logger.error(f"Database error: {e}")
             raise
 
-    def get_paper_categories(self, paper: sqlite3.Row, stringify: bool = True) -> Union[List[str], str]:
+    def get_paper_categories(
+        self, paper: sqlite3.Row, stringify: bool = True
+    ) -> Union[List[str], str]:
         """Get all categories for a specific paper.
 
         :param paper: Database row containing paper information
@@ -804,8 +800,8 @@ class Utils:
         :raises sqlite3.Error: If there's an issue with the database operations
         """
         query = """
-        SELECT category 
-        FROM paper_categories 
+        SELECT category
+        FROM paper_categories
         WHERE paper_id = ?
         ORDER BY category
         """
@@ -816,5 +812,7 @@ class Utils:
                 categories = [row[0] for row in cursor.fetchall()]
                 return ", ".join(categories) if stringify else categories
         except sqlite3.Error as e:
-            self.logger.error(f"Database error fetching categories for paper {paper['id']}: {e}")
+            self.logger.error(
+                f"Database error fetching categories for paper {paper['id']}: {e}"
+            )
             raise

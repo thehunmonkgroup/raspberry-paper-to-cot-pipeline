@@ -188,7 +188,9 @@ class CoTVoicing:
         )
         headers = {
             constants.ARTIFACT_HEADER_KEY_PAPER_URL: paper["paper_url"],
-            constants.ARTIFACT_HEADER_KEY_PAPER_CATEGORIES: self.utils.get_paper_categories(paper),
+            constants.ARTIFACT_HEADER_KEY_PAPER_CATEGORIES: self.utils.get_paper_categories(
+                paper
+            ),
             constants.ARTIFACT_HEADER_KEY_MODEL_PRESET: self.voicing_preset,
         }
         content = f"""Transformed Content:

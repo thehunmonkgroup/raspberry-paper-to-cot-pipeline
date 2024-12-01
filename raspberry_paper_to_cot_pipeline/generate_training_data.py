@@ -193,9 +193,7 @@ class TrainingDataGenerator:
                 f"Skipping paper {paper['paper_id']}: CoT voicing score {voicing_score} below threshold {self.cot_voicing_assessment_suitability_score}"
             )
             return False
-        self.logger.debug(
-            f"Paper {paper['paper_id']} meets minimum suitability scores"
-        )
+        self.logger.debug(f"Paper {paper['paper_id']} meets minimum suitability scores")
         return True
 
     def fetch_human_readable_training_data_for_paper(
@@ -242,7 +240,9 @@ class TrainingDataGenerator:
             )
             return None
 
-    def fetch_training_data_for_paper(self, paper: sqlite3.Row) -> Optional[Dict[str, Any]]:
+    def fetch_training_data_for_paper(
+        self, paper: sqlite3.Row
+    ) -> Optional[Dict[str, Any]]:
         """Loads a single paper's training data.
 
         :param paper: Paper record from database
@@ -294,7 +294,7 @@ class TrainingDataGenerator:
         if preset not in self.preset_files:
             filename = self._get_human_readable_filename(preset)
             filepath = self.training_artifacts_directory / filename
-            self.preset_files[preset] = open(filepath, 'a')
+            self.preset_files[preset] = open(filepath, "a")
             self.logger.debug(f"Created new file for preset {preset}: {filepath}")
         return self.preset_files[preset]
 
@@ -392,12 +392,14 @@ class TrainingDataGenerator:
         :param data: Training data dictionary containing paper info and content
         :type data: Dict[str, Any]
         """
-        model_preset = data['model_preset']
+        model_preset = data["model_preset"]
         preset_file = self._get_or_create_preset_file(model_preset)
         entry = self._format_markdown_entry(data)
         preset_file.write(entry + "\n")
 
-    def append_training_data(self, output_path: Path, paper: sqlite3.Row, data: Dict[str, Any]) -> None:
+    def append_training_data(
+        self, output_path: Path, paper: sqlite3.Row, data: Dict[str, Any]
+    ) -> None:
         """Append a single training data entry to the JSONL file.
 
         Converts the training data dictionary to JSON and appends it as a new
