@@ -52,7 +52,6 @@ The following diagram illustrates the pipeline workflow:
    * Initial extraction inference artifact
    * Critique inference artifact
    * Refinement inference artifact
-   * Training data artifact in JSONL format
 5. **raspberry-cot-quality-assessor:** Assess the quality of the refined Chain of Thought sets from the papers based on specific criteria, store criteria in the database
 
    Artifacts generated:
@@ -62,6 +61,7 @@ The following diagram illustrates the pipeline workflow:
 
    Artifacts generated:
    * Voicing artifact
+   * Individual training data artifact in JSONL format
 8. **raspberry-cot-voicing-assessor:** Assess the quality of the voiced Chain of Thought sets based on specific criteria, store criteria in the database
 
    Artifacts generated:
@@ -71,6 +71,7 @@ The following diagram illustrates the pipeline workflow:
 
    Artifacts generated:
    * Final training data in JSONL format
+   * Human-readable training data in markdown format (one per model preset)
 
 ## Gathering the Papers
 
@@ -110,7 +111,7 @@ raspberry-fetch-paper-urls
 
    Run the script with `--help` to see how to run the full pipeline with more papers and other selection strategies.
 
-   For more control, you can also run each script individually:
+   For more control, you can also run each script individually, in the following order:
 
    ```sh
    raspberry-paper-profiler
