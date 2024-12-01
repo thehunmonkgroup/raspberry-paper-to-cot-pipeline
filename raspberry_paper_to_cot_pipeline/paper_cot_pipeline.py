@@ -71,7 +71,7 @@ class PaperCoTPipeline:
     @contextmanager
     def _time_stage(self, stage_name: str):
         """Context manager to time pipeline stages.
-        
+
         :param stage_name: Name of the pipeline stage
         :type stage_name: str
         """
@@ -177,13 +177,15 @@ class PaperCoTPipeline:
                 generator.run()
 
             pipeline_duration = (datetime.now() - pipeline_start).total_seconds()
-            
+
             # Log timing summary
             self.logger.info("\nPipeline Timing Summary:")
             for stage, duration in self.stage_timings.items():
                 self.logger.info(f"{stage}: {self.utils.format_duration(duration)}")
-            self.logger.info(f"\nTotal Pipeline Duration: {self.utils.format_duration(pipeline_duration)}")
-            
+            self.logger.info(
+                f"\nTotal Pipeline Duration: {self.utils.format_duration(pipeline_duration)}"
+            )
+
             self.logger.info("Pipeline completed successfully")
 
         except Exception as e:
