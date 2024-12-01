@@ -367,7 +367,6 @@ class CoTExtractor:
             paper, refined_q, refined_c, refined_a, refinement_response
         )
         self.logger.info(f"Completed refinement for paper {paper['paper_id']}")
-        self.write_training_artifact(paper, refined_q, refined_c, refined_a)
 
     def process_paper(self, paper: sqlite3.Row) -> None:
         """
@@ -794,35 +793,6 @@ Raw Content:
         except Exception as e:
             self.logger.error(f"Unexpected error in refinement processing: {str(e)}")
             raise RuntimeError(f"Refinement processing failed: {str(e)}") from e
-
-    def write_training_artifact(
-        self,
-        paper: sqlite3.Row,
-        question: str,
-        chain_of_reasoning: str,
-        answer: str,
-    ) -> None:
-        """Write the final training data artifact to a JSONL file.
-
-        Creates a training data entry in JSONL format containing the system message,
-        question as user input, and reasoning chain with answer as assistant response.
-
-        :param paper: Paper data containing paper_id
-        :type paper: sqlite3.Row
-        :param question: Final refined question
-        :type question: str
-        :param chain_of_reasoning: Final refined reasoning chain
-        :type chain_of_reasoning: str
-        :param answer: Final refined answer
-        :type answer: str
-        """
-        artifact_name = f"{paper['paper_id']}-training-data.jsonl"
-        training_data = {
-            "system": constants.TRAINING_SYSTEM_MESSAGE,
-            "user": question,
-            "assistant": f"{chain_of_reasoning}\n\nAnswer: {answer}",
-        }
-        self.utils.write_training_artifact(artifact_name, training_data)
 
     def run(self) -> None:
         """Execute the main logic of the CoT extraction process.

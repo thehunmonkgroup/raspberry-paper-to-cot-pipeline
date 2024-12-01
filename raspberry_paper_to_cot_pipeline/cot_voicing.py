@@ -214,6 +214,35 @@ Raw Content:
 """
         self.utils.write_inference_artifact(artifact_name, headers, content)
 
+    def write_training_artifact(
+        self,
+        paper: sqlite3.Row,
+        question: str,
+        chain_of_reasoning: str,
+        answer: str,
+    ) -> None:
+        """Write the final training data artifact to a JSONL file.
+
+        Creates a training data entry in JSONL format containing the system message,
+        question as user input, and reasoning chain with answer as assistant response.
+
+        :param paper: Paper data containing paper_id
+        :type paper: sqlite3.Row
+        :param question: Final refined question
+        :type question: str
+        :param chain_of_reasoning: Final refined reasoning chain
+        :type chain_of_reasoning: str
+        :param answer: Final refined answer
+        :type answer: str
+        """
+        artifact_name = f"{paper['paper_id']}-training-data.jsonl"
+        training_data = {
+            "system": constants.TRAINING_SYSTEM_MESSAGE,
+            "user": question,
+            "assistant": f"{chain_of_reasoning}\n\nAnswer: {answer}",
+        }
+        self.utils.write_training_artifact(artifact_name, training_data)
+
     def process_voicing(
         self,
         paper_content: str,
@@ -292,6 +321,7 @@ Raw Content:
             self.write_voicing_artifact(
                 paper, question, transformed_c, transformed_a, raw_response
             )
+            self.write_training_artifact(paper, question, transformed_c, transformed_a)
 
             self.utils.update_paper_status(paper["id"], constants.STATUS_COT_VOICED)
             self.logger.info(
