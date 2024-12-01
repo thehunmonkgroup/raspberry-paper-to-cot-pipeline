@@ -791,3 +791,30 @@ class Utils:
         except sqlite3.Error as e:
             self.logger.error(f"Database error: {e}")
             raise
+
+    def get_paper_categories(self, paper: sqlite3.Row, stringify: bool = True) -> Union[List[str], str]:
+        """Get all categories for a specific paper.
+
+        :param paper: Database row containing paper information
+        :type paper: sqlite3.Row
+        :param stringify: Whether to return categories as comma-separated string
+        :type stringify: bool
+        :return: List of categories or comma-separated string of categories
+        :rtype: Union[List[str], str]
+        :raises sqlite3.Error: If there's an issue with the database operations
+        """
+        query = """
+        SELECT category 
+        FROM paper_categories 
+        WHERE paper_id = ?
+        ORDER BY category
+        """
+        try:
+            with get_db_connection(self.database) as conn:
+                cursor = conn.cursor()
+                cursor.execute(query, (paper["id"],))
+                categories = [row[0] for row in cursor.fetchall()]
+                return ", ".join(categories) if stringify else categories
+        except sqlite3.Error as e:
+            self.logger.error(f"Database error fetching categories for paper {paper['id']}: {e}")
+            raise

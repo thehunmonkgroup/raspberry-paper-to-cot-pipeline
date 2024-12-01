@@ -224,12 +224,13 @@ class TrainingDataGenerator:
                 raise ValueError(
                     "Could not retrieve original data or voiced data for paper"
                 )
-            model_preset = self.extract_model_preset_name(paper)
+            paper_categories, model_preset = self.extract_paper_metadata(paper)
             orig_q, _, _ = original_content
             _, voiced_c, voiced_a = voiced_content
             return {
                 "paper_id": paper["paper_id"],
                 "paper_url": paper["paper_url"],
+                "paper_categories": paper_categories,
                 "model_preset": model_preset,
                 "question": orig_q,
                 "chain_of_reasoning": voiced_c,
@@ -328,29 +329,38 @@ class TrainingDataGenerator:
 
         return jsonl_path
 
-    def extract_model_preset_name(self, paper: sqlite3.Row) -> str:
-        """Extract model preset from the voiced artifact.
+    def extract_paper_metadata(self, paper: sqlite3.Row) -> Tuple[str, str]:
+        """Extract paper metadata from the voiced artifact.
 
         :param paper: Paper record from database
         :type paper: sqlite3.Row
-        :return: Model preset string
-        :rtype: str
+        :return: Tuple containing (paper categories, model preset)
+        :rtype: Tuple[str, str]
         """
+        paper_categories, model_preset = "unknown", "unknown"
         try:
             filename = constants.COT_VOICING_ARTIFACT_PATTERN.format(
                 paper_id=paper["paper_id"]
             )
             headers, _ = self.utils.read_inference_artifact(filename)
-            if constants.ARTIFACT_HEADER_KEY_MODEL_PRESET in headers:
-                return headers[constants.ARTIFACT_HEADER_KEY_MODEL_PRESET]
+        except Exception as e:
+            self.logger.warning(
+                f"Could not extract paper metadata for paper {paper['paper_id']}: {e}"
+            )
+            return paper_categories, model_preset
+        if constants.ARTIFACT_HEADER_KEY_PAPER_CATEGORIES in headers:
+            paper_categories = headers[constants.ARTIFACT_HEADER_KEY_PAPER_CATEGORIES]
+        else:
+            self.logger.warning(
+                f"Could not find paper categories in voiced artifact for paper {paper['paper_id']}"
+            )
+        if constants.ARTIFACT_HEADER_KEY_MODEL_PRESET in headers:
+            model_preset = headers[constants.ARTIFACT_HEADER_KEY_MODEL_PRESET]
+        else:
             self.logger.warning(
                 f"Could not find model preset in voiced artifact for paper {paper['paper_id']}"
             )
-        except Exception as e:
-            self.logger.warning(
-                f"Could not extract model preset for paper {paper['paper_id']}: {e}"
-            )
-        return "unknown"
+        return paper_categories, model_preset
 
     def _format_markdown_entry(self, data: Dict[str, Any]) -> str:
         """Format markdown entry
@@ -364,6 +374,7 @@ class TrainingDataGenerator:
 
 ### Metadata
 - **Paper URL**: {data['paper_url']}
+- **Paper Categories**: {data['paper_categories']}
 
 ### Question
 {data['question']}
@@ -381,8 +392,8 @@ class TrainingDataGenerator:
         :param data: Training data dictionary containing paper info and content
         :type data: Dict[str, Any]
         """
-        preset = data['model_preset']
-        preset_file = self._get_or_create_preset_file(preset)
+        model_preset = data['model_preset']
+        preset_file = self._get_or_create_preset_file(model_preset)
         entry = self._format_markdown_entry(data)
         preset_file.write(entry + "\n")
 

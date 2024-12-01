@@ -227,6 +227,7 @@ class PaperProfiler:
         artifact_name = f"{paper['paper_id']}-paper-profiling.txt"
         headers = {
             constants.ARTIFACT_HEADER_KEY_PAPER_URL: paper["paper_url"],
+            constants.ARTIFACT_HEADER_KEY_PAPER_CATEGORIES: self.utils.get_paper_categories(paper),
             constants.ARTIFACT_HEADER_KEY_MODEL_PRESET: self.profiling_preset,
         }
         content = f"""Profiling results:

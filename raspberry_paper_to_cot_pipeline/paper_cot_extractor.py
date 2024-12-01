@@ -486,6 +486,7 @@ class CoTExtractor:
         )
         headers = {
             constants.ARTIFACT_HEADER_KEY_PAPER_URL: paper["paper_url"],
+            constants.ARTIFACT_HEADER_KEY_PAPER_CATEGORIES: self.utils.get_paper_categories(paper),
             constants.ARTIFACT_HEADER_KEY_MODEL_PRESET: self.extraction_preset,
         }
         content = f"""Extracted Information:
@@ -535,6 +536,7 @@ Raw Content:
         )
         headers = {
             constants.ARTIFACT_HEADER_KEY_PAPER_URL: paper["paper_url"],
+            constants.ARTIFACT_HEADER_KEY_PAPER_CATEGORIES: self.utils.get_paper_categories(paper),
             constants.ARTIFACT_HEADER_KEY_MODEL_PRESET: self.critique_preset,
         }
         content = f"""Critique:
@@ -576,6 +578,7 @@ Raw Response:
         )
         headers = {
             constants.ARTIFACT_HEADER_KEY_PAPER_URL: paper["paper_url"],
+            constants.ARTIFACT_HEADER_KEY_PAPER_CATEGORIES: self.utils.get_paper_categories(paper),
             constants.ARTIFACT_HEADER_KEY_MODEL_PRESET: self.refinement_preset,
         }
         content = f"""Refined Information:
