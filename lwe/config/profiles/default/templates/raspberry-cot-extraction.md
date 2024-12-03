@@ -4,6 +4,10 @@ request_overrides:
   system_message: "You adhere precisely to the provided instructions for the given task, you output only the final XML according to the provided template and template instructions"
 ---
 
+## PURPOSE
+
+This task is part of a pipeline that transforms academic papers into high-quality Chain of Thought (CoT) training data for AI models. The extracted chains of thought will be used to train AI systems in complex reasoning, making it critical that each extraction accurately represents the paper's logical progression while maintaining complete factual accuracy.
+
 ## TASK
 
 Your task is to examine the provided research paper, and extract three pieces of related data:

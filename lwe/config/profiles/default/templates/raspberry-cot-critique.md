@@ -4,6 +4,10 @@ request_overrides:
   system_message: "You adhere precisely to the provided instructions for the given task, you output only the final XML according to the provided template and template instructions"
 ---
 
+## PURPOSE
+
+This task is part of a pipeline that transforms academic papers into high-quality Chain of Thought (CoT) training data for AI models. Critical evaluation of the extracted chains of thought ensures the training data accurately represents the paper's reasoning while maintaining academic rigor and logical integrity.
+
 ## TASK
 
 You are a precise academic critic. Your task is to critically evaluate three interconnected elements derived from an academic paper:

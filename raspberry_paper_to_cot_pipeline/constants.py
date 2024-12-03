@@ -203,15 +203,19 @@ COT_VOICING_ASSESSMENT_CRITERIA = [
     # factual_accuracy criteria
     "factual_grounding",
     "academic_integrity",
+    "no_personal_actions",
     # voice_requirements criteria
     "first_person_narrative",
+    "no_specific_references",
     "no_source_references",
     "natural_expression",
 ]
 
 REQUIRED_COT_VOICING_ASSESSMENT_CRITERIA = [
     "factual_grounding",
+    "no_personal_actions",
     "first_person_narrative",
+    "no_specific_references",
     "no_source_references",
 ]
 
@@ -240,7 +244,7 @@ COT_QUALITY_ASSESSMENT_DEFAULT_SUITABILITY_SCORE = int(
 
 # CoT voicing assessment.
 COT_VOICING_ASSESSMENT_DEFAULT_SUITABILITY_SCORE = int(
-    os.getenv("RASPBERRY_COT_VOICING_ASSESSMENT_SUITABILITY_SCORE", 6)
+    os.getenv("RASPBERRY_COT_VOICING_ASSESSMENT_SUITABILITY_SCORE", 8)
 )
 
 # Database.
@@ -282,7 +286,9 @@ CREATE TABLE IF NOT EXISTS papers (
     cot_voicing_assessment_information_fidelity INT DEFAULT 0,
     cot_voicing_assessment_factual_grounding INT DEFAULT 0,
     cot_voicing_assessment_academic_integrity INT DEFAULT 0,
+    cot_voicing_assessment_no_personal_actions INT DEFAULT 0,
     cot_voicing_assessment_first_person_narrative INT DEFAULT 0,
+    cot_voicing_assessment_no_specific_references INT DEFAULT 0,
     cot_voicing_assessment_no_source_references INT DEFAULT 0,
     cot_voicing_assessment_natural_expression INT DEFAULT 0,
     cot_voicing_assessment_suitability_score INT DEFAULT 0

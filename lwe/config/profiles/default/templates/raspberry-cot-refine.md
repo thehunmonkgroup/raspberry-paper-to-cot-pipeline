@@ -4,6 +4,10 @@ request_overrides:
   system_message: "You adhere precisely to the provided instructions for the given task, you output only the final XML according to the provided template and template instructions"
 ---
 
+## PURPOSE
+
+This task is part of a pipeline that transforms academic papers into high-quality Chain of Thought (CoT) training data for AI models. Refinement of the extracted chains of thought based on expert critique ensures the training data demonstrates clear, precise reasoning while maintaining complete fidelity to the source material.
+
 ## TASK
 
 You will be provided the following:

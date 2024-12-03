@@ -4,6 +4,10 @@ request_overrides:
   system_message: "You adhere precisely to the provided instructions for the given task, you output only the final XML according to the provided template and template instructions"
 ---
 
+## PURPOSE
+
+This task is part of a pipeline that transforms academic papers into high-quality Chain of Thought (CoT) training data for AI models. Accurate profiling of papers ensures only those with clear reasoning chains and well-defined questions are selected, establishing a strong foundation for extracting high-quality training data.
+
 ## TASK
 ---
 
@@ -12,7 +16,7 @@ This rubric is designed to assess an academic paper's suitability for extracting
 - A complex chain of reasoning with multiple steps
 - A definitive answer derived through that reasoning
 
-The ideal paper will present a well-defined question, provide a clear answer, and demonstrate a logical reasoning process that bridges the gap between the question and the answer. This reasoning should be sufficiently complex to offer meaningful insights, yet accessible enough for an educated non-expert to understand with some effort.
+The ideal paper will present a well-defined question, provide a clear answer, and demonstrate a logical reasoning process that bridges the gap between the question and the answer. This reasoning should be sufficiently complex to offer meaningful insights, yet accessible enough for an educated non-expert to understand given they invest the effort to master the subject and terminology.
 
 When applying this rubric, consider the paper as a whole, but focus particularly on the sections that directly address the central question, the reasoning process, and the conclusion.
 
@@ -83,7 +87,7 @@ XML Template:
 
   <layperson_comprehensible>
     <![CDATA[
-      {Can the reasoning be explained to a layperson (defined as an educated adult without specific expertise in the paper's field) with some effort?}
+      {Can the reasoning be explained to a layperson? (layperson is defined as a non-expert, an educated adult willing to invest the effort to master the subject and terminology)}
     ]]>
   <explanation>
     <![CDATA[
@@ -94,7 +98,7 @@ XML Template:
 
   <minimal_jargon>
     <![CDATA[
-      {Does the paper minimize jargon in the reasoning process, or does it explain necessary technical terms used to derive the answer?}
+      {Does the paper minimize jargon in the reasoning process, or does it explain necessary technical terms used to derive the answer, or could a layperson look up the technical terms and understand them?}
     ]]>
   <explanation>
     <![CDATA[

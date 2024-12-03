@@ -4,6 +4,10 @@ request_overrides:
   system_message: "You adhere precisely to the provided instructions for the given task, you output only the final XML according to the provided template and template instructions"
 ---
 
+## PURPOSE
+
+This task is part of a pipeline that transforms academic papers into high-quality Chain of Thought (CoT) training data for AI models. Converting the refined chains of thought into a consistent first-person narrative voice creates training data that better demonstrates active reasoning while preserving the original logical integrity.
+
 ## TASK
 
 Given the original question, transform the provided chain of reasoning and answer into a consistent first-person narrative voice while maintaining complete factual accuracy and logical integrity.
@@ -13,30 +17,33 @@ Given the original question, transform the provided chain of reasoning and answe
 The transformed chain of reasoning and answer must:
 
 1. Present all reasoning as direct personal observations and analysis:
-- Use "I observe...", "I find...", "My analysis reveals..."
-- Show evolving understanding through the reasoning process
-- Include moments of realization and course correction
-- Express direct engagement with the subject matter
+   - Use phrases like "I observe...", "Analyzing the information...", "It appears that...", "I infer..."
+   - Do not claim to have conducted experiments, developed methods, or taken direct actions in the real world.
+   - Adopt the perspective of an expert analyst or knowledgeable professional reasoning through the information.
 
 2. NEVER include:
-- References to "the paper", "the authors", "the study"
-- Phrases like "according to" or "the research shows"
-- Any indication that information comes from a written document
-- Citations or academic references
+   - References to "the paper", "the authors", "the study"
+   - Specific dataset names, proprietary tools, or confidential information
+   - Phrases like "according to" or "the research shows"
+   - Any indication that information comes from a written document
+   - Citations or academic references
 
 3. Maintain perfect factual accuracy:
-- Preserve all critical information
-- Keep all numerical data and technical details precise
-- Maintain the complexity and nuance of arguments
-- Retain all supporting evidence
+   - Preserve all critical information
+   - Keep all numerical data and technical details precise
+   - Generalize specific references while maintaining the integrity of the information
+   - Maintain the complexity and nuance of arguments
+   - Retain all supporting evidence
 
 4. Preserve logical integrity:
-- Keep all reasoning steps in proper sequence
-- Maintain clear connections between concepts
-- Preserve the relationship between evidence and conclusions
-- Retain the full depth of analysis
+   - Keep all reasoning steps in proper sequence
+   - Maintain clear connections between concepts
+   - Preserve the relationship between evidence and conclusions
+   - Retain the full depth of analysis
 
 ### TRANSFORMATION GUIDELINES
+
+**IMPORTANT: The examples in this section are provided as general guidance for performing transformations, and should be adapted as needed to maintain factual grounding with the reference paper, while respecting the general principles outlined in the guidelines.**
 
 1. Converting Paper References:
   - Instead of "The authors found X", use "Looking at the data, I see X"
@@ -64,18 +71,37 @@ The transformed chain of reasoning and answer must:
     Instead of: "This approach minimizes bias because..."
     Use: "Considering potential sources of bias, I can see that..."
 
-The key is to position the model as actively thinking through the evidence and reaching conclusions in real-time, as if discovering and explaining insights during the conversation with the user.
+3. Handling Claims of Personal Actions:
+   - Avoid implying that you conducted experiments, developed methods, or performed real-world actions.
+   - Instead of: "I conducted experiments on..."
+     - Use: "Examining the data suggests..."
+   - Instead of: "I developed a new method..."
+     - Use: "One possible approach is to..."
 
-3. Multiple Viewpoint Integration:
+4. Generalizing Specific References:
+   - Do not mention specific dataset names, proprietary tools, or confidential information.
+   - Instead of: "Evaluated on datasets G and E..."
+     - Use: "Using diverse datasets covering various genres and emotions..."
+   - Instead of: "Using the XYZ proprietary tool..."
+     - Use: "By applying statistical analysis techniques..."
+
+5. Adopting the Perspective of an Expert Analyst:
+   - Position yourself as a knowledgeable professional reasoning through the information.
+   - Provide insights and logical deductions based on analysis, not personal actions.
+   - Use phrases like "It appears that...", "Analysis indicates...", "This suggests that..."
+
+6. Multiple Viewpoint Integration:
   - Present different perspectives as they arise in your thinking
   - Show how you evaluate competing explanations
   - Demonstrate real-time consideration of alternatives
 
-4. Maintaining Academic Rigor:
+7. Maintaining Academic Rigor:
   - Use precise, technical language naturally
   - Show careful consideration of evidence as you reason
   - Express uncertainty when evaluating complex relationships
   - Build conclusions step by step through clear logic
+
+**The key is to position the model as actively thinking through the evidence and reaching conclusions in real-time, as if discovering and explaining insights during the conversation with the user.**
 
 ## OUTPUT FORMAT
 
