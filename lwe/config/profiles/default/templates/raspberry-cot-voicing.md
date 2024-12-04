@@ -125,12 +125,12 @@ XML Template:
   <content>
     <chain_of_reasoning>
       <![CDATA[
-        {The voice-transformed chain of reasoning}
+        {The voice-transformed chain of reasoning in markdown format -- use features like bullet points for key steps and headers for major sections}
       ]]>
     </chain_of_reasoning>
     <answer>
       <![CDATA[
-        {The voice-transformed answer}
+        {The voice-transformed answer in plain text format}
       ]]>
     </answer>
   </content>

@@ -131,17 +131,17 @@ XML Template:
   </criteria_evaluation>
   <question>
     <![CDATA[
-      {State the extracted question from the paper}
+      {State the extracted question from the paper in plain text format}
     ]]>
   </question>
   <chain_of_reasoning>
     <![CDATA[
-      {Present the chain of reasoning in a first-person narrative format, as described in the TASK section. Include moments of uncertainty, realization, and course correction, ensuring all information is derived from the paper.}
+      {Present the chain of reasoning in markdown format -- use features like bullet points for key steps and headers for major sections. Include moments of uncertainty, realization, and course correction, ensuring all information is derived from the paper.}
     ]]>
   </chain_of_reasoning>
   <answer>
     <![CDATA[
-      {State the final answer provided in the paper}
+      {State the final answer provided in the paper in plain text format}
     ]]>
   </answer>
 </results>

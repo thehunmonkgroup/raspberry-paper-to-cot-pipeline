@@ -59,17 +59,17 @@ XML Template:
   </analysis>
   <question>
     <![CDATA[
-      {State the refined question, or the existing question if no refinements were necessary}
+      {State the refined question in plain text format, or the existing question if no refinements were necessary}
     ]]>
   </question>
   <chain_of_reasoning>
     <![CDATA[
-      {Present the refined chain of reasoning in a first-person narrative format, as described in the TASK section.}
+      {Present the refined chain of reasoning in markdown format -- use features like bullet points for key steps and headers for major sections}
     ]]>
   </chain_of_reasoning>
   <answer>
     <![CDATA[
-      {State the refined final answer, or the existing answer if no refinements were necessary}
+      {State the refined final answer in plain text format, or the existing answer if no refinements were necessary}
     ]]>
   </answer>
 </results>
