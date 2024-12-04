@@ -99,8 +99,8 @@ The output format will be XML, based on the provided XML template.
 
 1. Replace the content within curly brackets {} with your analysis or response
 2. For the <analysis> section, provide detailed reasoning for your evaluation of each criterion, focusing on content preservation, factual accuracy, and adherence to voice requirements.
-3. For all other sections, respond ONLY with "Yes" or "No" to the stated question
-4. Do not include any additional explanation or commentary in the criterion responses
+3. For each rubric question, replace the instruction in curly brackets with either "Yes" or "No".
+4. After the Yes/No response is given, replace the instruction in curly brackets with a brief explanation or evidence supporting this response in the <explanation> tag.
 
 XML Template:
 
@@ -115,54 +115,99 @@ XML Template:
   <content_preservation>
     <structural_integrity>
       <![CDATA[
-        {Yes/No - Are all reasoning steps preserved in correct order with maintained logical connections?}
+        {Are all reasoning steps preserved in correct order with maintained logical connections? Answer Yes or No}
       ]]>
+      <explanation>
+      <![CDATA[
+        {If Yes, confirm the steps match the original. If No, identify what steps are missing or out of order.}
+      ]]>
+      </explanation>
     </structural_integrity>
     <information_fidelity>
       <![CDATA[
-        {Yes/No - Are all key points, technical details, and nuances preserved accurately?}
+        {Are all key points, technical details, and nuances preserved accurately? Answer Yes or No}
       ]]>
+      <explanation>
+      <![CDATA[
+        {If Yes, confirm key information preserved. If No, identify what information was lost or altered.}
+      ]]>
+      </explanation>
     </information_fidelity>
   </content_preservation>
 
   <factual_accuracy>
     <factual_grounding>
       <![CDATA[
-        {Yes/No - Are all facts accurate to paper with correct technical term usage?}
+        {Are all facts accurate to paper with correct technical term usage? Answer Yes or No}
       ]]>
+      <explanation>
+      <![CDATA[
+        {If Yes, confirm accuracy. If No, identify any factual errors or misused terms.}
+      ]]>
+      </explanation>
     </factual_grounding>
     <academic_integrity>
       <![CDATA[
-        {Yes/No - Do conclusions stay within paper bounds with proper methodological accuracy?}
+        {Do conclusions stay within paper bounds with proper methodological accuracy? Answer Yes or No}
       ]]>
+      <explanation>
+      <![CDATA[
+        {If Yes, confirm conclusions match paper. If No, identify where conclusions exceed paper bounds.}
+      ]]>
+      </explanation>
     </academic_integrity>
     <no_personal_actions>
       <![CDATA[
-        {Yes/No - Does the content avoid claiming personal actions like conducting experiments or developing methods?}
+        {Does the content avoid claiming personal actions like conducting experiments or developing methods? Answer Yes or No}
       ]]>
+      <explanation>
+      <![CDATA[
+        {If Yes, confirm no personal action claims. If No, quote the problematic claims of personal action.}
+      ]]>
+      </explanation>
     </no_personal_actions>
   </factual_accuracy>
   
   <voice_requirements>
     <first_person_narrative>
       <![CDATA[
-        {Yes/No - Is first-person perspective maintained with natural thought progression?}
+        {Is first-person perspective maintained with natural thought progression? Answer Yes or No}
       ]]>
+      <explanation>
+      <![CDATA[
+        {If Yes, confirm first-person perspective maintained. If No, identify where perspective breaks down.}
+      ]]>
+      </explanation>
     </first_person_narrative>
     <no_specific_references>
       <![CDATA[
-        {Yes/No - Does the content avoid mentioning specific datasets, tools, or proprietary information that require external context?}
+        {Does the content avoid mentioning specific datasets, tools, or proprietary information that require external context? Answer Yes or No}
       ]]>
+      <explanation>
+      <![CDATA[
+        {If Yes, confirm no specific references present. If No, quote the specific references that need removal.}
+      ]]>
+      </explanation>
     </no_specific_references>
     <no_source_references>
       <![CDATA[
-        {Yes/No - Is content free of paper/study references and academic citations?}
+        {Is content free of paper/study references and academic citations? Answer Yes or No}
       ]]>
+      <explanation>
+      <![CDATA[
+        {If Yes, confirm no source references present. If No, quote the source references found.}
+      ]]>
+      </explanation>
     </no_source_references>
     <natural_expression>
       <![CDATA[
-        {Yes/No - Does the content flow naturally with authentic reasoning process?}
+        {Does the content flow naturally with authentic reasoning process? Answer Yes or No}
       ]]>
+      <explanation>
+      <![CDATA[
+        {If Yes, confirm content flows naturally. If No, identify where flow becomes artificial.}
+      ]]>
+      </explanation>
     </natural_expression>
   </voice_requirements>
 </results>

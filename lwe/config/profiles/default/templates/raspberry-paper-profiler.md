@@ -29,7 +29,7 @@ The output format will be XML, based on the provided XML template.
 1. Replace the content within curly brackets {} with your analysis or response.
 2. For the <analysis> section, provide a detailed, high-level analysis of the paper's suitability based on the criteria in the rubric.
 3. For each rubric question, replace the instruction in curly brackets with either "Yes" or "No".
-4. If a "Yes" response is given, replace the instruction in curly brackets with a brief explanation or evidence supporting this response in the <explanation> tag. If the response is "No", you may leave the <explanation> tag empty or provide a brief reason for the "No" response.
+4. After the Yes/No response is given, replace the instruction in curly brackets with a brief explanation or evidence supporting this response in the <explanation> tag.
 
 XML Template:
 
@@ -43,7 +43,7 @@ XML Template:
 
   <clear_question>
     <![CDATA[
-      {Is there a clear, well-defined central question explicitly stated in the paper?}
+      {Is there a clear, well-defined central question explicitly stated in the paper? Answer Yes or No}
     ]]>
   <explanation>
     <![CDATA[
@@ -54,7 +54,7 @@ XML Template:
 
   <definitive_answer>
     <![CDATA[
-      {Does the paper provide a definitive answer to this central question?}
+      {Does the paper provide a definitive answer to this central question? Answer Yes or No}
     ]]>
   <explanation>
     <![CDATA[
@@ -65,7 +65,7 @@ XML Template:
 
   <complex_reasoning>
     <![CDATA[
-      {Is the answer derived through multi-step reasoning that includes at least 3 distinct logical steps or connections?}
+      {Is the answer derived through multi-step reasoning that includes at least 3 distinct logical steps or connections? Answer Yes or No}
     ]]>
   <explanation>
     <![CDATA[
@@ -76,7 +76,7 @@ XML Template:
 
   <coherent_structure>
     <![CDATA[
-      {Is the reasoning leading to the answer logically coherent and well-structured?}
+      {Is the reasoning leading to the answer logically coherent and well-structured? Answer Yes or No}
     ]]>
   <explanation>
     <![CDATA[
@@ -87,7 +87,7 @@ XML Template:
 
   <layperson_comprehensible>
     <![CDATA[
-      {Can the reasoning be explained to a layperson? (layperson is defined as a non-expert, an educated adult willing to invest the effort to master the subject and terminology)}
+      {Can the reasoning be explained to a layperson? (layperson is defined as a non-expert, an educated adult willing to invest the effort to master the subject and terminology) Answer Yes or No}
     ]]>
   <explanation>
     <![CDATA[
@@ -98,7 +98,7 @@ XML Template:
 
   <minimal_jargon>
     <![CDATA[
-      {Does the paper minimize jargon in the reasoning process, or does it explain necessary technical terms used to derive the answer, or could a layperson look up the technical terms and understand them?}
+      {Does the paper minimize jargon in the reasoning process, or does it explain necessary technical terms used to derive the answer, or could a layperson look up the technical terms and understand them? Answer Yes or No}
     ]]>
   <explanation>
     <![CDATA[
@@ -109,7 +109,7 @@ XML Template:
 
   <illustrative_examples>
     <![CDATA[
-      {Are there illustrative examples or analogies in the reasoning that aid in understanding the answer?}
+      {Are there illustrative examples or analogies in the reasoning that aid in understanding the answer? Answer Yes or No}
     ]]>
   <explanation>
     <![CDATA[
@@ -120,7 +120,7 @@ XML Template:
 
   <significant_insights>
     <![CDATA[
-      {Does the reasoning provide significant insights or depth specifically related to the question and its answer?}
+      {Does the reasoning provide significant insights or depth specifically related to the question and its answer? Answer Yes or No}
     ]]>
   <explanation>
     <![CDATA[
@@ -131,7 +131,7 @@ XML Template:
 
   <verifiable_steps>
     <![CDATA[
-      {Does the paper provide sufficient information for the key reasoning steps to be independently verified or reproduced?}
+      {Does the paper provide sufficient information for the key reasoning steps to be independently verified or reproduced? Answer Yes or No}
     ]]>
   <explanation>
     <![CDATA[
@@ -142,7 +142,7 @@ XML Template:
 
   <overall_suitability>
     <![CDATA[
-      {Is the paper suitable for extracting a clear question and an answer arrived at by comprehensible, complex reasoning?}
+      {Is the paper suitable for extracting a clear question and an answer arrived at by comprehensible, complex reasoning? Answer Yes or No}
     ]]>
   <explanation>
     <![CDATA[
