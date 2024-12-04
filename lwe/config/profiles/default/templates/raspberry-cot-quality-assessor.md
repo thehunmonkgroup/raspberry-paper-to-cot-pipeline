@@ -33,8 +33,8 @@ Your evaluation should:
 Each criterion must be evaluated independently and supported by specific evidence from the academic paper.
 
 **Important Notes:**
-- At this stage, the content **may include references to the paper**, such as mentioning "the paper," "the authors," or using phrases like "according to the study."
-- The content **may be written in either first-person or third-person narrative**.
+- At this stage, the chain of reasoning and answer **may include references to the paper**, such as mentioning "the paper," "the authors," or using phrases like "according to the study."
+- The chain of reasoning and answer **may be written in either first-person or third-person narrative**.
 - These aspects will be addressed in a subsequent stage, and should be ignored for the purposes of the evaluation and suitability for training purposes. 
 
 ### EVALUATION PROCESS
@@ -119,6 +119,11 @@ XML Template:
         {Is the question clearly answerable from the paper's content? Answer Yes or No}
       ]]>
     </question_answerable>
+    <question_properly_formatted>
+      <![CDATA[
+        {Does the question focus directly on the subject matter being investigated, without referencing external sources like "the paper", "the study", or "the authors"? Answer Yes or No}
+      ]]>
+    </question_properly_formatted>
     <multi_step_progression>
       <![CDATA[
         {Does the chain of reasoning demonstrate clear multi-step logical progression? Answer Yes or No}

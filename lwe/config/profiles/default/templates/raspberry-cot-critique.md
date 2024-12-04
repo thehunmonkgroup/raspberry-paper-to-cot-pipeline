@@ -61,6 +61,7 @@ Organize your critique by severity:
    - Problems that invalidate the reasoning
    - Major factual errors or misrepresentations
    - Significant logical gaps
+   - A proposed question that references external sources (like "the paper", "the study", "the authors") - if found, suggest how to reformulate the question to focus directly on the subject matter while preserving its investigative intent
 
 2. Important Issues
    - Problems affecting clarity or completeness

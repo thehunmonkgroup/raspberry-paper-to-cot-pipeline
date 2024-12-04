@@ -177,6 +177,7 @@ COT_QUALITY_ASSESSMENT_CRITERIA = [
     "conclusion_follows",
     # training_utility criteria
     "question_answerable",
+    "question_properly_formatted",
     "multi_step_progression",
     "answer_addresses_question",
     "appropriate_complexity",
@@ -192,6 +193,7 @@ REQUIRED_COT_QUALITY_ASSESSMENT_CRITERIA = [
     "accurate_representation",
     "steps_supported_by_paper",
     "no_logical_leaps",
+    "question_properly_formatted",
     "answer_addresses_question",
 ]
 
@@ -239,7 +241,7 @@ COT_EXTRACTION_DEFAULT_SUITABILITY_SCORE = int(
 
 # CoT quality assessment.
 COT_QUALITY_ASSESSMENT_DEFAULT_SUITABILITY_SCORE = int(
-    os.getenv("RASPBERRY_COT_QUALITY_ASSESSMENT_SUITABILITY_SCORE", 13)
+    os.getenv("RASPBERRY_COT_QUALITY_ASSESSMENT_SUITABILITY_SCORE", 14)
 )
 
 # CoT voicing assessment.
@@ -275,6 +277,7 @@ CREATE TABLE IF NOT EXISTS papers (
     cot_quality_assessment_criteria_correct_sequence INT DEFAULT 0,
     cot_quality_assessment_criteria_conclusion_follows INT DEFAULT 0,
     cot_quality_assessment_criteria_question_answerable INT DEFAULT 0,
+    cot_quality_assessment_criteria_question_properly_formatted INT DEFAULT 0,
     cot_quality_assessment_criteria_multi_step_progression INT DEFAULT 0,
     cot_quality_assessment_criteria_answer_addresses_question INT DEFAULT 0,
     cot_quality_assessment_criteria_appropriate_complexity INT DEFAULT 0,

@@ -16,6 +16,7 @@ Your task is to examine the provided research paper, and extract three pieces of
 2. A chain of reasoning that bridges the question and the final answer
 3. The final answer provided in the paper
 
+When extracting questions, focus on the core subject matter being investigated. If you encounter questions that reference external sources (like "the paper", "the study", "the authors"), reformulate them to focus directly on the subject matter while preserving their investigative intent. For example, "How does the paper develop a maximal correlation framework?" should become "How is a maximal correlation framework developed?"
 
 It is imperative that your final chain of reasoning and answer include ONLY facts and information that are explicitly stated or directly implied in the research paper. Do not introduce any external information or speculation not supported by the paper's content. Your role is to organize and present the paper's own reasoning and conclusions in a narrative form, not to invent or introduce new ideas.
 
