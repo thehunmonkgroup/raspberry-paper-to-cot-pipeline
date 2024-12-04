@@ -264,7 +264,7 @@ Raw Inference Output:
         :param paper: Database row containing paper metadata
         :type paper: sqlite3.Row
         """
-        self.logger.info(f"Asssssing paper {paper['paper_id']}")
+        self.logger.info(f"Assessing paper {paper['paper_id']}")
         try:
             text = self.utils.get_pdf_text(paper)
             original_content = (

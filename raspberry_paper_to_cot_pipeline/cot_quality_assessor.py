@@ -319,7 +319,7 @@ Raw Inference Output:
         :return: None
         :rtype: None
         """
-        self.logger.info(f"Asssssing paper {paper['paper_id']}")
+        self.logger.info(f"Assessing paper {paper['paper_id']}")
         try:
             text = self.utils.get_pdf_text(paper)
             refinement_data = (
