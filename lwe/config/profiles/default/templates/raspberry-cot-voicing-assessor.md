@@ -6,90 +6,95 @@ request_overrides:
 
 ## PURPOSE
 
-This task is part of a pipeline that transforms academic papers into high-quality Chain of Thought (CoT) training data for AI models. Assessing the voice transformation ensures the training data maintains both narrative consistency and complete factual accuracy while properly demonstrating the reasoning process.
+This task is part of a pipeline that transforms academic papers into high-quality Chain of Thought (CoT) training data for AI models. Assessing the rephrased content ensures that it maintains factual accuracy, logical integrity, and adheres to the style guidelines suitable for training a chatbot.
 
 ## TASK
 
-Evaluate the voice-transformed content to ensure it meets all voice transformation requirements while preserving the original content's quality, accuracy, and logical integrity.
+Evaluate the rephrased content to ensure it meets all rephrasing requirements while preserving the original content's quality, accuracy, and logical integrity.
 
 **Your evaluation should confirm that:**
 - All references to the paper, authors, or external sources have been **completely removed**.
-- The content is presented in a **consistent first-person narrative** throughout.
+- The content is presented in an **objective and neutral tone**, avoiding self-referential language.
 - Factual accuracy and logical integrity are maintained from the original refined content.
 
 ### EVALUATION CRITERIA
 
 #### Content Preservation (comparing against original refined version)
 
-1. Structural Integrity
-*(Use these criteria to evaluate the <structural_integrity> question in the XML template below)*
-- All reasoning steps preserved in same order
-- All logical connections maintained
-- Complete preservation of argument flow
-- No missing or added content
+1. **Structural Integrity**
+   *(Use these criteria to evaluate the `<structural_integrity>` question in the XML template below)*
+   - All reasoning steps preserved in the same order
+   - All logical connections maintained
+   - Complete preservation of argument flow
+   - No missing or added content
 
-2. Information Fidelity
-*(Use these criteria to evaluate the <information_fidelity> question in the XML template below)*
-- All key points retained
-- Technical details preserved exactly
-- Nuances and qualifications maintained
-- Uncertainty expressions preserved appropriately
+2. **Information Fidelity**
+   *(Use these criteria to evaluate the `<information_fidelity>` question in the XML template below)*
+   - All key points retained
+   - Technical details preserved exactly
+   - Nuances and qualifications maintained
+   - Expressions of uncertainty preserved appropriately
 
 #### Factual Accuracy (comparing against reference paper)
 
-1. Factual Grounding
-*(Use these criteria to evaluate the <factual_grounding> question in the XML template below)*
-- All facts remain accurate to paper
-- Technical terms used correctly
-- Data and measurements precise
-- Evidence properly represented
+1. **Factual Grounding**
+   *(Use these criteria to evaluate the `<factual_grounding>` question in the XML template below)*
+   - All facts remain accurate according to the paper
+   - Technical terms used correctly
+   - Data and measurements precise
+   - Evidence properly represented
 
-2. Academic Integrity
-*(Use these criteria to evaluate the <academic_integrity> question in the XML template below)*
-- Conclusions stay within paper bounds
-- Methodological accuracy maintained
-- Limitations properly acknowledged
-- Complex concepts accurately conveyed
+2. **Academic Integrity**
+   *(Use these criteria to evaluate the `<academic_integrity>` question in the XML template below)*
+   - Conclusions stay within the bounds of the paper
+   - Methodological accuracy maintained
+   - Limitations properly acknowledged
+   - Complex concepts accurately conveyed
 
-3. No Misrepresentation of Personal Actions
-*(Use these criteria to evaluate the <no_personal_actions> question in the XML template below)*
-- The content does not claim that the AI conducted experiments, developed methods, or took direct actions
+3. **No Personal Actions**
+   *(Use these criteria to evaluate the `<no_personal_actions>` question in the XML template below)*
+   - The content does not imply personal involvement in experiments or actions
+   - Avoids phrases indicating personal actions like 'I conducted', 'we analyzed', etc.
 
-#### Voice Requirements (evaluating transformation)
+#### Style Requirements (evaluating transformation)
 
 **These criteria are critical to ensure the content is suitable for AI training purposes.**
 
-1. Consistent First-Person Narrative
-*(Use these criteria to evaluate the <first_person_narrative> question in the XML template below)*
-- Uses appropriate first-person perspective throughout
-- Maintains natural thought progression
-- Shows active engagement with the subject matter
+1. **No Self-Referential Language**
+   *(Use these criteria to evaluate the `<no_self_referential_language>` question in the XML template below)*
+   - The content avoids using self-referential statements (e.g., avoids 'I', 'we', 'my')
 
-2. No Specific References to Datasets or Proprietary Information
-*(Use these criteria to evaluate the <no_specific_references> question in the XML template below)*
-- The content avoids mentioning specific dataset names, proprietary tools, or confidential information that require external context
+2. **Objective and Neutral Tone**
+   *(Use these criteria to evaluate the `<objective_neutral_tone>` question in the XML template below)*
+   - Uses impersonal language throughout
+   - Presents information without bias
+   - Maintains a professional and informative style
 
-3. No Source References
-*(Use these criteria to evaluate the <no_source_references> question in the XML template below)*
-- Absence of paper/study/author references
-- No academic citations
-- No phrases indicating information comes from a written document
+2. **No Specific References to Datasets or Proprietary Information**
+   *(Use these criteria to evaluate the `<no_specific_references>` question in the XML template below)*
+   - The content avoids mentioning specific dataset names, proprietary tools, or confidential information that requires external context
 
-4. Natural Expression
-*(Use these criteria to evaluate the <natural_expression> question in the XML template below)*
-- Smooth flow of ideas
-- Clear thought progression
-- Authentic reasoning process
-- Appropriate technical language use
+3. **No Source References**
+   *(Use these criteria to evaluate the `<no_source_references>` question in the XML template below)*
+   - Absence of paper/study/author references
+   - No academic citations
+   - No phrases indicating information comes from a written document
+
+4. **Natural Expression**
+   *(Use these criteria to evaluate the `<natural_expression>` question in the XML template below)*
+   - Smooth flow of ideas
+   - Clear thought progression
+   - Authentic reasoning process
+   - Appropriate technical language use
 
 ### EDGE CASES
 
 Pay special attention to:
-1. Technical terminology handling
-2. Complex data presentation
-3. Multiple viewpoint integration
-4. Methodology descriptions
-5. Limitation acknowledgments
+- Technical terminology handling
+- Complex data presentation
+- Multiple viewpoint integration
+- Methodology descriptions
+- Limitation acknowledgments
 
 ## OUTPUT FORMAT
 
@@ -108,14 +113,14 @@ XML Template:
 <results>
   <analysis>
     <![CDATA[
-      {Provide detailed analysis of voice quality and content preservation}
+      {Provide a detailed analysis of style adherence and content preservation}
     ]]>
   </analysis>
-  
+
   <content_preservation>
     <structural_integrity>
       <![CDATA[
-        {Are all reasoning steps preserved in correct order with maintained logical connections? Answer Yes or No}
+        {Are all reasoning steps preserved in the correct order with maintained logical connections? Answer Yes or No}
       ]]>
       <explanation>
       <![CDATA[
@@ -129,7 +134,7 @@ XML Template:
       ]]>
       <explanation>
       <![CDATA[
-        {If Yes, confirm key information preserved. If No, identify what information was lost or altered.}
+        {If Yes, confirm key information is preserved. If No, identify what information was lost or altered.}
       ]]>
       </explanation>
     </information_fidelity>
@@ -138,7 +143,7 @@ XML Template:
   <factual_accuracy>
     <factual_grounding>
       <![CDATA[
-        {Are all facts accurate to paper with correct technical term usage? Answer Yes or No}
+        {Are all facts accurate according to the paper with correct technical term usage? Answer Yes or No}
       ]]>
       <explanation>
       <![CDATA[
@@ -148,74 +153,84 @@ XML Template:
     </factual_grounding>
     <academic_integrity>
       <![CDATA[
-        {Do conclusions stay within paper bounds with proper methodological accuracy? Answer Yes or No}
+        {Do conclusions stay within the bounds of the paper with proper methodological accuracy? Answer Yes or No}
       ]]>
       <explanation>
       <![CDATA[
-        {If Yes, confirm conclusions match paper. If No, identify where conclusions exceed paper bounds.}
+        {If Yes, confirm conclusions match the paper. If No, identify where conclusions exceed the paper's bounds.}
       ]]>
       </explanation>
     </academic_integrity>
     <no_personal_actions>
       <![CDATA[
-        {Does the content avoid claiming personal actions like conducting experiments or developing methods? Answer Yes or No}
+        {Does the content avoid implying personal involvement in experiments or actions? Answer Yes or No}
       ]]>
       <explanation>
       <![CDATA[
-        {If Yes, confirm no personal action claims. If No, quote the problematic claims of personal action.}
+        {If Yes, confirm there are no implications of personal actions. If No, quote the phrases that imply personal involvement.}
       ]]>
       </explanation>
     </no_personal_actions>
   </factual_accuracy>
-  
-  <voice_requirements>
-    <first_person_narrative>
+
+  <style_requirements>
+    <no_self_referential_language>
       <![CDATA[
-        {Is first-person perspective maintained with natural thought progression? Answer Yes or No}
+        {Does the content avoid self-referential language (e.g., 'I', 'we', 'my')? Answer Yes or No}
       ]]>
       <explanation>
       <![CDATA[
-        {If Yes, confirm first-person perspective maintained. If No, identify where perspective breaks down.}
+        {If Yes, confirm no self-referential language is present. If No, quote the problematic phrases.}
       ]]>
       </explanation>
-    </first_person_narrative>
+    </no_self_referential_language>
+    <objective_neutral_tone>
+      <![CDATA[
+        {Is an objective and neutral tone maintained throughout the content? Answer Yes or No}
+      ]]>
+      <explanation>
+      <![CDATA[
+        {If Yes, confirm the tone is appropriate. If No, identify where the tone deviates.}
+      ]]>
+      </explanation>
+    </objective_neutral_tone>
     <no_specific_references>
       <![CDATA[
         {Does the content avoid mentioning specific datasets, tools, or proprietary information that require external context? Answer Yes or No}
       ]]>
       <explanation>
       <![CDATA[
-        {If Yes, confirm no specific references present. If No, quote the specific references that need removal.}
+        {If Yes, confirm no specific references are present. If No, quote the specific references that need removal.}
       ]]>
       </explanation>
     </no_specific_references>
     <no_source_references>
       <![CDATA[
-        {Is content free of paper/study references and academic citations? Answer Yes or No}
+        {Is the content free of paper/study references and academic citations? Answer Yes or No}
       ]]>
       <explanation>
       <![CDATA[
-        {If Yes, confirm no source references present. If No, quote the source references found.}
+        {If Yes, confirm no source references are present. If No, quote the source references found.}
       ]]>
       </explanation>
     </no_source_references>
     <natural_expression>
       <![CDATA[
-        {Does the content flow naturally with authentic reasoning process? Answer Yes or No}
+        {Does the content flow naturally with an authentic reasoning process? Answer Yes or No}
       ]]>
       <explanation>
       <![CDATA[
-        {If Yes, confirm content flows naturally. If No, identify where flow becomes artificial.}
+        {If Yes, confirm the content flows naturally. If No, identify where the flow becomes unnatural.}
       ]]>
       </explanation>
     </natural_expression>
-  </voice_requirements>
+  </style_requirements>
 </results>
 ```
 
 ## ORIGINAL REFINED CONTENT
 
-The original refined content for comparison is fully enclosed within the `original_refined_content` XML tags below:
+The original refined content for comparison is fully enclosed within the `<original_refined_content>` XML tags below:
 
 <original_refined_content>
 Question:
@@ -231,9 +246,11 @@ Answer:
 {{ original_answer }}
 </original_refined_content>
 
+**Note:** Use this content to verify that the rephrased content accurately preserves all necessary information and logical structure.
+
 ## REFERENCE PAPER
 
-The original paper for fact-checking is fully enclosed within the `reference_paper` XML tags below:
+The original paper for fact-checking is fully enclosed within the `<reference_paper>` XML tags below:
 
 <reference_paper>
 {{ paper }}
@@ -241,7 +258,7 @@ The original paper for fact-checking is fully enclosed within the `reference_pap
 
 ## VOICE-TRANSFORMED CONTENT TO EVALUATE
 
-The voice-transformed content to evaluate is fully enclosed within the `content_to_evaluate` XML tags below:
+The rephrased content to evaluate is fully enclosed within the `<content_to_evaluate>` XML tags below:
 
 <content_to_evaluate>
 Question:

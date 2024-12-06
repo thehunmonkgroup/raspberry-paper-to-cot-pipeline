@@ -1,107 +1,108 @@
 ---
-description: Transforms a CoT and answer to a question into first-person narrative voice
+description: Transforms a CoT and answer into a format suitable for a chatbot response
 request_overrides:
   system_message: "You adhere precisely to the provided instructions for the given task, you output only the final XML according to the provided template and template instructions"
 ---
 
 ## PURPOSE
 
-This task is part of a pipeline that transforms academic papers into high-quality Chain of Thought (CoT) training data for AI models. Converting the refined chains of thought into a consistent first-person narrative voice creates training data that better demonstrates active reasoning while preserving the original logical integrity.
+This task is part of a pipeline that transforms academic papers into high-quality Chain of Thought (CoT) training data for AI models. Converting the refined chains of thought into clear, informative responses creates training data that demonstrates active reasoning while preserving the original logical integrity.
 
 ## TASK
 
-Given the original question, transform the provided chain of reasoning and answer into a consistent first-person narrative voice while maintaining complete factual accuracy and logical integrity.
+Given the original question, rephrase the provided chain of reasoning and answer into a clear, informative response that demonstrates logical reasoning and factual accuracy. The rephrased content should be suitable for training a chatbot to provide expert explanations in an objective and neutral tone.
 
-### VOICE TRANSFORMATION REQUIREMENTS
+### REPHRASING REQUIREMENTS
 
-The transformed chain of reasoning and answer must:
+The rephrased chain of reasoning and answer must:
 
-1. Present all reasoning as direct personal observations and analysis:
-   - Use phrases like "I observe...", "Analyzing the information...", "It appears that...", "I infer..."
-   - Do not claim to have conducted experiments, developed methods, or taken direct actions in the real world.
-   - Adopt the perspective of an expert analyst or knowledgeable professional reasoning through the information.
+1. **Use an objective and neutral tone:**
 
-2. NEVER include:
-   - References to "the paper", "the authors", "the study"
-   - Specific dataset names, proprietary tools, or confidential information
-   - Phrases like "according to" or "the research shows"
-   - Any indication that information comes from a written document
-   - Citations or academic references
+   - Present the reasoning and conclusions based on the information, without implying personal involvement.
+   - Avoid self-referential statements (e.g., avoid using 'I').
+   - Focus on providing expert explanations as an informative response.
 
-3. Maintain perfect factual accuracy:
-   - Preserve all critical information
-   - Keep all numerical data and technical details precise
-   - Generalize specific references while maintaining the integrity of the information
-   - Maintain the complexity and nuance of arguments
-   - Retain all supporting evidence
+2. **Ensure the response:**
 
-4. Preserve logical integrity:
-   - Keep all reasoning steps in proper sequence
-   - Maintain clear connections between concepts
-   - Preserve the relationship between evidence and conclusions
-   - Retain the full depth of analysis
+   - Presents facts and reasoning directly, without referencing external sources or documents.
+   - Uses generalized descriptions, avoiding specific dataset names, proprietary tools, or confidential information.
+   - Is self-contained and understandable without indicating it comes from a written document.
+   - Does not include academic citations or references.
+
+3. **Maintain perfect factual accuracy:**
+
+   - Preserve all critical information.
+   - Keep all numerical data and technical details precise.
+   - Generalize specific references while maintaining the integrity of the information.
+   - Maintain the complexity and nuance of arguments.
+   - Retain all supporting evidence.
+
+4. **Preserve logical integrity:**
+
+   - Keep all reasoning steps in proper sequence.
+   - Maintain clear connections between concepts.
+   - Preserve the relationship between evidence and conclusions.
+   - Retain the full depth of analysis.
 
 ### TRANSFORMATION GUIDELINES
 
-**IMPORTANT: The examples in this section are provided as general guidance for performing transformations, and should be adapted as needed to maintain factual grounding with the reference paper, while respecting the general principles outlined in the guidelines.**
+**IMPORTANT: The examples in this section are provided as general guidance for performing transformations and should be adapted as needed to maintain factual grounding with the reference paper while respecting the general principles outlined in the guidelines.**
 
-1. Converting Paper References:
-  - Instead of "The authors found X", use "Looking at the data, I see X"
-  - Replace "The paper shows" with "The evidence indicates"
-  - Transform "According to the study" into "Based on what I observe"
+1. **Eliminating References to the Source Material:**
 
-2. Handling Analysis and Results:
-  - Transform data observations into active reasoning:
-    Instead of: "Looking at the mass spectrometry results, I can see..."
-    Use: "When I examine these molecular patterns, I notice..."
+   - Remove phrases like "The authors found..." or "The paper shows...".
+   - Instead, directly present the information or findings.
+   - **For example:**
+     - Instead of "According to the study, the results indicate that...", use "Analysis reveals that...".
 
-  - Express pattern recognition as real-time insight:
-    Instead of: "I notice this investigation examines two factors..."
-    Use: "I see two key factors at play here..."
+2. **Handling Analysis and Results:**
 
-  - Frame statistical analysis as logical deduction:
-    Instead of: "When I compare these groups statistically..."
-    Use: "Comparing these groups, I can see a significant difference, which suggests..."
+   - Express observations and analyses without self-reference.
+     - Instead of "I notice two key factors...", use "There are two key factors...".
+     - Instead of "When I examine these patterns...", use "An examination of these patterns reveals...".
+   - Frame statistical analysis as logical deduction:
+     - Instead of "Comparing these groups, I can see a significant difference, which suggests...", use "A comparison of these groups shows a significant difference, suggesting...".
+   - Present evidence evaluation as objective reasoning:
+     - Instead of "Given these controlled conditions, I can conclude...", use "Given these controlled conditions, it can be concluded...".
+   - Show analytical progression:
+     - Instead of "Considering potential sources of bias, I can see that...", use "Considering potential sources of bias, it becomes apparent that...".
 
-  - Present evidence evaluation as active reasoning:
-    Instead of: "The presence of these controls helps me confirm..."
-    Use: "Given these controlled conditions, I can conclude..."
+3. **Handling Claims of Personal Actions:**
 
-  - Show analytical progression:
-    Instead of: "This approach minimizes bias because..."
-    Use: "Considering potential sources of bias, I can see that..."
+   - Avoid implying personal involvement in experiments, method development, or direct actions.
+   - **For example:**
+     - Instead of "A new method I developed...", use "A new method was developed...".
+     - Instead of "I conducted experiments on...", use "Experiments were conducted on...".
 
-3. Handling Claims of Personal Actions:
-   - Avoid implying that you conducted experiments, developed methods, or performed real-world actions.
-   - Instead of: "I conducted experiments on..."
-     - Use: "Examining the data suggests..."
-   - Instead of: "I developed a new method..."
-     - Use: "One possible approach is to..."
+4. **Generalizing Specific References:**
 
-4. Generalizing Specific References:
    - Do not mention specific dataset names, proprietary tools, or confidential information.
-   - Instead of: "Evaluated on datasets G and E..."
-     - Use: "Using diverse datasets covering various genres and emotions..."
-   - Instead of: "Using the XYZ proprietary tool..."
-     - Use: "By applying statistical analysis techniques..."
+   - **For example:**
+     - Instead of "Evaluated on datasets G and E...", use "Using diverse datasets covering various genres and emotions...".
+     - Instead of "Using the XYZ proprietary tool...", use "By applying statistical analysis techniques...".
 
-5. Adopting the Perspective of an Expert Analyst:
-   - Position yourself as a knowledgeable professional reasoning through the information.
-   - Provide insights and logical deductions based on analysis, not personal actions.
-   - Use phrases like "It appears that...", "Analysis indicates...", "This suggests that..."
+5. **Maintaining Impersonal Tone:**
 
-6. Multiple Viewpoint Integration:
-  - Present different perspectives as they arise in your thinking
-  - Show how you evaluate competing explanations
-  - Demonstrate real-time consideration of alternatives
+   - Use third-person or passive constructions where appropriate.
+   - Focus on the information and reasoning rather than the speaker.
+   - **For example:**
+     - Instead of "I can conclude that...", use "It can be concluded that...".
+     - Instead of "Analyzing the data leads me to...", use "Analysis of the data leads to...".
 
-7. Maintaining Academic Rigor:
-  - Use precise, technical language naturally
-  - Show careful consideration of evidence as you reason
-  - Express uncertainty when evaluating complex relationships
-  - Build conclusions step by step through clear logic
+6. **Multiple Viewpoint Integration:**
 
-**The key is to position the model as actively thinking through the evidence and reaching conclusions in real-time, as if discovering and explaining insights during the conversation with the user.**
+   - Present different perspectives as they arise in the reasoning.
+   - Show evaluation of competing explanations.
+   - Demonstrate consideration of alternatives.
+
+7. **Maintaining Academic Rigor:**
+
+   - Use precise, technical language naturally.
+   - Show careful consideration of evidence in the reasoning.
+   - Express uncertainty when evaluating complex relationships.
+   - Build conclusions step by step through clear logic.
+
+**The key is to present the reasoning process objectively, actively thinking through the evidence and reaching conclusions in real-time, as if discovering and explaining insights during conversation with another person.**
 
 ## OUTPUT FORMAT
 
@@ -119,18 +120,18 @@ XML Template:
 <results>
   <analysis>
     <![CDATA[
-      {Explain how you maintained factual accuracy while transforming the voice}
+      {Explain how you maintained factual accuracy and logical coherence while rephrasing the content into a neutral, informative style typical of a chatbot response}
     ]]>
   </analysis>
   <content>
     <chain_of_reasoning>
       <![CDATA[
-        {The voice-transformed chain of reasoning in markdown format -- use features like bullet points for key steps and headers for major sections}
+        {The rephrased chain of reasoning in markdown format -- use features like bullet points for key steps and headers for major sections. Present the reasoning in a clear, neutral tone using objective language.}
       ]]>
     </chain_of_reasoning>
     <answer>
       <![CDATA[
-        {The voice-transformed answer in plain text format}
+        {The rephrased answer in plain text format}
       ]]>
     </answer>
   </content>
