@@ -242,7 +242,7 @@ Raw Content:
         training_data = {
             "system": constants.TRAINING_SYSTEM_MESSAGE,
             "user": question,
-            "assistant": f"{chain_of_reasoning}\n\nAnswer: {answer}",
+            "assistant": f"<reasoning>\n{chain_of_reasoning}\n</reasoning>\n\n<output>\n{answer}\n</output>",
         }
         self.utils.write_training_artifact(artifact_name, training_data)
 
