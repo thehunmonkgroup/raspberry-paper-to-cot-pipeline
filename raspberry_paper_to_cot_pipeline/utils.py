@@ -318,12 +318,8 @@ class Utils:
         self.logger.debug(f"Extracting text from {pdf_path}")
         try:
             return pymupdf4llm.to_markdown(str(pdf_path))
-        except pymupdf4llm.ConversionError as e:
-            message = f"PDF conversion error for {pdf_path}: {str(e)}"
-            self.logger.error(message)
-            raise
         except Exception as e:
-            message = f"Unexpected error extracting {pdf_path} content: {str(e)}"
+            message = f"PDF conversion error for {pdf_path} content: {str(e)}"
             self.logger.error(message)
             raise RuntimeError(message)
 
