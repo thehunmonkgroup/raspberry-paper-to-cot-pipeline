@@ -118,6 +118,7 @@ raspberry-fetch-paper-urls
    raspberry-paper-profile-scorer
    raspberry-paper-cot-extractor
    raspberry-cot-quality-assessor
+   raspberry-cot-quality-scorer
    raspberry-cot-voicing
    raspberry-cot-voicing-assessor
    raspberry-cot-voicing-scorer
