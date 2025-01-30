@@ -126,7 +126,7 @@ XML Template:
   <content>
     <chain_of_reasoning>
       <![CDATA[
-        {The rephrased chain of reasoning in markdown format -- use features like bullet points for key steps and headers for major sections. Present the reasoning in a clear, neutral tone using objective language.}
+        {Present the rephrased chain of reasoning, which shows the intellectual work required to provide the final answer to the question. Include moments of uncertainty, realization, and course correction, ensuring all information is derived from the paper. Present the reasoning in a clear, neutral tone using objective language. Use plain text format.}
       ]]>
     </chain_of_reasoning>
     <answer>

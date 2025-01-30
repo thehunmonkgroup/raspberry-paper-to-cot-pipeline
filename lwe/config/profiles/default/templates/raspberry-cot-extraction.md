@@ -136,7 +136,7 @@ XML Template:
   </question>
   <chain_of_reasoning>
     <![CDATA[
-      {Present the chain of reasoning in markdown format -- use features like bullet points for key steps and headers for major sections. Include moments of uncertainty, realization, and course correction, ensuring all information is derived from the paper.}
+      {Present the chain of reasoning, which shows the intellectual work required to provide the final answer to the question. Include moments of uncertainty, realization, and course correction, ensuring all information is derived from the paper. Use plain text format.}
     ]]>
   </chain_of_reasoning>
   <answer>
