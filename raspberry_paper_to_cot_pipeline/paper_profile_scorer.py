@@ -69,6 +69,7 @@ class PaperProfileScorer(BaseScorer):
         self.scored_status = constants.STATUS_PAPER_PROFILE_SCORED
         self.initial_status = constants.STATUS_PAPER_PROFILED
         self.score_field_name = "profiler_suitability_score"
+        self.suitability_score = constants.COT_EXTRACTION_DEFAULT_SUITABILITY_SCORE
 
 
 def main() -> None:

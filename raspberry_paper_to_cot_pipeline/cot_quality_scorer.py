@@ -80,6 +80,7 @@ class CoTQualityScorer(BaseScorer):
         self.scored_status = constants.STATUS_COT_QUALITY_SCORED
         self.initial_status = constants.STATUS_COT_QUALITY_ASSESSED
         self.score_field_name = "cot_quality_assessment_suitability_score"
+        self.suitability_score = constants.COT_QUALITY_ASSESSMENT_DEFAULT_SUITABILITY_SCORE
 
 
 def main() -> None:

@@ -73,6 +73,7 @@ class CoTVoicingScorer(BaseScorer):
         self.scored_status = constants.STATUS_COT_VOICING_SCORED
         self.initial_status = constants.STATUS_COT_VOICING_ASSESSED
         self.score_field_name = "cot_voicing_assessment_suitability_score"
+        self.suitability_score = constants.COT_VOICING_ASSESSMENT_DEFAULT_SUITABILITY_SCORE
 
 
 def main() -> None:

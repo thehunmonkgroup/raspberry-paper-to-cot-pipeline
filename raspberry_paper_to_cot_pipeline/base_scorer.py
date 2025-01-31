@@ -87,6 +87,7 @@ class BaseScorer:
         self.scored_status: str = ""
         self.initial_status: str = ""
         self.score_field_name: str = ""
+        self.suitability_score: int = 0
 
     def build_criteria_columns(self, required_only: bool = False) -> List[str]:
         """Build list of database column names for scoring criteria.
@@ -210,6 +211,7 @@ class BaseScorer:
                 f"Paper {paper['paper_id']} scored and updated to status {self.scored_status}, "
                 f"suitability score: {suitability_score}"
             )
+            return suitability_score
         except (KeyError, sqlite3.Error) as processing_error:
             self.logger.error(
                 f"Failed to process paper {paper.get('paper_id', 'unknown')}: {processing_error}"
@@ -229,13 +231,16 @@ class BaseScorer:
         try:
             papers = self.fetch_papers_for_scoring()
             processed_count = 0
+            suitable = 0
             for paper in papers:
-                self.process_paper(paper)
+                suitability_score = self.process_paper(paper)
                 processed_count += 1
+                if suitability_score >= self.suitability_score:
+                    suitable += 1
                 if processed_count % BATCH_LOG_SIZE == 0:
                     self.logger.info(f"Processed {processed_count} papers so far.")
             self.logger.info(
-                f"Scoring process completed. Total papers scored: {processed_count}"
+                f"Scoring process completed. Total papers scored: {processed_count}, suitable for next stage: {suitable}"
             )
         except Exception as processing_error:
             self.logger.error(
