@@ -1,5 +1,6 @@
 import logging
 import os
+import signal
 import requests
 import email.parser
 import email.message
@@ -27,6 +28,21 @@ from tenacity import (
 from lwe.core.config import Config
 from lwe import ApiBackend
 from raspberry_paper_to_cot_pipeline import constants
+
+
+@contextmanager
+def timeout(seconds):
+    def handler(signum, frame):
+        raise TimeoutError()
+
+    # Register the signal function handler
+    signal.signal(signal.SIGALRM, handler)
+    signal.alarm(seconds)
+    try:
+        yield
+    finally:
+        # Disable the alarm
+        signal.alarm(0)
 
 
 @contextmanager
@@ -312,12 +328,28 @@ class Utils:
         :type pdf_path: Path
         :return: Extracted text
         :rtype: str
-        :raises pymupdf4llm.ConversionError: If PDF conversion fails
-        :raises RuntimeError: If an unexpected error occurs
+        :raises RuntimeError: If an unexpected error occurs, user interrupts, or operation times out
         """
-        self.logger.debug(f"Extracting text from {pdf_path}")
+        self.logger.debug(f"Extracting text from {pdf_path} (will time out in {constants.UTIL_PDF_TO_MARKDOWN_TIMEOUT_SECONDS} seconds)")
         try:
-            return pymupdf4llm.to_markdown(str(pdf_path))
+            with timeout(constants.UTIL_PDF_TO_MARKDOWN_TIMEOUT_SECONDS):
+                chunks = pymupdf4llm.to_markdown(
+                    str(pdf_path),
+                    page_chunks=True,
+                    graphics_limit=5000,
+                    write_images=False,
+                )
+                text_chunks = [chunk["text"] for chunk in chunks]
+                text = "\n\n".join(text_chunks).strip()
+                return text
+        except TimeoutError:
+            message = f"PDF extraction timed out after {constants.UTIL_PDF_TO_MARKDOWN_TIMEOUT_SECONDS} seconds for {pdf_path}"
+            self.logger.error(message)
+            raise RuntimeError(message)
+        except KeyboardInterrupt:
+            message = f"User interrupted PDF extraction for {pdf_path}"
+            self.logger.error(message)
+            raise RuntimeError(message)
         except Exception as e:
             message = f"PDF conversion error for {pdf_path} content: {str(e)}"
             self.logger.error(message)
