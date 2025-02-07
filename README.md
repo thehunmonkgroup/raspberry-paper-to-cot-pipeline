@@ -124,6 +124,18 @@ raspberry-fetch-paper-urls
    raspberry-cot-voicing-scorer
    raspberry-generate-training-data
 
+## Model Fine-Tuning
+
+After generating the training data, you can prepare it for fine-tuning and train an OpenAI model:
+
+1. **raspberry-prepare-training-data:** Convert the generated training data into OpenAI's chat message format and split into training/validation sets
+
+   Artifacts generated:
+   * Training data file in JSONL format
+   * Validation data file in JSONL format
+
+2. **raspberry-fine-tune-openai:** Upload the prepared datasets to OpenAI and initiate a fine-tuning job
+
 ## Artifacts
 
 All artifacts are output to the `results` directory in the root of the repository

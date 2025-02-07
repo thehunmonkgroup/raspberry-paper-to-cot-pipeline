@@ -333,6 +333,8 @@ DEFAULT_JSONL_TRAINING_FILENAME = os.getenv(
 DEFAULT_HUMAN_READABLE_TRAINING_STUB = os.getenv(
     "RASPBERRY_HUMAN_READABLE_TRAINING_STUB", "training-data-human-readable"
 )
+DEFAULT_TRAINING_FILE = os.getenv("RASPBERRY_TRAINING_FILE", "training.jsonl")
+DEFAULT_VALIDATION_FILE = os.getenv("RASPBERRY_VALIDATION_FILE", "validation.jsonl")
 DEFAULT_TRAINING_SYSTEM_MESSAGE = """
 You are a reasoning agent that uses chain-of-thought reasoning to solve problems and answer queries. Always structure your response in two parts: your step-by-step reasoning wrapped in <reasoning></reasoning> tags, followed by your final answer wrapped in <output></output> tags.
 
@@ -357,4 +359,21 @@ Ocean acidification occurs because atmospheric CO2 dissolves in seawater and und
 TRAINING_SYSTEM_MESSAGE = os.getenv(
     "RASPBERRY_TRAINING_SYSTEM_MESSAGE",
     DEFAULT_TRAINING_SYSTEM_MESSAGE,
+)
+
+# OpenAI fine-tuning defaults.
+DEFAULT_OPENAI_PLATFORM_BASE_URL = os.getenv(
+    "RASPBERRY_OPENAI_PLATFORM_BASE_URL", "https://platform.openai.com"
+)
+DEFAULT_OPENAI_FINE_TUNING_MODEL = os.getenv(
+    "RASPBERRY_OPENAI_FINE_TUNING_MODEL", "gpt-4o-mini-2024-07-18"
+)
+DEFAULT_OPENAI_FINE_TUNING_BATCH_SIZE = int(
+    os.getenv("RASPBERRY_OPENAI_FINE_TUNING_BATCH_SIZE", 4)
+)
+DEFAULT_OPENAI_FINE_TUNING_LEARNING_RATE_MULTIPLIER = float(
+    os.getenv("RASPBERRY_OPENAI_FINE_TUNING_LEARNING_RATE_MULTIPLIER", 0.05)
+)
+DEFAULT_OPENAI_FINE_TUNING_N_EPOCHS = int(
+    os.getenv("RASPBERRY_OPENAI_FINE_TUNING_N_EPOCHS", 3)
 )

@@ -9,6 +9,7 @@ description = "A pipeline for processing research papers"
 requires-python = ">=3.7"
 dependencies = [
     "beautifulsoup4",
+    "datasets",
     "python-dateutil",
     "requests",
     "tenacity",
@@ -37,6 +38,8 @@ raspberry-cot-voicing-assessor = "raspberry_paper_to_cot_pipeline.cot_voicing_as
 raspberry-cot-voicing-scorer = "raspberry_paper_to_cot_pipeline.cot_voicing_scorer:main"
 raspberry-paper-cot-pipeline = "raspberry_paper_to_cot_pipeline.paper_cot_pipeline:main"
 raspberry-generate-training-data = "raspberry_paper_to_cot_pipeline.generate_training_data:main"
+raspberry-prepare-training-data = "raspberry_paper_to_cot_pipeline.prepare_training_data:main"
+raspberry-fine-tune-openai = "raspberry_paper_to_cot_pipeline.fine_tune_openai:main"
 
 [tool.setuptools.packages.find]
 include = ["raspberry_paper_to_cot_pipeline*"]
